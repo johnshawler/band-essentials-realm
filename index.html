@@ -881,16 +881,13 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
   const END_TEXT = ['Theta Music Band Essentials', 'try it free at', 'bandessentials.com'];
   const TILE_TO_RECT = [1, 0, 3, 5, 6, 4, 2, 7];
 
-  // The movie's schedule. In the game it is the camera's "story time": the camera sits at the middle of each island's
-  // stretch while it is played, and runs the stretches between islands (and the ending) as flights.
-  const T = {
-    arrive: [3.0, 7.5, 10.4, 13.7, 16.6], leave: [6.6, 9.5, 12.8, 15.7, 19.5],
-    count: 3.3, play: 4.3, keys: [8.0, 8.35, 8.7], done2: 9.05, grab: 10.85, drop: 11.65, flat: 12.0, done3: 12.35, pick4: 14.9, done4: 15.15,
-    timer: 16.9, pick5: 18.6, done5: 18.85, lift: 19.5, flight: 1.2, gap: 0.07, dark0: 19.7, dark1: 21.1, camEnd: 20.9, exact0: 21.7, exact1: 22.2,
-    text: [22.35, 22.8, 23.25], end: 26.0,
-  };
-  const BEAT = 0.25;
-  T.done1 = T.play + 8 * BEAT + 0.05; T.done = [T.done1, T.done2, T.done3, T.done4, T.done5];
+  // Story time for the camera: each of the NS islands has a stretch (the camera drifts across it while it is played),
+  // with a flight between stretches; after the last island comes the movie's ending, on the same relative timings.
+  const NS = 15;
+  const T = { arrive: [], leave: [], flight: 1.2, gap: 0.07 };
+  for (let i = 0; i < NS; i++) { T.arrive.push(3 + 4 * i); T.leave.push(6 + 4 * i); }
+  T.lift = T.leave[NS - 1]; T.dark0 = T.lift + 0.2; T.dark1 = T.lift + 1.6; T.camEnd = T.lift + 1.4; T.exact0 = T.lift + 2.2; T.exact1 = T.lift + 2.7;
+  T.text = [T.lift + 2.85, T.lift + 3.3, T.lift + 3.75]; T.end = T.lift + 6.5;
   const tileStart = (j) => T.lift + j * T.gap;
 
   const C = {
@@ -1070,8 +1067,8 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       // ------------------------------------------------------------ light
       K.env(S, { top: '#1c2266', horizon: '#d07a90', bottom: '#3b2b62', intensity: 0.6, blur: 0.06, panels: [
         { pos: [-22, 24, 40], size: [34, 18], color: '#ffc88c', power: 4.5 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9cc4', power: 2.2 }, { pos: [0, 44, -12], size: [44, 12], color: '#8ea2ff', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb070', power: 2.5 }] });
-      const RAD = 30, DA = 0.33, STEP = 2.2;
-      const sun = K.sun(S, { pos: [-20, 50, RAD + 40], target: [0, 4, RAD - 3], color: '#ffd0a0', power: 2.5, size: 28, soft: 1.0, mapSize: Q.sun, far: 220 });
+      const RAD = 36, DA = 0.27, STEP = 2.6, A0 = -(NS - 1) * DA / 2;
+      const SUN_OFF = new THREE.Vector3(-20, 46, 43), sun = K.sun(S, { pos: [-20, 50, RAD + 40], target: [0, 4, RAD - 3], color: '#ffd0a0', power: 2.5, size: 28, soft: 1.0, mapSize: Q.sun, far: 220 });
       const hemi = new THREE.HemisphereLight('#9a92ff', '#6a3c58', 0.42); scene.add(hemi);
       const key = new THREE.SpotLight('#ffe6c8', 110, 60, 0.42, 0.9, 1.6); key.castShadow = false; scene.add(key, key.target);
       const FOG = new THREE.Color(C.fog); scene.fog = new THREE.Fog(FOG.clone(), 60, 900);
@@ -1140,20 +1137,25 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
 
       // ------------------------------------------------------------ the five islands
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
-      const isl = GAMES.map((gm, i) => {
-        const a = (i - 2) * DA, g = group(scene, RAD * Math.sin(a), i * STEP, RAD * Math.cos(a)); g.rotation.y = a;
+      const gameOf = (i) => i % 5;
+      const isl = Array.from({ length: NS }, (_, i) => {
+        const a = A0 + i * DA, g = group(scene, RAD * Math.sin(a), i * STEP, RAD * Math.cos(a)); g.rotation.y = a;
         islet(g, 4.7, 7 + (i % 2), i + 1);
-        if (i < 4) { const d = add(g, new THREE.CylinderGeometry(1, 1.06, DAIS, 9), M.stone, 0, DAIS / 2, 0.55); d.scale.set(3.25, 1, 1.15); }
+        if (gameOf(i) < 4) { const d = add(g, new THREE.CylinderGeometry(1, 1.06, DAIS, 9), M.stone, 0, DAIS / 2, 0.55); d.scale.set(3.25, 1, 1.15); }
         [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) pine(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
         shards(g, (i % 2 ? -1 : 1) * 3.75, 0, 1.3, 0.75, i % 2 ? M_CYAN : M_VIOLET, i * 3 + 1); shards(g, (i % 2 ? 1 : -1) * 3.9, 0, 0.2, 0.5, i % 2 ? M_VIOLET : M_CYAN, i * 3 + 2, 3);
         shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3);
-        return { i, g, a };
+        return { i, g, a, game: gameOf(i) };
       });
+      // five sets of game props; each sits on the island where its game is played next, and moves up the stair as the player climbs
+      const props = GAMES.map(() => new THREE.Group()), restLocal = [];
+      const placeProps = (game, stop) => { isl[stop].g.add(props[game]); props[game].updateMatrixWorld(true); };
+      props.forEach((_, k) => placeProps(k, k));
       // game state that the scene reads (filled in by the game further down)
-      const G = { t: 0, tau: 0.3, mode: 'title', endTau: -1, doneAt: [-1, -1, -1, -1, -1], island: 0 };
+      const G = { t: 0, tau: 0.3, mode: 'title', endTau: -1, doneAt: new Array(NS).fill(-1), island: 0 };
       const sparks = [];
       isl.forEach((b, i) => {
-        const name = label(GAMES[i].name, { height: 0.3, face: CINZEL, color: C.gilt, maxW: 3.3 }), w = name.userData.w, x0 = 0.18, bh = 0.6, n = 0.2, xl = x0 - w / 2 - 0.55, xr = x0 + w / 2 + 0.48;
+        const name = label(GAMES[b.game].name, { height: 0.3, face: CINZEL, color: C.gilt, maxW: 3.3 }), w = name.userData.w, x0 = 0.18, bh = 0.6, n = 0.2, xl = x0 - w / 2 - 0.55, xr = x0 + w / 2 + 0.48;
         const bg = group(b.g, 0, 4.22, 0);
         add(bg, extrude([[xl, -bh / 2], [xr, -bh / 2], [xr - n, 0], [xr, bh / 2], [xl, bh / 2]], [], 0.05), M.banner, 0, 0, -0.03);
         for (const sy of [-1, 1]) add(bg, box(xr - xl - 0.3, 0.03, 0.012), M.goldSmooth, (xl + xr) / 2 - 0.08, sy * (bh / 2 - 0.075), 0.026, { cast: false });
@@ -1194,13 +1196,11 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       const sign = (parent, str, x, y, z, h = 0.2) => { const g = group(parent, x, y, z), l = label(str, { height: h, face: CINZEL, color: C.gilt }), w = l.userData.w + 0.26; add(g, new THREE.CylinderGeometry(0.035, 0.045, 0.5, 5), M.woodDark, 0, 0.2, -0.05); const plank = add(g, K.roundedBox(w, h * 1.7, 0.07, 0.02, 2), M.woodDark, 0, 0.42, 0); l.position.set(0, 0.42, 0.04); g.add(l); g.rotation.x = -0.12; g.userData.plank = plank; g.userData.label = l; return g; };
 
       // the wisp's flights between islands, as in the movie
-      const wKeys = [], wArcs = [];
-      const WK = (t, obj, x, y, z, e) => { obj.updateWorldMatrix(true, false); wKeys.push([t, obj.localToWorld(new THREE.Vector3(x, y, z)).toArray(), e || 'inOut']); };
 
       // ---- 1. Read Rhythms: a scroll between two posts, four rune stones to count in, a hand drum to tap
       const R1 = {};
       {
-        const b = isl[0], g = b.g;
+        const g = props[0];
         for (const sx of [-1, 1]) add(g, new THREE.CylinderGeometry(0.1, 0.13, 3.3, 7), M.wood, sx * (PW / 2 + 0.34), DAIS + 1.65, -0.14);
         pickable(add(g, K.roundedBox(PW, PH + 0.24, 0.04, 0.015, 2), M.parch, 0, PY, 0), { kind: 'scroll' });
         for (const sy of [-1, 1]) { add(g, cylX(0.09, PW + 0.12, 10), M.parchDark, 0, PY + sy * (PH / 2 + 0.14), 0); for (const sx of [-1, 1]) add(g, cylX(0.13, 0.16, 8), M.woodDark, sx * (PW / 2 + 0.14), PY + sy * (PH / 2 + 0.14), 0); }
@@ -1220,14 +1220,13 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
           stones.forEach((s, k) => { const tc = R1.stoneAt[k]; set(s.userData.mat, tc > -9 ? (t >= tc ? Math.max(0, 1 - (t - tc) * 0.35) : 0) : 0); s.position.y = DAIS + 0.26 + 0.07 * bump(t, tc, 0.3); });
           sticks.forEach((s, j) => { let hit = 0; R1.tapAt.forEach((tp, k) => { if (k % 2 === j) hit = Math.max(hit, bump(t, tp - 0.02, 0.22)); }); s.rotation.z = (j ? 1 : -1) * (0.1 + 0.36 * Math.min(1, hit * 1.7)); });
         });
-        WK(0.0, g, -11, 7, 8); WK(2.95, g, 0.3, 1.75, 1.1, 'out'); WK(T.leave[0] - 0.2, face, 2.1, 0.5, 0.3);
-        b.face = face; b.rest = [2.6, PY + 1.25, 1.0];
+        restLocal[0] = [2.6, PY + 1.25, 1.0];
       }
 
       // ---- 2. Fingering Trainer: a standing stone; the note is cut into its face beside the instrument's keys, set as gems
       const R2 = {};
       {
-        const b = isl[1], g = b.g;
+        const g = props[1];
         const slabG = extrude([[-2.75, -1.95], [2.8, -1.95], [2.92, 0.5], [2.62, 1.14], [1.5, 1.36], [0.1, 1.5], [-1.6, 1.36], [-2.6, 1.1], [-2.93, 0.3]], [], 0.8); slabG.translate(0, 0, -0.8);
         add(g, slabG, M.stone, 0, PY, -0.02);
         add(g, K.roundedBox(PW, PH, 0.06, 0.04, 2), M.pale, 0, PY, 0.0);
@@ -1239,14 +1238,13 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         const flames = [0.75, 1.95].map((x) => { add(g, new THREE.CylinderGeometry(0.2, 0.09, 0.3, 7), M.gold, x, DAIS + 0.3, 0.8); add(g, new THREE.CylinderGeometry(0.05, 0.11, 0.18, 6), M.stoneDark, x, DAIS + 0.09, 0.8); return add(g, CONE7, M_WARM, x, DAIS + 0.62, 0.8, { cast: false }); });
         anims.push((t) => flames.forEach((f, k) => { const fl = 1 + 0.12 * Math.sin(t * 17 + k * 2) * Math.sin(t * 7.1 + k); f.scale.set(0.13 * fl, 0.36 * (2 - fl), 0.13 * fl); f.rotation.y = t * 3 + k; }));
         Object.assign(R2, { face, sf, clefG: group(face), noteG: group(face), keysG: group(face), plText, gems: [] });
-        WK(T.arrive[1] - 0.15, face, 0.75, 0.55, 0.6); WK(T.leave[1] - 0.15, face, -0.3, 0.6, 0.34);
-        b.face = face; b.rest = [-2.0, PY + 1.35, 1.0];
+        restLocal[1] = [-2.0, PY + 1.35, 1.0];
       }
 
       // ---- 3. Write Notes: a spellbook on a lectern. The note waits in its tray; drag it to the staff, then add a flat or sharp
       const R3 = {};
       {
-        const b = isl[2], g = b.g;
+        const g = props[2];
         add(g, new THREE.CylinderGeometry(0.42, 0.66, 1.5, 6), M.stoneDark, 0, DAIS + 0.75, -0.95); add(g, new THREE.CylinderGeometry(0.6, 0.45, 0.25, 6), M.stone, 0, DAIS + 1.55, -0.95);
         const bk = group(g, 0, PY, 0); bk.rotation.x = -0.3;
         add(bk, K.roundedBox(5.6, 2.6, 0.16, 0.04, 2), M.woodDark, 0, -0.02, -0.28);
@@ -1286,14 +1284,13 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
           const qp = K.track([[q0, rest.toArray()], [q0 + 0.46, [fp.x, fp.y + 0.36, 0.03]], [q0 + 0.8, [fp.x + 0.04, fp.y - 0.22, 0.03], 'linear'], [q0 + 1.0, [fp.x + 1.25, fp.y - 0.5, 0.35], 'in'], [q0 + 1.5, rest.toArray(), 'out']])(t);
           quill.position.set(qp[0], qp[1], qp[2]); quill.rotation.z = -0.5 + 0.12 * Math.sin((t - q0) * 30) * K.seg(t, q0 + 0.42, q0 + 0.46) * (1 - K.seg(t, q0 + 0.8, q0 + 0.84));
         });
-        WK(T.arrive[2] - 0.1, face, home.x + 0.5, home.y + 0.7, 0.5); WK(T.leave[2] - 0.2, face, 1.6, 0.6, 0.45);
-        b.face = face; b.rest = [2.9, PY + 1.4, 0.9];
+        restLocal[2] = [2.9, PY + 1.4, 0.9];
       }
 
       // ---- 4. Read Notes: a magic mirror, and three shields to strike
       const R4 = {};
       {
-        const b = isl[3], g = b.g;
+        const g = props[3];
         const arch = (w, h, top) => { const s = new THREE.Shape(); s.moveTo(-w / 2, -h / 2); s.lineTo(w / 2, -h / 2); s.lineTo(w / 2, h / 2 - top); s.quadraticCurveTo(0, h / 2 + top, -w / 2, h / 2 - top); s.closePath(); return s; };
         const outer = arch(PW + 0.56, PH + 0.62, 0.34), inner = arch(PW + 0.08, PH + 0.16, 0.3); outer.holes.push(inner);
         add(g, new THREE.ExtrudeGeometry(outer, { depth: 0.26, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 1, curveSegments: 10 }), M.gold, 0, PY, -0.2);
@@ -1319,15 +1316,14 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         });
         Object.assign(R4, { face, sf, gilt, shields, clefG: group(face), noteG: group(face) });
         anims.push((t) => shields.forEach((q) => { const h = bump(t, q.userData.hitAt, 0.4); q.rotation.x = -0.3 - 0.3 * h; }));
-        WK(T.arrive[3] - 0.1, face, 1.6, 0.3, 0.7); WK(T.leave[3] - 0.2, g, -1.95, DAIS + 1.5, 1.15);
-        b.face = face; b.rest = [2.75, DAIS + 1.6, 1.3];
+        restLocal[3] = [2.75, DAIS + 1.6, 1.3];
       }
 
       // ---- 5. Terms & Symbols: an ice slab over an altar, sixteen rune lights for a timer, eight answer cards
       const tiles = [];
       const R5 = {};
       {
-        const b = isl[4], g = b.g;
+        const g = props[4];
         const slabG = extrude([[-2.8, -1.6], [2.76, -1.6], [2.96, 0.2], [2.52, 1.1], [0.9, 1.3], [-1.3, 1.2], [-2.62, 1.08], [-2.96, 0.1]], [], 0.6); slabG.translate(0, 0, -0.6);
         add(g, slabG, facet(C.ice, 0.3, { emissive: '#2a6a8a', emissiveIntensity: 0.0 }), 0, PY, -0.02);
         add(g, K.roundedBox(PW, PH, 0.05, 0.04, 2), M.frost, 0, PY, 0.0);
@@ -1348,23 +1344,42 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         }
         Object.assign(R5, { face, sf, lights, deck, dyn: group(face), hlMats: [] });
         anims.push((t) => R5.hlMats.forEach((m) => set(m, 0.75 + 0.25 * Math.sin(t * 7))));
-        WK(T.arrive[4] - 0.1, face, 1.4, 0.4, 0.7); WK(T.leave[4] - 0.05, deck, 0.6, 0.15, 0.42);
-        WK(T.lift + 1.6, g, 0.5, 8, 5);
-        b.face = face; b.deck = deck; b.rest = [2.9, PY + 1.35, 1.1];
+        restLocal[4] = [2.9, PY + 1.35, 1.1];
       }
 
       // ------------------------------------------------------------ between and around the islands
-      for (let i = 0; i < 4; i++) for (let k = 1; k <= 4; k++) {
-        const a = (i - 2 + k / 5) * DA, r = RAD + 0.4 + 0.8 * Math.sin(k * 2.1 + i), y = (i + k / 5) * STEP - 0.25 + 0.2 * Math.sin(k * 1.3 + i * 2);
+      for (let i = 0; i < NS - 1; i++) for (let k = 1; k <= 3; k++) {
+        const a = A0 + (i + k / 4) * DA, r = RAD + 0.4 + 0.8 * Math.sin(k * 2.1 + i), y = (i + k / 4) * STEP - 0.25 + 0.2 * Math.sin(k * 1.3 + i * 2);
         const s = add(scene, new THREE.CylinderGeometry(0.55, 0.3, 0.3, 6), k % 2 ? M.stone : M.rock, r * Math.sin(a), y, r * Math.cos(a)); s.rotation.y = k + i; s.scale.setScalar(0.8 + 0.4 * K.hash(i, k));
         anims.push((t) => { s.position.y = y + 0.07 * Math.sin(t * 1.1 + k * 1.9 + i); });
       }
       const rocklet = (a, r, y, size, seed, trees = 2) => { const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed); for (let k = 0; k < trees; k++) pine(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.5 + 0.4 * K.hash(seed, k + 8)), k); if (seed % 2) shards(g, size * 0.4, 0, size * 0.3, size * 0.4, seed % 4 === 1 ? M_CYAN : M_VIOLET, seed); anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g; };
-      for (let i = 0; i < 4; i++) rocklet((i - 1.5) * DA, RAD + (TALL ? 8.5 : 5.6), (i + 0.5) * STEP + (TALL ? 2.0 : 1.6), 0.95, 60 + i, 1);
-      [[-0.56, 17, 3.5, 2.2], [0.14, 15, 9.5, 1.8], [0.84, 18, 12, 2.4], [-0.95, 22, -1.5, 2.0], [1.25, 24, 4, 2.6], [-1.5, 34, 6, 3], [1.75, 36, 14, 3.2],
-        [Math.PI - 0.5, 46, 16, 6], [Math.PI + 0.5, 60, 2, 8], [Math.PI + 0.1, 80, 26, 7], [Math.PI - 0.95, 70, 30, 5], [Math.PI + 1.0, 52, 22, 5], [2.2, 62, 8, 6], [-2.2, 66, 18, 7]].forEach(([a, r, y, s], k) => rocklet(a, r, y, s, 70 + k, 3));
+      for (let i = 0; i < NS - 1; i += 2) rocklet(A0 + (i + 0.5) * DA, RAD + (TALL ? 8.5 : 6.5), (i + 0.5) * STEP - 2.6, 0.95, 60 + i, 1);
+      [[Math.PI - 0.5, 46, 16, 6], [Math.PI + 0.5, 60, 2, 8], [Math.PI + 0.1, 80, 26, 7], [Math.PI - 0.95, 70, 30, 5], [Math.PI + 1.0, 52, 22, 5], [2.4, 66, 8, 6], [-2.4, 66, 18, 7], [2.9, 90, 44, 6], [-2.9, 84, 50, 5]].forEach(([a, r, y, s], k) => rocklet(a, r, y, s, 70 + k, 3));
+      const SUM = (NS - 1) * STEP + 4;
       {
-        const cg = group(scene, 0, 2 * STEP - 5, 0); islet(cg, 13.5, 26, 91);
+        // the mountain: a jagged low-poly peak, violet rock below, pale stone higher, snow on the shoulders; flat-topped for the citadel
+        const H0 = -45, MH = SUM - H0, mg = new THREE.CylinderGeometry(13.5, 31, MH, 26, 14, false); mg.translate(0, H0 + MH / 2, 0);
+        const p = mg.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+          const x = p.getX(i), y = p.getY(i), z = p.getZ(i), rr = Math.hypot(x, z); if (rr < 1e-4 || y > SUM - 0.01) continue;
+          const ang = Math.atan2(z, x), row = Math.round((y - H0) / MH * 14), k = 1 + 0.16 * (K.hash(Math.round(ang / (Math.PI * 2) * 26), row, 5) * 2 - 1);
+          p.setXYZ(i, x * k, y + (K.hash(row, Math.round(ang * 9), 7) - 0.5) * 3, z * k);
+        }
+        const mesh = mg.toNonIndexed(), pp = mesh.attributes.position, cols = new Float32Array(pp.count * 3), c = new THREE.Color();
+        const ROCK = new THREE.Color(C.rockDark), MID = new THREE.Color(C.stone), SNOW = new THREE.Color('#eef0fb');
+        for (let f = 0; f < pp.count; f += 3) {
+          const y = (pp.getY(f) + pp.getY(f + 1) + pp.getY(f + 2)) / 3, u = (y - H0) / MH, jit = K.hash(f, 3) * 0.12;
+          if (u + jit > 0.8) c.copy(SNOW); else if (u + jit > 0.42) c.copy(MID).lerp(ROCK, 0.25 * K.hash(f, 4)); else c.copy(ROCK).lerp(MID, 0.3 * K.hash(f, 5));
+          for (let v = 0; v < 3; v++) { cols[(f + v) * 3] = c.r; cols[(f + v) * 3 + 1] = c.g; cols[(f + v) * 3 + 2] = c.b; }
+        }
+        mesh.setAttribute('color', new THREE.BufferAttribute(cols, 3)); mesh.computeVertexNormals();
+        const mm = add(scene, mesh, std('#ffffff', 0, 0.95, { vertexColors: true, flatShading: true }), 0, 0, 0, { cast: false }); mm.receiveShadow = false;
+        // crags and pines on the slopes
+        for (let k = 0; k < 40; k++) { const a = K.hash(k, 61) * Math.PI * 2, y = H0 + 20 + K.hash(k, 62) * (MH - 34), r = 13.5 + (31 - 13.5) * (1 - (y - H0) / MH) - 0.5; if (y < SUM - 8) pine(scene, Math.sin(a) * r, y, Math.cos(a) * r, 2.5 + 2 * K.hash(k, 63), k); }
+      }
+      {
+        const cg = group(scene, 0, SUM, 0); add(cg, turfGeo(13.6, 91), M.grass);
         const winM = lum('#6a4a20', '#ffc66a', 2.4), WIN = box(0.3, 0.55, 0.08);
         const tower = (x, z, r, h, roof, seed) => {
           const tg = group(cg, x, 0, z); tg.rotation.y = seed;
@@ -1377,26 +1392,12 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         [[-7, 9, 3.5], [7.5, 8, 4.2], [-10.5, -3, 5], [10, -5.5, 4.6]].forEach(([x, z, h], k) => pine(cg, x, 0, z, h, k));
         const big = add(cg, OCTA, lum('#3a8ab0', '#7ff0ff', 2.6, { facet: true, rough: 0.2 }), 0, 41, 0, { cast: false }); big.scale.set(1.5, 3.2, 1.5);
         anims.push((t) => { big.rotation.y = t * 0.5; big.position.y = 41 + 0.5 * Math.sin(t * 0.8); });
-        const fallTex = K.canvasTex(64, 512, (ctx, w, h) => { ctx.clearRect(0, 0, w, h); for (let i = 0; i < 90; i++) { ctx.fillStyle = `rgba(235,245,255,${0.25 + rnd() * 0.6})`; ctx.fillRect(rnd() * w, rnd() * h, 2 + rnd() * 5, 30 + rnd() * 120); } }, { repeat: [1, 1] });
-        const fallM = basic('#cfe4ff', 0.9, { map: fallTex, transparent: true, opacity: 0.8, depthWrite: false, side: THREE.DoubleSide });
-        [[-0.75, 12.6, 1.7], [0.62, 12.9, 1.3], [2.5, 12.4, 2.0]].forEach(([a, r, w]) => { const f = add(cg, new THREE.PlaneGeometry(w, 34), fallM, Math.sin(a) * r, -17.2, Math.cos(a) * r, { cast: false }); f.rotation.y = a; f.receiveShadow = false; });
-        anims.push((t) => { fallTex.offset.y = (t * 0.55) % 1; });
       }
 
       // ------------------------------------------------------------ the wisp: on the flights it keeps the movie's path; on an island it goes where the player acts
-      wKeys.sort((a, b) => a[0] - b[0]);
-      const wTrack = K.track(wKeys);
-      for (let i = 0; i < 4; i++) { const k1 = wKeys.findIndex((k) => k[0] >= T.leave[i] - 0.25), k0 = k1 - 1; if (k0 >= 0) wArcs.push([wKeys[k0][0], wKeys[k1][0], new THREE.Vector3(0, 1.4, 0)]); }
-      wArcs.push([wKeys[0][0], wKeys[1][0], new THREE.Vector3(0, 2.5, 0)]);
-      const _wp = new THREE.Vector3();
-      function wispPath(tau) {
-        const p = wTrack(tau); _wp.set(p[0], p[1], p[2]);
-        for (const [t0, t1, v] of wArcs) if (tau > t0 && tau < t1) _wp.addScaledVector(v, Math.sin((tau - t0) / (t1 - t0) * Math.PI));
-        return _wp;
-      }
       const WS = { pos: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), t0: -9, dur: 0.3, lift: 0.25, free: false, hist: [] };
       const wispTo = (v, dur = 0.32, lift = 0.25) => { WS.from.copy(WS.pos); WS.to.copy(v); WS.t0 = G.t; WS.dur = dur; WS.lift = lift; WS.free = true; };
-      const restOf = (i) => isl[i].g.localToWorld(new THREE.Vector3(...isl[i].rest));
+      const restOf = (i) => isl[i].g.localToWorld(new THREE.Vector3(...restLocal[isl[i].game]));
       const haloTex = K.canvasTex(128, 128, (ctx, w) => { const g = ctx.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.18, 'rgba(170,245,255,0.75)'); g.addColorStop(0.5, 'rgba(90,200,255,0.2)'); g.addColorStop(1, 'rgba(60,140,255,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, w); });
       const wisp = group(scene), wCore = add(wisp, new THREE.SphereGeometry(0.055, 12, 8), basic('#eaffff', 2.2), 0, 0, 0, { cast: false }); wCore.receiveShadow = false;
       const haloM = new THREE.SpriteMaterial({ map: haloTex, color: new THREE.Color('#9ff4ff').multiplyScalar(0.55), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }); haloM.userData = { c0: haloM.color.clone(), o0: 1 }; basics.push(haloM);
@@ -1405,14 +1406,14 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       const TRAIL = 44, trail = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), basic('#aef6ff', 2.6), TRAIL); trail.frustumCulled = false; trail.castShadow = false; scene.add(trail);
       const BURST = 14, burst = new THREE.InstancedMesh(OCTA, basic('#fff0b0', 3), 5 * BURST); burst.frustumCulled = false; burst.castShadow = false; scene.add(burst);
       const MOTES = 110, motes = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 6, 4), basic('#ffe8b0', 2.4), MOTES); motes.frustumCulled = false; motes.castShadow = false; scene.add(motes);
-      scene.updateMatrixWorld(true);
-      const moteHome = Array.from({ length: MOTES }, (_, k) => isl[k % 5].g.localToWorld(new THREE.Vector3((K.hash(k, 41) - 0.5) * 11, 0.4 + K.hash(k, 42) * 5.2, -3 + K.hash(k, 43) * 5.4)));
+      scene.updateMatrixWorld(true); WS.pos.copy(restOf(0));
+      const moteHome = Array.from({ length: MOTES }, (_, k) => isl[k % NS].g.localToWorld(new THREE.Vector3((K.hash(k, 41) - 0.5) * 11, 0.4 + K.hash(k, 42) * 5.2, -3 + K.hash(k, 43) * 5.4)));
       let lastHist = -1;
       const air = (t) => {
-        if (G.mode === 'play' && WS.free) {
+        if (WS.free) {
           const e = K.seg(t, WS.t0, WS.t0 + WS.dur, K.ease.inOut);
           WS.pos.copy(WS.from).lerp(WS.to, e); WS.pos.y += WS.lift * Math.sin(e * Math.PI);
-        } else WS.pos.copy(wispPath(G.tau));
+        }
         const w = wisp.position.copy(WS.pos); w.x += 0.025 * Math.sin(t * 5.3); w.y += 0.03 * Math.sin(t * 4.1 + 1);
         if (t !== lastHist) { WS.hist.unshift(w.clone()); if (WS.hist.length > TRAIL) WS.hist.length = TRAIL; lastHist = t; }
         for (let j = 0; j < TRAIL; j++) { const p = WS.hist[Math.min(WS.hist.length - 1, j)] || w, s = 0.036 * (1 - j / TRAIL); K.place(trail, j, [p.x + 0.02 * Math.sin(j * 2.1 + t * 9), p.y + 0.02 * Math.cos(j * 1.7 + t * 8), p.z], null, s); }
@@ -1435,18 +1436,19 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         return { pos: [side, 2.6 - 0.1 * k, d], aim: [0, 2.2, 0] };
       };
       const shot = (i, k) => { const s = shotL(i, k); return { pos: cyl(L2W(i, s.pos)), aim: cyl(L2W(i, s.aim)) }; };
-      const OPEN = TALL ? { pos: { a: -1.02, y: 9.5, r: 47 }, aim: { a: -0.28, y: 1.5, r: 27 } } : { pos: { a: -1.0, y: 8.5, r: 50 }, aim: { a: -0.16, y: 4.6, r: 24 } };
+      // the opening: far out in the air, the whole stair rising round the mountain to the citadel
+      const OPEN = { pos: { a: 0.12, y: 16, r: RAD + 92 }, aim: { a: 0.0, y: 30, r: 0.5 } };
       const mixc = (p, q, e, w, back, lift) => ({ a: K.lerp(p.a, q.a, e), y: K.lerp(p.y, q.y, e) + lift * w, r: K.lerp(p.r, q.r, e) + back * w });
       const mix = (A, B, e, back = 0, lift = 0) => { const w = Math.sin(e * Math.PI); return { pos: mixc(A.pos, B.pos, e, w, back, lift), aim: mixc(A.aim, B.aim, e, w, 0, 0) }; };
-      const endL = (() => { const a = shotL(4, 1); return { pos: [a.pos[0], a.pos[1] + 0.5, a.pos[2] + 2.4], aim: a.aim }; })();
-      const endShot = { pos: cyl(L2W(4, endL.pos)), aim: cyl(L2W(4, endL.aim)) };
+      const endL = (() => { const a = shotL(NS - 1, 1); return { pos: [a.pos[0], a.pos[1] + 0.5, a.pos[2] + 2.4], aim: a.aim }; })();
+      const endShot = { pos: cyl(L2W(NS - 1, endL.pos)), aim: cyl(L2W(NS - 1, endL.aim)) };
       const camAt = (t) => {
         if (t <= T.arrive[0]) return mix(OPEN, shot(0, 0), K.seg(t, 0.3, T.arrive[0], K.ease.inOut));
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < NS; i++) {
           if (t <= T.leave[i]) return shot(i, K.smooth(T.arrive[i], T.leave[i], t));
-          if (i < 4 && t <= T.arrive[i + 1]) return mix(shot(i, 1), shot(i + 1, 0), K.seg(t, T.leave[i], T.arrive[i + 1], K.ease.inOut), 1.5, 0.3);
+          if (i < NS - 1 && t <= T.arrive[i + 1]) return mix(shot(i, 1), shot(i + 1, 0), K.seg(t, T.leave[i], T.arrive[i + 1], K.ease.inOut), 1.5, 0.3);
         }
-        return mix(shot(4, 1), endShot, K.seg(t, T.lift, T.camEnd, K.ease.inOut));
+        return mix(shot(NS - 1, 1), endShot, K.seg(t, T.lift, T.camEnd, K.ease.inOut));
       };
 
       // ------------------------------------------------------------ the ending: the eight cards rise and become the picture
@@ -1455,30 +1457,39 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       const cr = new THREE.Vector3().setFromMatrixColumn(endCam.matrixWorld, 0), cu = new THREE.Vector3().setFromMatrixColumn(endCam.matrixWorld, 1), cz = new THREE.Vector3().setFromMatrixColumn(endCam.matrixWorld, 2);
       const frameH = 2 * DIST * tanV, unit = frameH * LOGO.size / 1024, rise = (0.5 - LOGO.cy) * frameH, THIN = 0.03;
       const qFlip = new THREE.Quaternion(), X_AXIS = new THREE.Vector3(1, 0, 0), blockMats = [];
+      const tileLocal = tiles.map((tb) => ({ p: tb.position.clone(), q: tb.quaternion.clone() }));
       tiles.forEach((tb, j) => {
         const r = END[TILE_TO_RECT[j]];
-        scene.attach(tb);
         const bm = std(r.c, 0, 0.9, { emissive: lightFor(r.c), emissiveIntensity: 0, fog: false }); blockMats.push(bm);
-        const block = add(tb, new THREE.BoxGeometry(1, 1, 1), bm); block.visible = false;
-        const home = { p: tb.position.clone(), q: tb.quaternion.clone() };
-        const goal = { p: new THREE.Vector3().fromArray(endPos).addScaledVector(cz, -DIST - THIN / 2).addScaledVector(cr, (r.x + r.w / 2 - 512) * unit).addScaledVector(cu, (512 - r.y - r.h / 2) * unit + rise), q: endCam.quaternion.clone() };
-        const n = new THREE.Vector3(0, 0, 1).applyQuaternion(home.q);
-        tb.userData.fly = (t) => {
-          const t0 = tileStart(j), e = t < 0 ? 0 : K.seg(t, t0, t0 + T.flight, K.ease.inOut), w = Math.sin(e * Math.PI);
-          tb.position.copy(home.p).lerp(goal.p, e).addScaledVector(n, 0.5 * w + 0.04 * bump(G.t, tb.userData.hitAt || -9, 0.35)).addScaledVector(cu, 0.35 * w);
-          tb.quaternion.copy(home.q).slerp(goal.q, e).multiply(qFlip.setFromAxisAngle(X_AXIS, e * Math.PI * 2));
-          const turned = e > 0.25, land = 1 + 0.07 * (t < 0 ? 0 : bump(t, t0 + T.flight - 0.04, 0.3));
-          tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = !turned; block.visible = turned;
-          const k = t < 0 ? 0 : K.seg(t, t0 + T.flight * 0.25, t0 + T.flight, K.ease.inOut);
-          block.scale.set(K.lerp(tb.userData.w, r.w * unit, k) * land, K.lerp(tb.userData.h, r.h * unit, k) * land, K.lerp(0.045, THIN, k));
-        };
+        tb.userData.block = add(tb, new THREE.BoxGeometry(1, 1, 1), bm); tb.userData.block.visible = false; tb.userData.fly = () => {};
       });
+      function launchTiles() {
+        tiles.forEach((tb, j) => {
+          const r = END[TILE_TO_RECT[j]], block = tb.userData.block;
+          scene.attach(tb);
+          const home = { p: tb.position.clone(), q: tb.quaternion.clone() };
+          const goal = { p: new THREE.Vector3().fromArray(endPos).addScaledVector(cz, -DIST - THIN / 2).addScaledVector(cr, (r.x + r.w / 2 - 512) * unit).addScaledVector(cu, (512 - r.y - r.h / 2) * unit + rise), q: endCam.quaternion.clone() };
+          const n = new THREE.Vector3(0, 0, 1).applyQuaternion(home.q);
+          tb.userData.fly = (t) => {
+            const t0 = tileStart(j), e = t < 0 ? 0 : K.seg(t, t0, t0 + T.flight, K.ease.inOut), w = Math.sin(e * Math.PI);
+            tb.position.copy(home.p).lerp(goal.p, e).addScaledVector(n, 0.5 * w).addScaledVector(cu, 0.35 * w);
+            tb.quaternion.copy(home.q).slerp(goal.q, e).multiply(qFlip.setFromAxisAngle(X_AXIS, e * Math.PI * 2));
+            const turned = e > 0.25, land = 1 + 0.07 * (t < 0 ? 0 : bump(t, t0 + T.flight - 0.04, 0.3));
+            tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = !turned; block.visible = turned;
+            const k = t < 0 ? 0 : K.seg(t, t0 + T.flight * 0.25, t0 + T.flight, K.ease.inOut);
+            block.scale.set(K.lerp(tb.userData.w, r.w * unit, k) * land, K.lerp(tb.userData.h, r.h * unit, k) * land, K.lerp(0.045, THIN, k));
+          };
+        });
+      }
+      function resetTiles() {
+        tiles.forEach((tb, j) => { R5.deck.add(tb); tb.position.copy(tileLocal[j].p); tb.quaternion.copy(tileLocal[j].q); tb.userData.fly = () => {}; tb.userData.block.visible = false; tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = true; });
+      }
 
       // ================================================================ the game
       const R = S.R, BASE = { vignette: R.vignette, grain: R.grain, bloom: R.bloom, ca: R.ca, sun: sun.intensity, key: key.intensity, hemi: hemi.intensity, env: scene.environmentIntensity };
-      const GAME = createGame({ G, T, GAMES, TERMS, isl, R1, R2, R3, R4, R5, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, staff, text, label, clear, pickable, picks, add, group, box, cylZ, gly, M, C, U, PY, DAIS, CINZEL, CINZEL_B, wispTo, restOf, WS, wispPath, bump, LET });
+      const GAME = createGame({ G, T, NS, GAMES, TERMS, isl, props, placeProps, launchTiles, resetTiles, R1, R2, R3, R4, R5, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, staff, text, label, clear, pickable, picks, add, group, box, cylZ, gly, M, C, U, PY, DAIS, CINZEL, CINZEL_B, wispTo, restOf, WS, bump, LET });
       window.GAME = GAME;
-      const _s = new THREE.Vector3();
+      const _s = new THREE.Vector3(), Y_AXIS = new THREE.Vector3(0, 1, 0);
       let endPic = null;
       return {
         update(t) {
@@ -1502,6 +1513,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
           const fa = { a: c.aim.a, y: c.aim.y + (TALL ? 1.45 : 0), r: c.aim.r + 0.15 }, fp = uncyl(fa);
           K.focus(camera, K.lerp(_s.set(fp[0], fp[1], fp[2]).distanceTo(camera.position), DIST, still), 0.06 * (TALL ? 1.8 : 1) * (1 - still) * (1 - 0.8 * wide));
           key.intensity = BASE.key * day * (1 - 0.6 * wide);
+          sun.target.position.set(fp[0], fp[1] - 2, fp[2]); sun.position.copy(SUN_OFF).applyAxisAngle(Y_AXIS, c.aim.a).add(sun.target.position);
           key.target.position.set(fp[0], fp[1], fp[2]); const kp = uncyl({ a: c.aim.a - 0.1, y: c.aim.y + 6, r: c.aim.r + 13 }); key.position.set(kp[0], kp[1], kp[2]);
         },
         overlay(ctx, t, W, H) {
@@ -1532,7 +1544,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
 
 // ================================================================ the game: rules, sound, input and the painted HUD
 function createGame(E) {
-  const { G, T, GAMES, TERMS, isl, R1, R2, R3, R4, R5, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, text, clear, pickable, picks, add, group, box, cylZ, M, C, U, PY, CINZEL, CINZEL_B, wispTo, restOf, WS, wispPath, bump } = E;
+  const { G, T, NS, GAMES, TERMS, isl, props, placeProps, launchTiles, resetTiles, R1, R2, R3, R4, R5, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, text, clear, pickable, picks, add, group, box, cylZ, M, C, U, PY, CINZEL, CINZEL_B, wispTo, restOf, WS, bump } = E;
   const LET = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }, SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const parseNote = (n) => { const m = /^([A-G])(#|b)?(-?\d)$/.exec(n), acc = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0, oct = +m[3];
     return { name: n, letter: m[1], acc, oct, step: LET[m[1]] + 7 * oct, midi: 12 * (oct + 1) + SEMI[m[1]] + acc }; };
@@ -1554,10 +1566,15 @@ function createGame(E) {
   // ---------------------------------------------------------------- state
   const st = {
     inst: INST.find((i) => i.key === (saved.inst || 'saxophone')) || INST[0],
-    results: [null, null, null, null, null], tally: { c: 0, n: 0 }, q: 0, res: [], msg: '', msgKind: '', btns: [], hover: -1,
+    tallies: [], stopRes: [], skipped: [], stop: 0, q: 0, res: [], msg: '', msgKind: '', btns: [], hover: -1,
     captionAt: -9, events: [], fly: null, sub: null, bpm: saved.bpm || 80, flash: 0,
   };
   const pool = () => st.inst.notes.map(parseNote);
+  // written-to-sounding shift in semitones (B-flat, E-flat and F instruments; bass sounds an octave down, bells two up)
+  const TRANSPOSE = { saxophone: -9, tenorsaxophone: -14, clarinet: -2, trumpet: -2, euphonium: -14, fhorn: -7, bbhorn: -7, dhorn: -7, electricbass: -12, bells: 24 };
+  const NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  const concert = (n) => { let m = n.midi + (TRANSPOSE[st.inst.key] || 0); while (m < 43) m += 12; while (m > 96) m -= 12; return NAMES[m % 12] + (Math.floor(m / 12) - 1); };
+  const TONIC = () => (st.inst.clef === 'bass' ? 'Bb3' : 'Bb4');            // the rhythm's sounding note: the key note of the music
   G.summaryFade = 0;
 
   // ---------------------------------------------------------------- sound: the movie's kit, played live
@@ -1603,40 +1620,66 @@ function createGame(E) {
   // a flight is a list of [seconds, story time] keys; story time moves straight between them, the camera path does the easing
   function flyTo(from, to, dur, then) { flyPath([[0, from], [dur, to]], then); }
   function flyPath(keys, then) { G.mode = 'fly'; st.fly = { keys, t0: G.t, then }; }
+  const gameOf = (j) => j % 5, lapOf = (j) => Math.floor(j / 5);
+  function resetJourney() {
+    st.events = []; st.fly = null; st.sub = null; say('');
+    st.tallies = GAMES.map(() => ({ c: 0, n: 0 })); st.skipped = GAMES.map(() => false); st.stopRes = new Array(NS).fill(null); st.stop = 0;
+    st.seqs = { finger: noteSeq(3), write: noteSeq(3), read: noteSeq(3), terms: shuffle(TERMS.map((_, j) => j)).slice(0, 3) }; st.rhythmPrev = '';
+    G.doneAt = new Array(NS).fill(-1); G.endTau = -1; G.summaryFade = 0;
+    resetTiles(); GAMES.forEach((_, g) => placeProps(g, g));
+    WS.free = false; WS.pos.copy(restOf(0));
+  }
   function begin() {
     audio(); snd.gliss(['Bb3', 'D4', 'F4', 'Bb4', 'C5', 'D5', 'F5', 'Bb5'], 0.2, 0.08); snd.play('sparkle', { gain: 0.25 }, now() + 1.6); snd.gust(2.6, 0.1);
-    st.events = []; st.results = [null, null, null, null, null]; G.doneAt = [-1, -1, -1, -1, -1]; G.endTau = -1; G.summaryFade = 0;
-    flyTo(0.3, hold(0), 2.9, () => startIsland(0));
+    resetJourney();
+    flyTo(0.3, hold(0), 2.9, () => startStop(0));
   }
-  function startIsland(i) {
-    G.mode = 'play'; G.island = i; G.tau = hold(i); st.q = 0; st.res = []; st.tally = { c: 0, n: 0 }; st.captionAt = G.t; say('');
-    WS.free = false; WS.pos.copy(wispPath(G.tau)); wispTo(restOf(i), 0.6, 0.2);
-    [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms][i]();
+  // clear a game's last result off its props before they appear on the next island
+  function tidy(g) {
+    if (g === 0) { R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); }); R1.stoneAt = [-9, -9, -9, -9]; }
+    if (g === 1) { R2.gems.forEach((o) => { o.on = false; tintTo(o.pearl, C.lit); set(o.pearl, 0); }); clear(R2.noteG); }
+    if (g === 2) { clear(R3.noteG); clear(R3.accG); clear(R3.askG); R3.seals.forEach((sg) => set(sg.userData.mat, 0)); }
+    if (g === 3) { clear(R4.noteG); R4.shields.forEach((q) => { tintTo(q.userData.mat, '#e05200'); set(q.userData.mat, 0); }); }
+    if (g === 4) { clear(R5.dyn); R5.hlMats = []; tiles.forEach((tb) => { tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); }); }
+  }
+  function startStop(j) {
+    const g = gameOf(j);
+    G.mode = 'play'; G.island = j; G.tau = hold(j); st.stop = j; st.q = lapOf(j); st.captionAt = G.t; say('');
+    // the game two islands back is out of sight now: carry its props up to its next island
+    if (j >= 2 && j + 3 < NS) { tidy(gameOf(j - 2)); placeProps(gameOf(j - 2), j + 3); }
+    wispTo(restOf(j), 0.6, 0.2);
+    [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms][g]();
   }
   // percentage correct: questions answered right, or for rhythms, notes tapped in time (extra taps count as misses)
   const pctOf = (t) => (t.n ? Math.round(100 * t.c / t.n) : 0);
-  const mark = (c, n = 1) => { st.tally.c += c; st.tally.n += n; };
-  const finalPct = () => { const r = st.results.filter(Boolean); return r.length ? Math.round(r.reduce((a, x) => a + x.pct, 0) / r.length) : 0; };
-  function finishIsland() {
-    const i = G.island, pct = pctOf(st.tally);
-    st.results[i] = { pct };
+  const mark = (c, n = 1) => { const t = st.tallies[gameOf(st.stop)]; t.c += c; t.n += n; };
+  const finalPct = () => { const r = st.tallies.filter((t) => t.n); return r.length ? Math.round(r.reduce((a, t) => a + 100 * t.c / t.n, 0) / r.length) : 0; };
+  // one exercise is done: light the island's crystal, then swoop on up the stair
+  function saveBest() {
     const best = ((saved.bestPct = saved.bestPct || {})[st.inst.key] = saved.bestPct[st.inst.key] || []);
-    best[i] = Math.max(best[i] == null ? 0 : best[i], pct); persist();
-    G.doneAt[i] = G.t; snd.play('sparkle', { gain: 0.42 }); snd.play('bell', { gain: 0.24, f: ['Bb5', 'C6', 'D6', 'Eb6', 'F6'][i] });
-    st.sub = { kind: 'done' };
-    say(`${GAMES[i].name}: ${pct}% correct`, pct >= 60 ? 'good' : '');
-    at(2.2, () => leaveIsland(i));
+    st.tallies.forEach((tl, i) => { if (tl.n) best[i] = Math.max(best[i] == null ? 0 : best[i], pctOf(tl)); }); persist();
   }
-  function skipIsland(i, why) { st.results[i] = null; st.sub = { kind: 'done' }; say(why); at(2.6, () => leaveIsland(i)); }
-  function leaveIsland(i) {
+  function finishStop() {
+    const j = st.stop; if (st.sub && st.sub.kind === 'done') return;
+    G.doneAt[j] = G.t; snd.play('sparkle', { gain: 0.42 }); snd.play('bell', { gain: 0.24, f: ['Bb5', 'C6', 'D6', 'Eb6', 'F6'][gameOf(j)] });
+    st.sub = { kind: 'done' };
+    at(1.4, () => leaveStop(j));
+  }
+  function skipStop(why) { st.skipped[gameOf(st.stop)] = true; st.sub = { kind: 'done' }; say(why); const j = st.stop; at(st.q ? 1.6 : 2.8, () => leaveStop(j)); }
+  function leaveStop(j) {
+    if (st.stop !== j) return;
     st.sub = null; say('');
-    if (i < 4) { snd.gust(1.1, 0.12); snd.gliss([['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], ['G4', 'Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5'], ['Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5', 'C6'], ['C5', 'D5', 'F5', 'G5', 'Bb5', 'C6', 'D6']][i], 0.085, 0.07, now() + 0.1); flyPath([[0, G.tau], [0.6, T.leave[i]], [2.8, T.arrive[i + 1]], [3.4, hold(i + 1)]], () => startIsland(i + 1)); }
-    else finale();
+    if (j < NS - 1) {
+      const runs = [['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], ['G4', 'Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5'], ['Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5', 'C6'], ['C5', 'D5', 'F5', 'G5', 'Bb5', 'C6', 'D6']];
+      snd.gust(1.1, 0.12); snd.gliss(runs[j % 4], 0.085, 0.07, now() + 0.5);
+      flyPath([[0, G.tau], [0.6, T.leave[j]], [2.8, T.arrive[j + 1]], [3.4, hold(j + 1)]], () => startStop(j + 1));
+      at(0.5, () => wispTo(restOf(j + 1), 2.6, 2.2));
+    } else finale();
   }
   function finale() {
     // the eight cards carry the names of the last question's answers, as the movie's did
-    flyPath([[0, G.tau], [0.7, T.leave[4]], [1.2, T.lift]], () => {
-      G.mode = 'finale'; G.endTau = T.lift; st.endStart = G.t;
+    flyPath([[0, G.tau], [0.7, T.lift - 0.01], [1.2, T.lift]], () => {
+      G.mode = 'finale'; G.endTau = T.lift; st.endStart = G.t; launchTiles();
       snd.play('riser', { gain: 0.28, dur: 1.2 }); snd.gust(1.6, 0.1, now() + 0.2);
       tiles.forEach((_, j) => { const tl = tileStart(j) + T.flight - T.lift; snd.play('swish', { gain: 0.32, dur: 0.3 }, now() + tileStart(j) - T.lift); snd.play('stamp', { gain: 0.34 + 0.03 * j }, now() + tl - 0.04); snd.pluck(['Bb3', 'D4', 'F4', 'Bb4', 'D5', 'F5', 'Bb5', 'D6'][j], 0.8, 0.09, now() + tl - 0.04); });
       snd.play('ding', { gain: 0.5, f: 'Bb5' }, now() + T.exact0 + 0.1 - T.lift); snd.play('ding', { gain: 0.35, f: 'F6' }, now() + T.exact0 + 0.1 - T.lift);
@@ -1644,13 +1687,8 @@ function createGame(E) {
     });
   }
   const tileStart = (j) => T.lift + j * T.gap;
-  function replay(i) {
-    G.endTau = -1; G.summaryFade = 0; for (let j = i; j < 5; j++) G.doneAt[j] = -1; st.fly = null; st.events = [];
-    G.tau = i ? T.leave[i - 1] : 0.3; WS.free = false;
-    flyTo(G.tau, hold(i), i ? 1.6 : 2.6, () => startIsland(i));
-  }
   function toTitle() {
-    G.mode = 'title'; G.tau = 0.3; G.endTau = -1; G.summaryFade = 0; G.doneAt = [-1, -1, -1, -1, -1]; st.fly = null; st.sub = null; st.events = []; say(''); WS.free = false;
+    resetJourney(); G.mode = 'title'; G.tau = 0.3;
   }
 
   // ---------------------------------------------------------------- 1. Read Rhythms
@@ -1666,11 +1704,11 @@ function createGame(E) {
       if (out.length > 1 || Math.random() < 0.3) return out;
     }
   }
-  function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: '' }; newRhythm(); }
+  function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: st.rhythmPrev }; newRhythm(); }
   function newRhythm() {
     const s = st.sub, clef = st.inst.clef; let r;
     do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1));
-    s.prev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = [];
+    s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = [];
     clear(R1.dyn); R1.notes = []; R1.tapAt = []; R1.stoneAt = [-9, -9, -9, -9];
     putClef(R1.sf, clef, R1.dyn);
     R1.sf.put('barline', 13.0, 0, M.ink, R1.dyn); R1.sf.put('barline', 20.75, 0, M.ink, R1.dyn); R1.sf.put('thick', 21.25, 0, M.ink, R1.dyn);
@@ -1699,9 +1737,9 @@ function createGame(E) {
       atAudio(tn - 0.1, () => wispTo(world(R1.dyn, R1.sf.X(n.su), R1.sf.Y(2) + 0.5, 0.3), 0.12, 0.08));
       // a note nobody tapped turns red once its eighth-note window has passed
       if (tapping) atAudio(tn + beat / 2 + 0.02, () => { if (s.phase === 'tap' && !s.hit[j]) { tintTo(n.g.userData.mat, C.bad); set(n.g.userData.mat, 1); } });
-      if (!tapping) { snd.play('thud', { gain: 0.5, f: 170 }, tn); snd.play('slap', { gain: 0.16 }, tn); snd.pluck(s.mid.name, n.d * beat + 0.2, 0.2, tn); atAudio(tn, () => { set(n.g.userData.mat, 1); R1.tapAt.push(G.t); }); atAudio(tn + n.d * beat - 0.05, () => set(n.g.userData.mat, 0)); }
+      if (!tapping) { snd.play('thud', { gain: 0.5, f: 170 }, tn); snd.play('slap', { gain: 0.16 }, tn); snd.pluck(TONIC(), n.d * beat + 0.2, 0.2, tn); atAudio(tn, () => { set(n.g.userData.mat, 1); R1.tapAt.push(G.t); }); atAudio(tn + n.d * beat - 0.05, () => set(n.g.userData.mat, 0)); }
     });
-    atAudio(ts + 8 * beat + 0.35, () => { if (tapping) gradeRhythm(); else { s.phase = 'ready'; say('Your turn: choose Tap it, then tap the drum on every note.'); wispTo(restOf(0), 0.5); } });
+    atAudio(ts + 8 * beat + 0.35, () => { if (tapping) gradeRhythm(); else { s.phase = 'ready'; say('Your turn: choose Tap it, then tap the drum on every note.'); wispTo(restOf(st.stop), 0.5); } });
   }
   // every touch of the drum sounds and moves the sticks; only taps after the count-in are judged
   function drumHit() { R1.tapAt.push(G.t); snd.play('thud', { gain: 0.45, f: 170 }); snd.play('slap', { gain: 0.14 }); }
@@ -1715,7 +1753,7 @@ function createGame(E) {
     let bj = -1, be = 1e9;
     s.onsets.forEach((o, j) => { const e = tt - (s.ts + o * s.beat); if (!s.hit[j] && Math.abs(e) <= win + 1e-6 && Math.abs(e) < Math.abs(be)) { be = e; bj = j; } });
     s.taps.push(tt);
-    if (bj >= 0) { s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(s.mid.name, 0.3, 0.12); }
+    if (bj >= 0) { s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(TONIC(), 0.3, 0.12); }
     else { s.extra++; say(`Extra tap (${s.extra}). Tap only where a note starts.`, 'bad'); }
     return true;
   }
@@ -1723,13 +1761,13 @@ function createGame(E) {
     const s = st.sub, N = s.onsets.length, hits = s.hit.filter(Boolean).length, extra = s.extra;
     s.onsets.forEach((o, j) => { const m = R1.notes[j].g.userData.mat; tintTo(m, s.hit[j] ? C.good : C.bad); set(m, 1); });
     const ok = hits === N && extra === 0;
-    mark(hits, N + extra); st.res[st.q] = ok; ok ? snd.right() : snd.wrong();
+    mark(hits, N + extra); st.stopRes[st.stop] = ok; ok ? snd.right() : snd.wrong();
     s.phase = 'result';
-    if (st.q + 1 >= GAMES[0].rounds) at(1.8, () => { if (st.sub === s && s.phase === 'result') nextRhythm(); });   // the last rhythm: move on by itself
+    at(1.8, () => { if (st.sub === s && s.phase === 'result') finishStop(); });
     say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}`, ok ? 'good' : 'bad');
-    wispTo(restOf(0), 0.5);
+    wispTo(restOf(st.stop), 0.5);
   }
-  function nextRhythm() { const s = st.sub; if (!s || s.kind !== 'rhythm' || s.phase !== 'result') return; st.q++; if (st.q >= GAMES[0].rounds) finishIsland(); else newRhythm(); }
+  function nextRhythm() { const s = st.sub; if (!s || s.kind !== 'rhythm' || s.phase !== 'result') return; finishStop(); }
 
   // ---------------------------------------------------------------- 2. Fingering Trainer
   const KX = 1.38, COL = [0.7, 0.42, 0.14, -0.22, -0.5, -0.78];
@@ -1771,9 +1809,9 @@ function createGame(E) {
     });
   }
   function setupFinger() {
-    if (!st.inst.family) { clear(R2.keysG); clear(R2.noteG); clear(R2.clefG); clear(R2.plText); text(R2.plText, st.inst.name, 0, 0, 0.065, { height: 0.27, face: CINZEL, maxW: 1.9 }); skipIsland(1, `The course data has no fingering chart for ${st.inst.name} yet, so this island is skipped.`); return; }
+    if (!st.inst.family) { clear(R2.keysG); clear(R2.noteG); clear(R2.clefG); clear(R2.plText); text(R2.plText, st.inst.name, 0, 0, 0.065, { height: 0.27, face: CINZEL, maxW: 1.9 }); skipStop(`The course data has no fingering chart for ${st.inst.name} yet, so this island is skipped.`); return; }
     buildKeys(); clear(R2.clefG); putClef(R2.sf, st.inst.clef, R2.clefG);
-    st.sub = { kind: 'finger', seq: noteSeq(GAMES[1].rounds) }; newFinger();
+    st.sub = { kind: 'finger', seq: st.seqs.finger }; newFinger();
   }
   function noteSeq(n) { let out = []; const p = pool(); while (out.length < n) out = out.concat(shuffle(p)); out = out.slice(0, n); for (let k = 1; k < out.length; k++) if (out[k].name === out[k - 1].name) { const j = (k + 1) % out.length; [out[k], out[j]] = [out[j], out[k]]; } return out; }
   function newFinger() {
@@ -1802,18 +1840,18 @@ function createGame(E) {
     const s = st.sub; if (!s || s.kind !== 'finger' || s.locked) return;
     s.locked = true; audio();
     const want = wantSet(st.inst.fing[s.n.midi]), ok = R2.gems.every((g, i) => g.on === want[i]);
-    st.res[st.q] = ok; mark(ok ? 1 : 0);
+    st.stopRes[st.stop] = ok; mark(ok ? 1 : 0);
     R2.gems.forEach((g, i) => { if (want[i]) { tintTo(g.pearl, C.good); set(g.pearl, 1); } else if (g.on) { tintTo(g.pearl, C.bad); set(g.pearl, 1); } });
     tintTo(s.nm.userData.mat, ok ? C.lit : C.bad); set(s.nm.userData.mat, ok ? 1 : 0);
-    snd.horn(s.n.name); ok ? snd.right() : snd.wrong();
+    snd.horn(concert(s.n)); ok ? snd.right() : snd.wrong();
     say(ok ? 'Correct fingering!' : 'Not quite. The green gems show the fingering.', ok ? 'good' : 'bad');
-    s.waitNext = true; if (ok || st.q + 1 >= GAMES[1].rounds) at(ok ? 1.3 : 2.6, () => { if (st.sub === s && s.waitNext) nextFinger(); });
+    s.waitNext = true; at(ok ? 1.3 : 2.6, () => { if (st.sub === s && s.waitNext) nextFinger(); });
   }
-  function nextFinger() { const s = st.sub; if (!s || !s.waitNext) return; s.waitNext = false; st.q++; if (st.q >= GAMES[1].rounds) finishIsland(); else newFinger(); }
+  function nextFinger() { const s = st.sub; if (!s || !s.waitNext) return; s.waitNext = false; finishStop(); }
 
   // ---------------------------------------------------------------- 3. Write Notes
   const GOAL_SU = 7.4;
-  function setupWrite() { clear(R3.clefG); putClef(R3.sf, st.inst.clef, R3.clefG); st.sub = { kind: 'write', seq: noteSeq(GAMES[2].rounds) }; newWrite(); }
+  function setupWrite() { clear(R3.clefG); putClef(R3.sf, st.inst.clef, R3.clefG); st.sub = { kind: 'write', seq: st.seqs.write }; newWrite(); }
   function newWrite() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.p = null; s.acc = 0; s.tries = 0; s.locked = false; s.drag = null;
     clear(R3.askG); text(R3.askG, pretty(n), -1.245, 0.18, 0.004, { height: 0.56, face: CINZEL_B, color: C.ember });
@@ -1859,28 +1897,27 @@ function createGame(E) {
     if (s.p == null) { say('First drag the note onto the staff.'); return; }
     audio();
     const n = s.n, ok = s.p === pOf(n, st.inst.clef) && s.acc === n.acc;
-    snd.pluck(fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef], s.acc).name, 0.6, 0.2);
     if (ok) {
-      s.locked = true; st.res[st.q] = !s.tries; mark(s.tries ? 0 : 1); snd.right(); drawWritten(C.good);
+      s.locked = true; st.stopRes[st.stop] = !s.tries; mark(s.tries ? 0 : 1); snd.pluck(concert(n), 0.6, 0.2); snd.right(); drawWritten(C.good);
       say(s.tries ? 'That is it, on the second try.' : 'Correct!', 'good'); at(1.3, nextWrite);
     } else if (!s.tries) {
       s.tries = 1; snd.wrong();
       const wrongSpot = s.p !== pOf(n, st.inst.clef), here = fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef]);
       say(wrongSpot ? `Not quite: that spot is ${here.letter}. Try once more.` : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
     } else {
-      s.locked = true; st.res[st.q] = false; mark(0); snd.wrong(); s.p = pOf(n, st.inst.clef); s.acc = n.acc; drawWritten(C.good);
+      s.locked = true; st.stopRes[st.stop] = false; mark(0); snd.wrong(); snd.pluck(concert(n), 0.6, 0.16, now() + 0.45); s.p = pOf(n, st.inst.clef); s.acc = n.acc; drawWritten(C.good);
       R3.seals.forEach((sg) => set(sg.userData.mat, sg.userData.acc === s.acc ? 1 : 0));
       say(`Here is ${sci(n)}.`, 'bad'); at(2.0, nextWrite);
     }
   }
-  function nextWrite() { st.q++; if (st.q >= GAMES[2].rounds) finishIsland(); else newWrite(); }
+  function nextWrite() { finishStop(); }
 
   // ---------------------------------------------------------------- 4. Read Notes
   function setupRead() {
     clear(R4.clefG); putClef(R4.sf, st.inst.clef, R4.clefG, R4.gilt);
     const ch = pool().sort((a, b) => a.midi - b.midi).slice(0, 3);
     R4.shields.forEach((q, k) => { clear(q.userData.labelG); q.visible = k < ch.length; if (ch[k]) text(q.userData.labelG, pretty(ch[k]), 0, 0.04, 0.012, { height: 0.42, face: CINZEL_B }); });
-    st.sub = { kind: 'read', seq: noteSeq(GAMES[3].rounds), choices: ch }; newRead();
+    st.sub = { kind: 'read', seq: st.seqs.read, choices: ch }; newRead();
   }
   function newRead() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.locked = false; s.t0 = G.t;
@@ -1895,12 +1932,12 @@ function createGame(E) {
     const q = R4.shields[k], ok = s.choices[k].name === s.n.name, ci = s.choices.findIndex((c) => c.name === s.n.name);
     wispTo(world(q, 0, 0.1, 0.15), 0.25, 0.25); q.userData.hitAt = G.t + 0.22;
     at(0.22, () => {
-      snd.play('thud', { gain: 0.6, f: 140 }); kit && kit.tone(now(), { f: 1180, dur: 0.5, gain: 0.07, a: 0.001, verb: 0.4 }); snd.pluck(s.n.name, 0.6, 0.2);
+      snd.play('thud', { gain: 0.6, f: 140 }); kit && kit.tone(now(), { f: 1180, dur: 0.5, gain: 0.07, a: 0.001, verb: 0.4 }); snd.pluck(concert(s.n), 0.6, 0.2);
       if (ok) { tintTo(q.userData.mat, C.good); set(q.userData.mat, 1); set(s.nm.userData.mat, 1); }
       else { tintTo(q.userData.mat, C.bad); set(q.userData.mat, 1); const cq = R4.shields[ci]; tintTo(cq.userData.mat, C.good); set(cq.userData.mat, 1); }
-      st.res[st.q] = ok; mark(ok ? 1 : 0); ok ? snd.right() : snd.wrong();
+      st.stopRes[st.stop] = ok; mark(ok ? 1 : 0); ok ? snd.right() : snd.wrong();
       say(ok ? `Yes, ${sci(s.n)}.` : `That note is ${sci(s.n)}.`, ok ? 'good' : 'bad');
-      at(ok ? 1.0 : 1.8, () => { wispTo(restOf(3), 0.4); st.q++; if (st.q >= GAMES[3].rounds) finishIsland(); else newRead(); });
+      at(ok ? 1.0 : 1.8, () => { wispTo(restOf(st.stop), 0.4); finishStop(); });
     });
   }
 
@@ -1938,7 +1975,7 @@ function createGame(E) {
     const old = tb.userData.label; tb.remove(old); if (old.material.map) old.material.map.dispose(); old.material.dispose(); old.geometry.dispose();
     tb.userData.label = text(tb, str, 0, -0.005, 0.026, { height: 0.172, maxW: tb.userData.w - 0.12 });
   }
-  function setupTerms() { st.sub = { kind: 'terms', order: shuffle(TERMS.map((_, j) => j)).slice(0, GAMES[4].rounds) }; newTerm(); }
+  function setupTerms() { st.sub = { kind: 'terms', order: st.seqs.terms }; newTerm(); }
   function newTerm() {
     const s = st.sub, ti = s.order[st.q]; s.ti = ti; s.locked = false; s.t0 = G.t;
     termScene(TERMS[ti]);
@@ -1952,9 +1989,9 @@ function createGame(E) {
     const ok = k >= 0 && s.opts[k] === s.ti, left = Math.max(0, 1 - (G.t - s.t0) / 8);
     if (k >= 0) { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
     const ck = s.opts.indexOf(s.ti); if (!ok) { tintTo(tiles[ck].userData.mat, C.good); set(tiles[ck].userData.mat, 1); }
-    st.res[st.q] = ok; mark(ok ? 1 : 0); ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
+    st.stopRes[st.stop] = ok; mark(ok ? 1 : 0); ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
     say(ok ? `Correct: ${TERMS[s.ti]}.` : k < 0 ? `Time's up. That is a ${TERMS[s.ti].toLowerCase()}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
-    at(ok ? 1.1 : 2.0, () => { st.q++; if (st.q >= GAMES[4].rounds) { R5.hlMats = []; finishIsland(); } else newTerm(); });
+    at(ok ? 1.1 : 2.0, () => { if (st.stop === NS - 1) R5.hlMats = []; finishStop(); });
   }
 
   // ---------------------------------------------------------------- per frame
@@ -1967,7 +2004,7 @@ function createGame(E) {
       G.tau = K.lerp(k[j - 1][1], k[j][1], K.clamp((e - k[j - 1][0]) / (k[j][0] - k[j - 1][0])));
       if (e >= k[k.length - 1][0]) { st.fly = null; f.then && f.then(); }
     }
-    if (G.mode === 'finale') { G.endTau = Math.min(T.end, T.lift + (t - st.endStart)); if (G.endTau >= T.end - 1.2) { G.mode = 'summary'; st.sumAt = t; } }
+    if (G.mode === 'finale') { G.endTau = Math.min(T.end, T.lift + (t - st.endStart)); if (G.endTau >= T.end - 1.2) { G.mode = 'summary'; st.sumAt = t; saveBest(); } }
     if (G.mode === 'summary') { G.endTau = T.end; G.summaryFade = K.seg(t, st.sumAt, st.sumAt + 0.8); }
     // the terms timer: sixteen rune lights go out over eight seconds
     const s = st.sub;
@@ -1978,7 +2015,7 @@ function createGame(E) {
       if (!s.locked && left <= 0) pickCard(-1);
     } else R5.lights.forEach((d) => set(d.userData.mat, 0));
     // the wisp drifts back to its resting place when nothing has happened for a while
-    if (G.mode === 'play' && WS.free && t > WS.t0 + WS.dur + 2.5 && !(s && s.kind === 'rhythm' && s.phase !== 'ready' && s.phase !== 'result')) wispTo(restOf(G.island), 0.6, 0.15);
+    if (G.mode === 'play' && WS.free && t > WS.t0 + WS.dur + 2.5 && !(s && s.kind === 'rhythm' && s.phase !== 'ready' && s.phase !== 'result')) wispTo(restOf(st.stop), 0.6, 0.15);
   }
 
   // ---------------------------------------------------------------- input
@@ -1998,7 +2035,7 @@ function createGame(E) {
     }
     // down
     audio();
-    const bi = hitBtn(px, py); if (bi >= 0) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1500 }); b.fn(); } return; }
+    const bi = hitBtn(px, py); if (bi >= 0) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1397 }); b.fn(); } return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm' && (s.phase === 'tap' || s.phase === 'count')) { rhythmTap(); return; }  // anywhere counts as the drum
     const p = pickAt(ndc); if (!p) return;
@@ -2087,22 +2124,22 @@ function createGame(E) {
     if (G.mode === 'play' || G.mode === 'fly') {
       // score and progress, top left
       ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Correct 100%').width + H * 0.05;
-      scroll(H * 0.04, H * 0.03, sw, H * 0.06, '#3a2070', '#e8c060'); ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('Correct ' + (st.tally.n && G.mode === 'play' ? pctOf(st.tally) + '%' : '–'), H * 0.06, H * 0.062);
-      if (G.mode === 'play') {
-        const n = GAMES[G.island].rounds; for (let k = 0; k < n; k++) { const r = st.res[k]; ctx.beginPath(); ctx.arc(H * 0.07 + k * H * 0.034, H * 0.125, H * 0.011, 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.q ? '#ffe2a0' : 'rgba(255,255,255,0.25)'; ctx.fill(); }
+      scroll(H * 0.04, H * 0.03, sw, H * 0.06, '#3a2070', '#e8c060'); ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('Correct ' + (st.tallies.some((t) => t.n) ? finalPct() + '%' : '–'), H * 0.06, H * 0.062);
+      {
+        const n = NS; for (let k = 0; k < n; k++) { const r = k === st.stop && st.sub && st.sub.kind !== 'done' ? null : st.stopRes[k]; ctx.beginPath(); ctx.arc(H * 0.07 + k * H * 0.03, H * 0.125, H * 0.01, 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.stop ? '#ffe2a0' : k < st.stop ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)'; ctx.fill(); }
         // island caption on arrival, then the game's own words at the bottom
         const ca = Math.min(K.seg(t, st.captionAt, st.captionAt + 0.3), 1 - K.seg(t, st.captionAt + 2.4, st.captionAt + 2.7));
-        strip(GAMES[G.island].line, null, ca);
+        strip(`${GAMES[gameOf(G.island)].line} · ${lapOf(G.island) + 1} of 3`, null, ca);
         if (ca <= 0 && st.msg) ribbon(st.msg, H * 0.93, H * 0.03, W * 0.7, st.msgKind);
         const s = st.sub, col = (list) => list.forEach((b, k) => row([b], H * (0.07 + k * 0.08), W * 0.895));
         if (s && s.kind === 'rhythm') {
           const busy = s.phase !== 'ready' && s.phase !== 'result';
-          if (s.phase === 'result') col([{ label: st.q + 1 < GAMES[0].rounds ? 'Next rhythm' : 'Finish', fn: nextRhythm }]);
+          if (s.phase === 'result') col([{ label: 'Next island', fn: nextRhythm }]);
           else col([{ label: 'Listen', fn: () => runRhythm(false), off: busy }, { label: 'Tap it', fn: () => runRhythm(true), off: busy },
             { label: 'Tempo ' + st.bpm, off: busy, fn: () => { st.bpm = st.bpm === 50 ? 80 : st.bpm === 80 ? 120 : 50; saved.bpm = st.bpm; persist(); } }]);
           if (s.phase === 'tap' || s.phase === 'count' || s.phase === 'listen') { const b = Math.floor((now() - s.t0) / s.beat); if (b >= 0 && b < 12) { ctx.font = `700 ${H * 0.11}px "Texturina"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.008; const txt = b < 4 ? String(b + 1) : s.phase === 'listen' ? '♪' : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.4); ctx.fillText(txt, W * 0.895, H * 0.4); } }
         } else if (s && s.kind === 'finger') {
-          col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(s.n.name) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(s.n.name); } }]);
+          col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(concert(s.n)) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(concert(s.n)); } }]);
         } else if (s && s.kind === 'write') {
           col([{ label: 'Check', fn: checkWrite, off: s.locked }]);
         }
@@ -2114,18 +2151,16 @@ function createGame(E) {
       const y0 = H * 0.635; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.font = `700 ${H * 0.05}px "Texturina"`; ctx.fillStyle = '#ffe2a0'; ctx.fillText(`Level 1 complete · ${finalPct()}% correct`, W / 2, y0);
       ctx.font = `700 ${H * 0.026}px "Alegreya"`;
-      GAMES.forEach((g, i) => { const r = st.results[i], x = W / 2 + (i - 2) * W * 0.17; ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(r ? r.pct + '%' : i === 1 && !st.inst.family ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
+      GAMES.forEach((g, i) => { const tl = st.tallies[i], x = W / 2 + (i - 2) * W * 0.17; ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(tl && tl.n ? pctOf(tl) + '%' : st.skipped[i] ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
       ctx.globalAlpha = 1;
       if (a > 0.9) {
-        row([{ label: 'Play again', fn: begin }], H * 0.825);
-        ctx.font = `700 ${H * 0.024}px "Alegreya"`; ctx.fillStyle = '#d8cfdf'; ctx.textAlign = 'right'; ctx.fillText('Replay from island', W / 2 - H * 0.2, H * 0.92);
-        row(GAMES.map((g, i) => ({ label: String(i + 1), fn: () => replay(i) })), H * 0.92, W / 2 + H * 0.12);
+        row([{ label: 'Climb again', fn: begin }], H * 0.86);
       }
     }
   }
 
   return {
-    frame, pointer, keydown, drawHud, begin, toTitle, clock: now, startIsland, showTerm: termScene,
+    frame, pointer, keydown, drawHud, begin, toTitle, clock: now, startStop, showTerm: termScene,
     setInstrument(k) { st.inst = INST.find((i) => i.key === k) || st.inst; saved.inst = st.inst.key; persist(); toTitle(); },
     get inst() { return st.inst; }, setSound, get sound() { return soundOn; }, st,
   };
