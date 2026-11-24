@@ -1,6 +1,6 @@
 // ================================================================ player: one continuous loop; the picture follows the game
 const K = window.K, style = window.STYLES[window.STYLES.length - 1];
-const $ = (id) => document.getElementById(id), canvas = $('view'), noteEl = $('note'), sel = $('inst'), bSnd = $('snd'), bRestart = $('restart');
+const $ = (id) => document.getElementById(id), canvas = $('view'), noteEl = $('note'), sel = $('inst'), bSnd = $('snd'), bRestart = $('restart'), bFs = $('fs'), page = document.querySelector('.page');
 const size = (params.get('size') || '1280x720').split('x').map(Number);
 try {
   const S = await K.run(canvas, style, { samples: 2, width: size[0], height: size[1] });
@@ -11,6 +11,26 @@ try {
   const syncSnd = () => { bSnd.setAttribute('aria-pressed', String(GAME.sound)); bSnd.textContent = GAME.sound ? 'Sound on' : 'Sound off'; };
   bSnd.addEventListener('click', () => { GAME.setSound(!GAME.sound); syncSnd(); }); syncSnd();
   bRestart.addEventListener('click', () => { GAME.toTitle(); canvas.focus(); });
+
+  // full screen: the whole page (stage and bar), so the controls and the way out stay on screen
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
+    bFs.hidden = false;
+    const syncFs = () => {
+      const on = !!fsEl(), lab = on ? 'Exit full screen' : 'Full screen';
+      bFs.setAttribute('aria-label', lab); bFs.title = lab;
+      bFs.querySelector('.enter').style.display = on ? 'none' : '';
+      bFs.querySelector('.exit').style.display = on ? '' : 'none';
+    };
+    bFs.addEventListener('click', async () => {
+      try {
+        if (fsEl()) await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        else await (page.requestFullscreen || page.webkitRequestFullscreen).call(page);
+      } catch (err) {}
+      canvas.focus();
+    });
+    document.addEventListener('fullscreenchange', syncFs); document.addEventListener('webkitfullscreenchange', syncFs);
+  }
 
   let live = +(params.get('live') || 2), slow = 0;
   const t0 = performance.now();

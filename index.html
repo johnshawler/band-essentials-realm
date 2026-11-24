@@ -27,6 +27,11 @@ button:hover, select:hover { border-color: var(--muted); }
 button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .hint { margin-left: auto; color: var(--muted); font-size: 13px; }
+button.icon { display: inline-grid; place-items: center; padding: 5px; width: 32px; height: 32px; box-sizing: border-box; }
+button.icon svg { width: 18px; height: 18px; }
+button.icon[hidden] { display: none; }
+.page:fullscreen { background: var(--bg); width: 100%; }
+.page:-webkit-full-screen { background: var(--bg); width: 100%; }
 @media (max-width: 640px) { .hint { display: none; } }
 </style>
 <div class="page">
@@ -36,6 +41,7 @@ button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
     <button id="snd" type="button" aria-pressed="true">Sound on</button>
     <button id="restart" type="button">Restart</button>
     <span class="hint" id="hint">Level 1 · click the things on each island</span>
+    <button id="fs" class="icon" type="button" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="enter" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="exit" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" style="display:none"/></svg></button>
   </div>
 </div>
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js" } }</script>
@@ -2168,7 +2174,7 @@ function createGame(E) {
 
 // ================================================================ player: one continuous loop; the picture follows the game
 const K = window.K, style = window.STYLES[window.STYLES.length - 1];
-const $ = (id) => document.getElementById(id), canvas = $('view'), noteEl = $('note'), sel = $('inst'), bSnd = $('snd'), bRestart = $('restart');
+const $ = (id) => document.getElementById(id), canvas = $('view'), noteEl = $('note'), sel = $('inst'), bSnd = $('snd'), bRestart = $('restart'), bFs = $('fs'), page = document.querySelector('.page');
 const size = (params.get('size') || '1280x720').split('x').map(Number);
 try {
   const S = await K.run(canvas, style, { samples: 2, width: size[0], height: size[1] });
@@ -2179,6 +2185,26 @@ try {
   const syncSnd = () => { bSnd.setAttribute('aria-pressed', String(GAME.sound)); bSnd.textContent = GAME.sound ? 'Sound on' : 'Sound off'; };
   bSnd.addEventListener('click', () => { GAME.setSound(!GAME.sound); syncSnd(); }); syncSnd();
   bRestart.addEventListener('click', () => { GAME.toTitle(); canvas.focus(); });
+
+  // full screen: the whole page (stage and bar), so the controls and the way out stay on screen
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
+    bFs.hidden = false;
+    const syncFs = () => {
+      const on = !!fsEl(), lab = on ? 'Exit full screen' : 'Full screen';
+      bFs.setAttribute('aria-label', lab); bFs.title = lab;
+      bFs.querySelector('.enter').style.display = on ? 'none' : '';
+      bFs.querySelector('.exit').style.display = on ? '' : 'none';
+    };
+    bFs.addEventListener('click', async () => {
+      try {
+        if (fsEl()) await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        else await (page.requestFullscreen || page.webkitRequestFullscreen).call(page);
+      } catch (err) {}
+      canvas.focus();
+    });
+    document.addEventListener('fullscreenchange', syncFs); document.addEventListener('webkitfullscreenchange', syncFs);
+  }
 
   let live = +(params.get('live') || 2), slow = 0;
   const t0 = performance.now();
