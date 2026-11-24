@@ -22,7 +22,7 @@ function createGame(E) {
   // ---------------------------------------------------------------- state
   const st = {
     inst: INST.find((i) => i.key === (saved.inst || 'saxophone')) || INST[0],
-    results: [null, null, null, null, null], score: 0, q: 0, res: [], msg: '', msgKind: '', btns: [], hover: -1,
+    results: [null, null, null, null, null], tally: { c: 0, n: 0 }, q: 0, res: [], msg: '', msgKind: '', btns: [], hover: -1,
     captionAt: -9, events: [], fly: null, sub: null, bpm: saved.bpm || 80, flash: 0,
   };
   const pool = () => st.inst.notes.map(parseNote);
@@ -71,26 +71,29 @@ function createGame(E) {
   function flyTo(from, to, dur, then) { G.mode = 'fly'; st.fly = { from, to, t0: G.t, dur, then }; }
   function begin() {
     audio(); snd.gliss(['Bb3', 'D4', 'F4', 'Bb4', 'C5', 'D5', 'F5', 'Bb5'], 0.2, 0.08); snd.play('sparkle', { gain: 0.25 }, now() + 1.6); snd.gust(2.6, 0.1);
-    st.events = []; st.results = [null, null, null, null, null]; st.score = 0; G.doneAt = [-1, -1, -1, -1, -1]; G.endTau = -1; G.summaryFade = 0;
+    st.events = []; st.results = [null, null, null, null, null]; G.doneAt = [-1, -1, -1, -1, -1]; G.endTau = -1; G.summaryFade = 0;
     flyTo(0.3, hold(0), 2.9, () => startIsland(0));
   }
   function startIsland(i) {
-    G.mode = 'play'; G.island = i; G.tau = hold(i); st.q = 0; st.res = []; st.islandScore = 0; st.captionAt = G.t; say('');
+    G.mode = 'play'; G.island = i; G.tau = hold(i); st.q = 0; st.res = []; st.tally = { c: 0, n: 0 }; st.captionAt = G.t; say('');
     WS.free = false; WS.pos.copy(wispPath(G.tau)); wispTo(restOf(i), 0.6, 0.2);
     [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms][i]();
   }
+  // percentage correct: questions answered right, or for rhythms, notes tapped in time (extra taps count as misses)
+  const pctOf = (t) => (t.n ? Math.round(100 * t.c / t.n) : 0);
+  const mark = (c, n = 1) => { st.tally.c += c; st.tally.n += n; };
+  const finalPct = () => { const r = st.results.filter(Boolean); return r.length ? Math.round(r.reduce((a, x) => a + x.pct, 0) / r.length) : 0; };
   function finishIsland() {
-    const i = G.island, total = GAMES[i].rounds, correct = st.res.filter(Boolean).length;
-    const pct = correct / total, stars = pct >= 1 ? 3 : pct >= 0.8 ? 2 : pct >= 0.6 ? 1 : 0;
-    st.results[i] = { correct, total, score: st.islandScore, stars };
-    const best = ((saved.best = saved.best || {})[st.inst.key] = saved.best[st.inst.key] || []);
-    best[i] = Math.max(best[i] || 0, stars); persist();
+    const i = G.island, pct = pctOf(st.tally);
+    st.results[i] = { pct };
+    const best = ((saved.bestPct = saved.bestPct || {})[st.inst.key] = saved.bestPct[st.inst.key] || []);
+    best[i] = Math.max(best[i] == null ? 0 : best[i], pct); persist();
     G.doneAt[i] = G.t; snd.play('sparkle', { gain: 0.42 }); snd.play('bell', { gain: 0.24, f: ['Bb5', 'C6', 'D6', 'Eb6', 'F6'][i] });
-    st.sub = { kind: 'done', stars };
-    say(`${GAMES[i].name}: ${correct} of ${total} · ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`, stars ? 'good' : '');
+    st.sub = { kind: 'done' };
+    say(`${GAMES[i].name}: ${pct}% correct`, pct >= 60 ? 'good' : '');
     at(2.2, () => leaveIsland(i));
   }
-  function skipIsland(i, why) { st.results[i] = null; st.sub = { kind: 'done', stars: 0 }; say(why); at(2.6, () => leaveIsland(i)); }
+  function skipIsland(i, why) { st.results[i] = null; st.sub = { kind: 'done' }; say(why); at(2.6, () => leaveIsland(i)); }
   function leaveIsland(i) {
     st.sub = null; say('');
     if (i < 4) { snd.gust(1.1, 0.12); snd.gliss([['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], ['G4', 'Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5'], ['Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5', 'C6'], ['C5', 'D5', 'F5', 'G5', 'Bb5', 'C6', 'D6']][i], 0.085, 0.07, now() + 0.1); flyTo(G.tau, hold(i + 1), 2.0, () => startIsland(i + 1)); }
@@ -144,48 +147,51 @@ function createGame(E) {
       const nn = writeNote(R1.dyn, R1.sf, clef, mid, su, n.d === 4 ? 'w' : n.d === 2 ? 'h' : 'q', inkLit(), -1);
       R1.notes.push({ g: nn, su, d: n.d }); s.onsets.push(bi * 4 + n.beat);
     }));
-    say('Listen first if you like. Then tap the drum (or press Space) at the start of every note, after the four count-in stones.');
+    say('Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.');
   }
   function runRhythm(tapping) {
     const s = st.sub; if (!s || s.phase !== 'ready' && s.phase !== 'result') return;
     if (s.phase === 'result') return;
     audio();
     const beat = 60 / st.bpm, t0 = now() + 0.4, ts = t0 + 4 * beat;
-    s.phase = tapping ? 'count' : 'listen'; s.t0 = t0; s.ts = ts; s.beat = beat; s.taps = []; s.tapping = tapping;
+    s.phase = tapping ? 'count' : 'listen'; s.t0 = t0; s.ts = ts; s.beat = beat; s.taps = []; s.tapping = tapping; s.hit = s.onsets.map(() => false); s.extra = 0;
     R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); });
     say(tapping ? 'Count in: 1, 2, 3, 4…' : 'Listen…');
     for (let b = 0; b < 4; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
     for (let b = 0; b < 8; b++) snd.play('tock', { gain: 0.14, f: 700 }, ts + b * beat);
-    atAudio(ts - beat * 0.5, () => { if (tapping) { s.phase = 'tap'; say('Tap!'); } });
+    atAudio(ts - beat * 0.5, () => { if (tapping) { s.phase = 'tap'; say('Tap the drum (or Space) on every note!'); } });
     s.onsets.forEach((o, j) => {
       const tn = ts + o * beat, n = R1.notes[j];
       atAudio(tn - 0.1, () => wispTo(world(R1.dyn, R1.sf.X(n.su), R1.sf.Y(2) + 0.5, 0.3), 0.12, 0.08));
+      // a note nobody tapped turns red once its eighth-note window has passed
+      if (tapping) atAudio(tn + beat / 2 + 0.02, () => { if (s.phase === 'tap' && !s.hit[j]) { tintTo(n.g.userData.mat, C.bad); set(n.g.userData.mat, 1); } });
       if (!tapping) { snd.play('thud', { gain: 0.5, f: 170 }, tn); snd.play('slap', { gain: 0.16 }, tn); snd.pluck(s.mid.name, n.d * beat + 0.2, 0.2, tn); atAudio(tn, () => { set(n.g.userData.mat, 1); R1.tapAt.push(G.t); }); atAudio(tn + n.d * beat - 0.05, () => set(n.g.userData.mat, 0)); }
     });
     atAudio(ts + 8 * beat + 0.35, () => { if (tapping) gradeRhythm(); else { s.phase = 'ready'; say('Your turn: choose Tap it, then tap the drum on every note.'); wispTo(restOf(0), 0.5); } });
   }
+  // every touch of the drum sounds and moves the sticks; only taps after the count-in are judged
+  function drumHit() { R1.tapAt.push(G.t); snd.play('thud', { gain: 0.45, f: 170 }); snd.play('slap', { gain: 0.14 }); }
   function rhythmTap() {
-    const s = st.sub; if (!s || s.kind !== 'rhythm' || (s.phase !== 'tap' && s.phase !== 'count')) return false;
+    const s = st.sub; if (!s || s.kind !== 'rhythm') return false;
+    audio(); drumHit();
+    if (s.phase !== 'tap' && s.phase !== 'count') return false;
     const tt = now() - (AC.outputLatency || 0);
-    if (tt < s.ts - s.beat * 0.5) return true;
-    s.taps.push(tt); R1.tapAt.push(G.t);
-    snd.play('thud', { gain: 0.45, f: 170 }); snd.play('slap', { gain: 0.14 });
+    if (tt < s.ts - s.beat * 0.5) return true;                       // still counting in
+    const win = s.beat / 2;                                          // an eighth note early or late
+    let bj = -1, be = 1e9;
+    s.onsets.forEach((o, j) => { const e = tt - (s.ts + o * s.beat); if (!s.hit[j] && Math.abs(e) <= win + 1e-6 && Math.abs(e) < Math.abs(be)) { be = e; bj = j; } });
+    s.taps.push(tt);
+    if (bj >= 0) { s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(s.mid.name, 0.3, 0.12); }
+    else { s.extra++; say(`Extra tap (${s.extra}). Tap only where a note starts.`, 'bad'); }
     return true;
   }
   function gradeRhythm() {
-    const s = st.sub, win = Math.min(0.2, s.beat * 0.3), used = new Set(); let hits = 0, pts = 0;
-    s.onsets.forEach((o, j) => {
-      const target = s.ts + o * s.beat; let bj = -1, be = 1e9;
-      s.taps.forEach((t, ti) => { if (!used.has(ti) && Math.abs(t - target) < Math.abs(be)) { be = t - target; bj = ti; } });
-      const m = R1.notes[j].g.userData.mat;
-      if (bj >= 0 && Math.abs(be) <= win) { used.add(bj); hits++; pts += Math.abs(be) <= win * 0.5 ? 100 : 60; tintTo(m, C.good); } else tintTo(m, C.bad);
-      set(m, 1);
-    });
-    const extra = s.taps.length - used.size, ok = hits === s.onsets.length && extra === 0;
-    pts = Math.max(0, pts - extra * 25);
-    st.res[st.q] = ok; st.score += pts; st.islandScore += pts; ok ? snd.right() : snd.wrong();
+    const s = st.sub, N = s.onsets.length, hits = s.hit.filter(Boolean).length, extra = s.extra;
+    s.onsets.forEach((o, j) => { const m = R1.notes[j].g.userData.mat; tintTo(m, s.hit[j] ? C.good : C.bad); set(m, 1); });
+    const ok = hits === N && extra === 0;
+    mark(hits, N + extra); st.res[st.q] = ok; ok ? snd.right() : snd.wrong();
     s.phase = 'result';
-    say(ok ? `In time! All ${hits} notes.` : `${hits} of ${s.onsets.length} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}. Red notes were missed.`, ok ? 'good' : 'bad');
+    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}`, ok ? 'good' : 'bad');
     wispTo(restOf(0), 0.5);
   }
   function nextRhythm() { st.q++; if (st.q >= GAMES[0].rounds) finishIsland(); else newRhythm(); }
@@ -261,7 +267,7 @@ function createGame(E) {
     const s = st.sub; if (!s || s.kind !== 'finger' || s.locked) return;
     s.locked = true; audio();
     const want = wantSet(st.inst.fing[s.n.midi]), ok = R2.gems.every((g, i) => g.on === want[i]);
-    st.res[st.q] = ok; if (ok) { st.score += 100; st.islandScore += 100; }
+    st.res[st.q] = ok; mark(ok ? 1 : 0);
     R2.gems.forEach((g, i) => { if (want[i]) { tintTo(g.pearl, C.good); set(g.pearl, 1); } else if (g.on) { tintTo(g.pearl, C.bad); set(g.pearl, 1); } });
     tintTo(s.nm.userData.mat, ok ? C.lit : C.bad); set(s.nm.userData.mat, ok ? 1 : 0);
     snd.horn(s.n.name); ok ? snd.right() : snd.wrong();
@@ -320,14 +326,14 @@ function createGame(E) {
     const n = s.n, ok = s.p === pOf(n, st.inst.clef) && s.acc === n.acc;
     snd.pluck(fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef], s.acc).name, 0.6, 0.2);
     if (ok) {
-      s.locked = true; const pts = s.tries ? 50 : 100; st.score += pts; st.islandScore += pts; st.res[st.q] = !s.tries; snd.right(); drawWritten(C.good);
+      s.locked = true; st.res[st.q] = !s.tries; mark(s.tries ? 0 : 1); snd.right(); drawWritten(C.good);
       say(s.tries ? 'That is it, on the second try.' : 'Correct!', 'good'); at(1.3, nextWrite);
     } else if (!s.tries) {
       s.tries = 1; snd.wrong();
       const wrongSpot = s.p !== pOf(n, st.inst.clef), here = fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef]);
       say(wrongSpot ? `Not quite: that spot is ${here.letter}. Try once more.` : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
     } else {
-      s.locked = true; st.res[st.q] = false; snd.wrong(); s.p = pOf(n, st.inst.clef); s.acc = n.acc; drawWritten(C.good);
+      s.locked = true; st.res[st.q] = false; mark(0); snd.wrong(); s.p = pOf(n, st.inst.clef); s.acc = n.acc; drawWritten(C.good);
       R3.seals.forEach((sg) => set(sg.userData.mat, sg.userData.acc === s.acc ? 1 : 0));
       say(`Here is ${sci(n)}.`, 'bad'); at(2.0, nextWrite);
     }
@@ -357,8 +363,7 @@ function createGame(E) {
       snd.play('thud', { gain: 0.6, f: 140 }); kit && kit.tone(now(), { f: 1180, dur: 0.5, gain: 0.07, a: 0.001, verb: 0.4 }); snd.pluck(s.n.name, 0.6, 0.2);
       if (ok) { tintTo(q.userData.mat, C.good); set(q.userData.mat, 1); set(s.nm.userData.mat, 1); }
       else { tintTo(q.userData.mat, C.bad); set(q.userData.mat, 1); const cq = R4.shields[ci]; tintTo(cq.userData.mat, C.good); set(cq.userData.mat, 1); }
-      const secs = (G.t - s.t0), pts = ok ? 100 + Math.max(0, Math.round(50 * (1 - secs / 5))) : 0;
-      st.res[st.q] = ok; st.score += pts; st.islandScore += pts; ok ? snd.right() : snd.wrong();
+      st.res[st.q] = ok; mark(ok ? 1 : 0); ok ? snd.right() : snd.wrong();
       say(ok ? `Yes, ${sci(s.n)}.` : `That note is ${sci(s.n)}.`, ok ? 'good' : 'bad');
       at(ok ? 1.0 : 1.8, () => { wispTo(restOf(3), 0.4); st.q++; if (st.q >= GAMES[3].rounds) finishIsland(); else newRead(); });
     });
@@ -412,8 +417,7 @@ function createGame(E) {
     const ok = k >= 0 && s.opts[k] === s.ti, left = Math.max(0, 1 - (G.t - s.t0) / 8);
     if (k >= 0) { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
     const ck = s.opts.indexOf(s.ti); if (!ok) { tintTo(tiles[ck].userData.mat, C.good); set(tiles[ck].userData.mat, 1); }
-    const pts = ok ? 50 + Math.round(left * 160) : 0;
-    st.res[st.q] = ok; st.score += pts; st.islandScore += pts; ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
+    st.res[st.q] = ok; mark(ok ? 1 : 0); ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
     say(ok ? `Correct: ${TERMS[s.ti]}.` : k < 0 ? `Time's up. That is a ${TERMS[s.ti].toLowerCase()}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
     at(ok ? 1.1 : 2.0, () => { st.q++; if (st.q >= GAMES[4].rounds) { R5.hlMats = []; finishIsland(); } else newTerm(); });
   }
@@ -457,10 +461,11 @@ function createGame(E) {
     audio();
     const bi = hitBtn(px, py); if (bi >= 0) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1500 }); b.fn(); } return; }
     if (G.mode !== 'play' || !s) return;
-    if (s.kind === 'rhythm' && (s.phase === 'tap' || s.phase === 'count')) { rhythmTap(); return; }
+    if (s.kind === 'rhythm' && (s.phase === 'tap' || s.phase === 'count')) { rhythmTap(); return; }  // anywhere counts as the drum
     const p = pickAt(ndc); if (!p) return;
-    if (p.kind === 'drum' && s.kind === 'rhythm') { if (s.phase === 'ready') runRhythm(true); }
-    else if (p.kind === 'countin' && s.kind === 'rhythm') { if (s.phase === 'ready') runRhythm(false); }
+    if (p.kind === 'drum' && s.kind === 'rhythm') { rhythmTap(); if (s.phase === 'ready') say('That is the drum. Press Tap it (or the Count in sign) to start, then tap on every note.'); }
+    else if (p.kind === 'countin' && s.kind === 'rhythm') { if (s.phase === 'ready') runRhythm(true); }
+    else if (p.kind === 'scroll' && s.kind === 'rhythm') { if (s.phase === 'ready') runRhythm(false); }
     else if (p.kind === 'gem') touchGem(p.idx);
     else if (p.kind === 'tray' && s.kind === 'write' && !s.locked) { s.drag = { free: true, x: R3.home.x, y: R3.home.y }; s.p = null; drawWritten(); snd.play('paper', { gain: 0.6, dur: 0.2 }); }
     else if (p.kind === 'page' && s.kind === 'write' && !s.locked) { ray.setFromCamera(ndc, S.camera); writeAt(facePoint(ray.ray), true); }
@@ -473,7 +478,7 @@ function createGame(E) {
     if (G.mode === 'title' && (k === 'Enter' || k === ' ')) { e.preventDefault(); begin(); return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm') {
-      if (k === ' ' || e.code === 'Space') { e.preventDefault(); if (!rhythmTap() && s.phase === 'ready') runRhythm(true); }
+      if (k === ' ' || e.code === 'Space') { e.preventDefault(); if (s.phase === 'ready') runRhythm(true); else rhythmTap(); }
       else if (k === 'Enter' && s.phase === 'result') { e.preventDefault(); nextRhythm(); }
       else if (k === 'l' || k === 'L') runRhythm(false);
     } else if (s.kind === 'finger') { if (k === 'Enter') { e.preventDefault(); s.waitNext ? nextFinger() : checkFinger(); } else if (/^[1-9]$/.test(k) && R2.gems[+k - 1]) touchGem(+k - 1); }
@@ -536,14 +541,14 @@ function createGame(E) {
       ctx.font = `700 ${H * 0.026}px "Alegreya"`; ctx.textAlign = 'center'; ctx.fillStyle = '#ffe9bc';
       ctx.fillText(`Level 1 · ${st.inst.name} · notes ${pool().map(pretty).join(', ')}`, W / 2, H * 0.62);
       row([{ label: 'Begin', fn: begin }], H * 0.53, W / 2, 1.5);
-      const best = (saved.best || {})[st.inst.key];
-      if (best && best.some((b) => b)) { ctx.font = `700 ${H * 0.022}px "Alegreya"`; ctx.fillStyle = '#d8cfdf'; ctx.fillText('Best: ' + GAMES.map((g, i) => '★'.repeat(best[i] || 0) + '☆'.repeat(3 - (best[i] || 0))).join('   '), W / 2, H * 0.665); }
+      const best = (saved.bestPct || {})[st.inst.key];
+      if (best && best.some((b) => b != null)) { ctx.font = `700 ${H * 0.022}px "Alegreya"`; ctx.fillStyle = '#d8cfdf'; ctx.fillText('Best: ' + GAMES.map((g, i) => `${g.name} ${best[i] == null ? '–' : best[i] + '%'}`).join(' · '), W / 2, H * 0.665); }
       return;
     }
     if (G.mode === 'play' || G.mode === 'fly') {
       // score and progress, top left
-      ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Score 00000').width + H * 0.05;
-      scroll(H * 0.04, H * 0.03, sw, H * 0.06, '#3a2070', '#e8c060'); ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('Score ' + st.score, H * 0.06, H * 0.062);
+      ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Correct 100%').width + H * 0.05;
+      scroll(H * 0.04, H * 0.03, sw, H * 0.06, '#3a2070', '#e8c060'); ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('Correct ' + (st.tally.n && G.mode === 'play' ? pctOf(st.tally) + '%' : '–'), H * 0.06, H * 0.062);
       if (G.mode === 'play') {
         const n = GAMES[G.island].rounds; for (let k = 0; k < n; k++) { const r = st.res[k]; ctx.beginPath(); ctx.arc(H * 0.07 + k * H * 0.034, H * 0.125, H * 0.011, 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.q ? '#ffe2a0' : 'rgba(255,255,255,0.25)'; ctx.fill(); }
         // island caption on arrival, then the game's own words at the bottom
@@ -556,7 +561,7 @@ function createGame(E) {
           if (s.phase === 'result') col([{ label: st.q + 1 < GAMES[0].rounds ? 'Next rhythm' : 'Finish', fn: nextRhythm }]);
           else col([{ label: 'Listen', fn: () => runRhythm(false), off: busy }, { label: 'Tap it', fn: () => runRhythm(true), off: busy },
             { label: 'Tempo ' + st.bpm, off: busy, fn: () => { st.bpm = st.bpm === 50 ? 80 : st.bpm === 80 ? 120 : 50; saved.bpm = st.bpm; persist(); } }]);
-          if (s.phase === 'tap' || s.phase === 'count') { ctx.font = `700 ${H * 0.08}px "Texturina"`; ctx.textAlign = 'center'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.006; const b = Math.floor((now() - s.t0) / s.beat), txt = b < 4 ? String(b + 1) : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.36); ctx.fillText(txt, W * 0.895, H * 0.36); }
+          if (s.phase === 'tap' || s.phase === 'count' || s.phase === 'listen') { const b = Math.floor((now() - s.t0) / s.beat); if (b >= 0 && b < 12) { ctx.font = `700 ${H * 0.11}px "Texturina"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.008; const txt = b < 4 ? String(b + 1) : s.phase === 'listen' ? '♪' : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.4); ctx.fillText(txt, W * 0.895, H * 0.4); } }
         } else if (s && s.kind === 'finger') {
           col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(s.n.name) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(s.n.name); } }]);
         } else if (s && s.kind === 'write') {
@@ -568,9 +573,9 @@ function createGame(E) {
     if (G.mode === 'summary') {
       const a = G.summaryFade; ctx.globalAlpha = a;
       const y0 = H * 0.635; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = `700 ${H * 0.05}px "Texturina"`; ctx.fillStyle = '#ffe2a0'; ctx.fillText(`Level 1 complete · ${st.score} points`, W / 2, y0);
+      ctx.font = `700 ${H * 0.05}px "Texturina"`; ctx.fillStyle = '#ffe2a0'; ctx.fillText(`Level 1 complete · ${finalPct()}% correct`, W / 2, y0);
       ctx.font = `700 ${H * 0.026}px "Alegreya"`;
-      GAMES.forEach((g, i) => { const r = st.results[i], x = W / 2 + (i - 2) * W * 0.17; ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(r ? '★'.repeat(r.stars) + '☆'.repeat(3 - r.stars) : i === 1 && !st.inst.family ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
+      GAMES.forEach((g, i) => { const r = st.results[i], x = W / 2 + (i - 2) * W * 0.17; ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(r ? r.pct + '%' : i === 1 && !st.inst.family ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
       ctx.globalAlpha = 1;
       if (a > 0.9) {
         row([{ label: 'Play again', fn: begin }], H * 0.825);

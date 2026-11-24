@@ -346,7 +346,7 @@ const INST = /*INST_DATA*/[];
       {
         const b = isl[0], g = b.g;
         for (const sx of [-1, 1]) add(g, new THREE.CylinderGeometry(0.1, 0.13, 3.3, 7), M.wood, sx * (PW / 2 + 0.34), DAIS + 1.65, -0.14);
-        add(g, K.roundedBox(PW, PH + 0.24, 0.04, 0.015, 2), M.parch, 0, PY, 0);
+        pickable(add(g, K.roundedBox(PW, PH + 0.24, 0.04, 0.015, 2), M.parch, 0, PY, 0), { kind: 'scroll' });
         for (const sy of [-1, 1]) { add(g, cylX(0.09, PW + 0.12, 10), M.parchDark, 0, PY + sy * (PH / 2 + 0.14), 0); for (const sx of [-1, 1]) add(g, cylX(0.13, 0.16, 8), M.woodDark, sx * (PW / 2 + 0.14), PY + sy * (PH / 2 + 0.14), 0); }
         const face = group(g, 0, PY, 0.022), sf = staff(face, -2.15, 4.3, -0.45);
         sf.put('four', 3.8, 2); sf.put('four', 3.8, 0);
