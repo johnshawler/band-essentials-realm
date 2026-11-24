@@ -68,7 +68,9 @@ function createGame(E) {
   const at = (dt, fn) => st.events.push({ t: G.t + dt, fn });
   const atAudio = (audioT, fn) => st.events.push({ t: toAmb(audioT), fn });
   function say(msg, kind = '') { st.msg = msg; st.msgKind = kind; }
-  function flyTo(from, to, dur, then) { G.mode = 'fly'; st.fly = { from, to, t0: G.t, dur, then }; }
+  // a flight is a list of [seconds, story time] keys; story time moves straight between them, the camera path does the easing
+  function flyTo(from, to, dur, then) { flyPath([[0, from], [dur, to]], then); }
+  function flyPath(keys, then) { G.mode = 'fly'; st.fly = { keys, t0: G.t, then }; }
   function begin() {
     audio(); snd.gliss(['Bb3', 'D4', 'F4', 'Bb4', 'C5', 'D5', 'F5', 'Bb5'], 0.2, 0.08); snd.play('sparkle', { gain: 0.25 }, now() + 1.6); snd.gust(2.6, 0.1);
     st.events = []; st.results = [null, null, null, null, null]; G.doneAt = [-1, -1, -1, -1, -1]; G.endTau = -1; G.summaryFade = 0;
@@ -96,12 +98,12 @@ function createGame(E) {
   function skipIsland(i, why) { st.results[i] = null; st.sub = { kind: 'done' }; say(why); at(2.6, () => leaveIsland(i)); }
   function leaveIsland(i) {
     st.sub = null; say('');
-    if (i < 4) { snd.gust(1.1, 0.12); snd.gliss([['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], ['G4', 'Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5'], ['Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5', 'C6'], ['C5', 'D5', 'F5', 'G5', 'Bb5', 'C6', 'D6']][i], 0.085, 0.07, now() + 0.1); flyTo(G.tau, hold(i + 1), 2.0, () => startIsland(i + 1)); }
+    if (i < 4) { snd.gust(1.1, 0.12); snd.gliss([['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], ['G4', 'Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5'], ['Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5', 'C6'], ['C5', 'D5', 'F5', 'G5', 'Bb5', 'C6', 'D6']][i], 0.085, 0.07, now() + 0.1); flyPath([[0, G.tau], [0.6, T.leave[i]], [2.8, T.arrive[i + 1]], [3.4, hold(i + 1)]], () => startIsland(i + 1)); }
     else finale();
   }
   function finale() {
     // the eight cards carry the names of the last question's answers, as the movie's did
-    flyTo(G.tau, T.lift, 0.9, () => {
+    flyPath([[0, G.tau], [0.7, T.leave[4]], [1.2, T.lift]], () => {
       G.mode = 'finale'; G.endTau = T.lift; st.endStart = G.t;
       snd.play('riser', { gain: 0.28, dur: 1.2 }); snd.gust(1.6, 0.1, now() + 0.2);
       tiles.forEach((_, j) => { const tl = tileStart(j) + T.flight - T.lift; snd.play('swish', { gain: 0.32, dur: 0.3 }, now() + tileStart(j) - T.lift); snd.play('stamp', { gain: 0.34 + 0.03 * j }, now() + tl - 0.04); snd.pluck(['Bb3', 'D4', 'F4', 'Bb4', 'D5', 'F5', 'Bb5', 'D6'][j], 0.8, 0.09, now() + tl - 0.04); });
@@ -191,10 +193,11 @@ function createGame(E) {
     const ok = hits === N && extra === 0;
     mark(hits, N + extra); st.res[st.q] = ok; ok ? snd.right() : snd.wrong();
     s.phase = 'result';
+    if (st.q + 1 >= GAMES[0].rounds) at(1.8, () => { if (st.sub === s && s.phase === 'result') nextRhythm(); });   // the last rhythm: move on by itself
     say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}`, ok ? 'good' : 'bad');
     wispTo(restOf(0), 0.5);
   }
-  function nextRhythm() { st.q++; if (st.q >= GAMES[0].rounds) finishIsland(); else newRhythm(); }
+  function nextRhythm() { const s = st.sub; if (!s || s.kind !== 'rhythm' || s.phase !== 'result') return; st.q++; if (st.q >= GAMES[0].rounds) finishIsland(); else newRhythm(); }
 
   // ---------------------------------------------------------------- 2. Fingering Trainer
   const KX = 1.38, COL = [0.7, 0.42, 0.14, -0.22, -0.5, -0.78];
@@ -272,7 +275,7 @@ function createGame(E) {
     tintTo(s.nm.userData.mat, ok ? C.lit : C.bad); set(s.nm.userData.mat, ok ? 1 : 0);
     snd.horn(s.n.name); ok ? snd.right() : snd.wrong();
     say(ok ? 'Correct fingering!' : 'Not quite. The green gems show the fingering.', ok ? 'good' : 'bad');
-    s.waitNext = true; if (ok) at(1.3, () => { if (st.sub === s && s.waitNext) nextFinger(); });
+    s.waitNext = true; if (ok || st.q + 1 >= GAMES[1].rounds) at(ok ? 1.3 : 2.6, () => { if (st.sub === s && s.waitNext) nextFinger(); });
   }
   function nextFinger() { const s = st.sub; if (!s || !s.waitNext) return; s.waitNext = false; st.q++; if (st.q >= GAMES[1].rounds) finishIsland(); else newFinger(); }
 
@@ -427,7 +430,11 @@ function createGame(E) {
   function frame(t) {
     G.t = t; ambient();
     for (let i = 0; i < st.events.length; i++) { const e = st.events[i]; if (t >= e.t) { st.events.splice(i--, 1); e.fn(); } }
-    if (st.fly) { const f = st.fly, u = K.clamp((t - f.t0) / f.dur); G.tau = K.lerp(f.from, f.to, u); if (u >= 1) { st.fly = null; f.then && f.then(); } }
+    if (st.fly) {
+      const f = st.fly, k = f.keys, e = t - f.t0; let j = 1; while (j < k.length - 1 && e > k[j][0]) j++;
+      G.tau = K.lerp(k[j - 1][1], k[j][1], K.clamp((e - k[j - 1][0]) / (k[j][0] - k[j - 1][0])));
+      if (e >= k[k.length - 1][0]) { st.fly = null; f.then && f.then(); }
+    }
     if (G.mode === 'finale') { G.endTau = Math.min(T.end, T.lift + (t - st.endStart)); if (G.endTau >= T.end - 1.2) { G.mode = 'summary'; st.sumAt = t; } }
     if (G.mode === 'summary') { G.endTau = T.end; G.summaryFade = K.seg(t, st.sumAt, st.sumAt + 0.8); }
     // the terms timer: sixteen rune lights go out over eight seconds
