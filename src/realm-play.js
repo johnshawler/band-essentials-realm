@@ -1,6 +1,6 @@
 // ================================================================ the game: rules, sound, input and the painted HUD
 function createGame(E) {
-  const { G, T, NS, GAMES, TERMS, isl, props, placeProps, launchTiles, resetTiles, R1, R2, R3, R4, R5, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, text, clear, pickable, picks, add, group, box, cylZ, M, C, U, PY, CINZEL, CINZEL_B, wispTo, restOf, WS, bump } = E;
+  const { G, T, NS, GAMES, TERMS, isl, props, placeProps, launchTiles, resetTiles, R1, R2, R3, R4, R5, R6, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, staff, arcOn, hairpin, gly, text, clear, pickable, picks, add, group, box, cylZ, M, C, U, PY, CINZEL, CINZEL_B, wispTo, restOf, WS, bump } = E;
   const LET = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }, SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const parseNote = (n) => { const m = /^([A-G])(#|b)?(-?\d)$/.exec(n), acc = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0, oct = +m[3];
     return { name: n, letter: m[1], acc, oct, step: LET[m[1]] + 7 * oct, midi: 12 * (oct + 1) + SEMI[m[1]] + acc }; };
@@ -58,11 +58,20 @@ function createGame(E) {
     flute: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: dur + 0.25, gain: 0.05, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.45 }); kit.tone(t, { f: f * 2, type: 'sine', dur: dur * 0.8, gain: 0.008, a: 0.08, bus: 'music', verb: 0.4 }); kit.noise(t, { dur: 0.05, filter: 'bandpass', f: f * 2, q: 3, gain: 0.006, bus: 'music' }); },
     bird: (t = now()) => { if (!kit) return; const f0 = 2600 + Math.random() * 1400, n = 2 + Math.floor(Math.random() * 2); for (let k = 0; k < n; k++) kit.tone(t + k * 0.13, { f: [[0, f0], [0.05, f0 * 1.35], [0.1, f0 * 1.1]], type: 'sine', dur: 0.12, gain: 0.018, a: 0.005, pan: 0.5 - Math.random(), verb: 0.35 }); },
     reed: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); for (const dt of [1, 1.004]) kit.tone(t, { f: f * dt, type: 'sawtooth', dur: dur + 0.15, gain: 0.018, a: 0.05, hold: Math.max(0.05, dur - 0.08), filter: 'lowpass', f2: 1500, bus: 'music', verb: 0.4 }); kit.tone(t, { f: f / 2, type: 'triangle', dur: dur + 0.1, gain: 0.012, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.35 }); },
+    // more chapter voices: glass (celesta), harp, brass, marimba, bell
+    glass: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: dur + 0.9, gain: 0.05, a: 0.003, bus: 'music', verb: 0.55 }); kit.tone(t, { f: f * 4, type: 'sine', dur: 0.35, gain: 0.012, a: 0.002, bus: 'music', verb: 0.5 }); },
+    harp: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'triangle', dur: dur + 1.0, gain: 0.05, a: 0.004, bus: 'music', verb: 0.5, filter: 'lowpass', f2: 2600 }); kit.tone(t, { f: f * 2, type: 'sine', dur: 0.5, gain: 0.012, a: 0.003, bus: 'music', verb: 0.45 }); },
+    brass: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sawtooth', dur: dur + 0.2, gain: 0.02, a: 0.07, hold: Math.max(0.05, dur - 0.1), filter: 'lowpass', f2: 1100, bus: 'music', verb: 0.45 }); kit.tone(t, { f, type: 'sine', dur: dur + 0.2, gain: 0.02, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.4 }); },
+    marimba: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: 0.6, gain: 0.06, a: 0.002, bus: 'music', verb: 0.35 }); kit.tone(t, { f: f * 3.9, type: 'sine', dur: 0.12, gain: 0.012, a: 0.001, bus: 'music', verb: 0.3 }); },
+    bellv: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: dur + 1.6, gain: 0.04, a: 0.002, bus: 'music', verb: 0.6 }); kit.tone(t, { f: f * 2.76, type: 'sine', dur: 0.9, gain: 0.01, a: 0.002, bus: 'music', verb: 0.6 }); kit.tone(t, { f: f * 5.4, type: 'sine', dur: 0.4, gain: 0.005, a: 0.001, bus: 'music', verb: 0.6 }); },
+    drip: (t = now()) => { if (!kit) return; const f0 = 700 + Math.random() * 600; kit.tone(t, { f: [[0, f0], [0.06, f0 * 2.2]], type: 'sine', dur: 0.09, gain: 0.03, a: 0.002, verb: 0.75, pan: 0.7 - Math.random() * 1.4 }); },
+    thunder: (t = now(), g = 1) => { if (!kit) return; kit.noise(t, { dur: 3.2, color: 'brown', filter: 'lowpass', f: [[0, 900], [3.2, 120]], gain: 0.16 * g, a: 0.02, verb: 0.5, pan: 0.6 - Math.random() * 1.2 }); kit.noise(t, { dur: 0.25, color: 'pink', filter: 'highpass', f: 1500, gain: 0.08 * g, a: 0.002 }); },
     wave: (t = now()) => { if (!kit) return; const d = 3.2 + Math.random() * 1.5; kit.noise(t, { dur: d, color: 'pink', filter: 'lowpass', f: [[0, 250], [d * 0.45, 900], [d, 220]], q: 0.6, gain: 0.05, a: d * 0.45, pan: 0.6 - Math.random() * 1.2, verb: 0.3 }); },
     gull: (t = now()) => { if (!kit) return; const f0 = 1500 + Math.random() * 500, n = 1 + Math.floor(Math.random() * 3), pan = 0.8 - Math.random() * 1.6; for (let k = 0; k < n; k++) kit.tone(t + k * 0.32, { f: [[0, f0], [0.06, f0 * 1.12], [0.26, f0 * 0.72]], type: 'triangle', dur: 0.3, gain: 0.014, a: 0.01, filter: 'bandpass', f2: 1700, q: 1.4, pan, verb: 0.5 }); },
-    right: () => { snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
+    right: () => { const u = st.sub; sig('onRight', st.stop, { note: u && u.n ? concert(u.n) : null, term: u && u.kind === 'terms' ? TERMS[u.ti] : null, kind: u && u.kind }); snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
     wrong: () => { snd.play('thud', { gain: 0.4, f: 120 }); kit && kit.tone(now(), { f: 'D3', type: 'triangle', dur: 0.4, gain: 0.08, filter: 'lowpass', f2: 900 }); },
   };
+  if (R1.sig) Object.assign(R1.sig, { snd, now, toAmb: (t) => toAmb(t) });   // the scenery may make sounds of its own
   const MUS = CH.music, BAR = 240 / MUS.bpm;
   let ambWin = 0;
   function ambient() {
@@ -74,6 +83,14 @@ function createGame(E) {
       kit.music('pad', t0, t0 + len, { bpm: MUS.bpm, gain: quiet ? 0.25 : 0.5, chords: MUS.chords }); kit.bed('room', t0, t0 + len, { gain: 0.5 });
       snd.gust(2.4, 0.035, t0 + 3); snd.gust(2.4, 0.03, t0 + len * 0.62);
       if (MUS.tune && w % 2 === 1 && !quiet) { const voice = snd[MUS.voice || 'flute']; let tb = t0; MUS.tune.slice(4 * ((w >> 1) % 2), 4 * ((w >> 1) % 2) + 4).forEach((bar) => bar.forEach(([nt, beats]) => { if (nt) voice(nt, beats * BAR / 4, tb); tb += beats * BAR / 4; })); }
+      // each chapter's surroundings: falling water, cave drips, thunder, a volcano's rumble, a clock's ticks, wind, night sparkles
+      if (MUS.water) kit.noise(t0, { dur: len + 0.6, color: 'pink', filter: 'lowpass', f: 700, q: 0.5, gain: 0.05, a: 0.4, hold: len - 0.3, verb: 0.25 });
+      if (MUS.drips) for (let k = 0; k < 5; k++) snd.drip(t0 + Math.random() * len);
+      if (MUS.thunder && Math.random() < 0.7) snd.thunder(t0 + Math.random() * len * 0.8, quiet ? 0.4 : 1);
+      if (MUS.rumble) kit.noise(t0, { dur: len + 0.6, color: 'brown', filter: 'lowpass', f: 160, gain: 0.07, a: 0.5, hold: len - 0.5 });
+      if (MUS.ticks && !quiet) for (let k = 0; k < 4 * 4; k++) snd.play('tick', { gain: 0.05, f: k % 4 ? 3800 : 5200 }, t0 + k * BAR / 4);
+      if (MUS.wind) { snd.gust(3, 0.06, t0 + 1); snd.gust(3.4, 0.05, t0 + len * 0.55); }
+      if (MUS.sparkle && !quiet) for (let k = 0; k < 2; k++) snd.play('sparkle', { gain: 0.06 }, t0 + len * (0.25 + 0.4 * k));
       if (MUS.sea) { for (let k = 0; k < 3; k++) snd.wave(t0 + len * k / 3 + Math.random()); if (!quiet) for (let k = 0; k < 2; k++) if (Math.random() < 0.7) snd.gull(t0 + len * (0.2 + 0.45 * k) + Math.random() * 1.5); if (w % 2 === 0 && !quiet) snd.chime('D5', 0.035, t0 + len * 0.55); }
       if (MUS.birds) for (let k = 0; k < 3; k++) snd.bird(t0 + len * (0.15 + 0.3 * k) + Math.random() * 1.2);
       ambUntil = t0 + len - 0.4;
@@ -88,15 +105,17 @@ function createGame(E) {
   // a flight is a list of [seconds, story time] keys; story time moves straight between them, the camera path does the easing
   function flyTo(from, to, dur, then) { flyPath([[0, from], [dur, to]], then); }
   function flyPath(keys, then) { G.mode = 'fly'; st.fly = { keys, t0: G.t, then }; }
-  const gameOf = (j) => j % 5, lapOf = (j) => Math.floor(j / 5);
+  const NG = GAMES.length, gameOf = (j) => j % NG, lapOf = (j) => Math.floor(j / NG);
+  // the chapter's scenery listens to the game through these hooks (see SIG in realm-game.js)
+  const sig = (name, ...a) => R1.sig && typeof R1.sig[name] === 'function' && R1.sig[name](...a);
   // the chapter's terms as indices into TERMS: the ones this unit adds, and earlier units' for review
   const termIds = (names) => names.map((nm) => TERMS.indexOf(nm)).filter((j) => j >= 0);
   const termPool = () => { const t = chapterTerms(st.inst.clef); return { fresh: termIds(t.fresh), review: termIds(t.review) }; };
-  function termSeq() { const t = termPool(); return t.review.length ? shuffle(shuffle(t.fresh).slice(0, 2).concat(shuffle(t.review).slice(0, 1))) : shuffle(t.fresh).slice(0, 3); }
+  function termSeq() { const t = termPool(); if (!t.review.length) return shuffle(t.fresh).slice(0, 3); const f = shuffle(t.fresh).slice(0, 2); return shuffle(f.concat(shuffle(t.review).slice(0, 3 - f.length))); }
   function resetJourney() {
     st.events = []; st.fly = null; st.sub = null; say('');
     st.tallies = GAMES.map(() => ({ c: 0, n: 0 })); st.skipped = GAMES.map(() => false); st.stopRes = new Array(NS).fill(null); st.stop = 0;
-    st.seqs = { finger: noteSeq(3), write: noteSeq(3), read: noteSeq(3), terms: termSeq() }; st.rhythmPrev = '';
+    st.seqs = { finger: noteSeq(3), write: noteSeq(3), read: noteSeq(3), terms: termSeq(), keys: keySeq() }; st.rhythmPrev = '';
     G.doneAt = new Array(NS).fill(-1); G.endTau = -1; G.summaryFade = 0;
     resetTiles(); GAMES.forEach((_, g) => placeProps(g, g));
     WS.free = false; WS.pos.copy(restOf(0));
@@ -112,15 +131,16 @@ function createGame(E) {
     if (g === 1) { R2.gems.forEach((o) => { o.on = false; tintTo(o.pearl, C.lit); set(o.pearl, 0); }); clear(R2.noteG); }
     if (g === 2) { clear(R3.noteG); clear(R3.accG); clear(R3.askG); R3.seals.forEach((sg) => set(sg.userData.mat, 0)); }
     if (g === 3) { clear(R4.noteG); R4.shields.forEach((q) => { tintTo(q.userData.mat, '#e05200'); set(q.userData.mat, 0); }); }
+    if (g === 5) { clear(R6.dyn); R6.keys.forEach((kg) => { const u = kg.userData; u.turnAt = -9; tintTo(u.tagMat, C.lit); set(u.tagMat, 0); }); set(R6.panelM, 0); }
     if (g === 4) { clear(R5.dyn); R5.hlMats = []; tiles.forEach((tb) => { tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); }); }
   }
   function startStop(j) {
     const g = gameOf(j);
     G.mode = 'play'; G.island = j; G.tau = hold(j); st.stop = j; st.q = lapOf(j); st.captionAt = G.t; say('');
     // the game two islands back is out of sight now: carry its props up to its next island
-    if (j >= 2 && j + 3 < NS) { tidy(gameOf(j - 2)); placeProps(gameOf(j - 2), j + 3); }
-    wispTo(restOf(j), 0.6, 0.2);
-    [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms][g]();
+    if (j >= 2 && j - 2 + NG < NS) { tidy(gameOf(j - 2)); placeProps(gameOf(j - 2), j - 2 + NG); }
+    wispTo(restOf(j), 0.6, 0.2); sig('onStop', j);
+    [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms, setupKeys][g]();
   }
   // percentage correct: questions answered right, or for rhythms, notes tapped in time (extra taps count as misses)
   // best results, per instrument and chapter (Chapter 1 keeps the key it has always used)
@@ -135,14 +155,14 @@ function createGame(E) {
   }
   function finishStop() {
     const j = st.stop; if (st.sub && st.sub.kind === 'done') return;
-    G.doneAt[j] = G.t; snd.play('sparkle', { gain: 0.42 }); snd.play('bell', { gain: 0.24, f: ['Bb5', 'C6', 'D6', 'Eb6', 'F6'][gameOf(j)] });
+    G.doneAt[j] = G.t; snd.play('sparkle', { gain: 0.42 }); snd.play('bell', { gain: 0.24, f: ['Bb5', 'C6', 'D6', 'Eb6', 'F6', 'G6'][gameOf(j)] });
     st.sub = { kind: 'done' };
     at(1.4, () => leaveStop(j));
   }
   function skipStop(why) { st.skipped[gameOf(st.stop)] = true; st.sub = { kind: 'done' }; say(why); const j = st.stop; at(st.q ? 1.6 : 2.8, () => leaveStop(j)); }
   function leaveStop(j) {
     if (st.stop !== j) return;
-    st.sub = null; say('');
+    st.sub = null; say(''); sig('onLeave', j);
     if (j < NS - 1) {
       const runs = [['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], ['G4', 'Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5'], ['Bb4', 'C5', 'D5', 'F5', 'G5', 'Bb5', 'C6'], ['C5', 'D5', 'F5', 'G5', 'Bb5', 'C6', 'D6']];
       snd.gust(1.1, 0.12); snd.gliss(runs[j % 4], 0.085, 0.07, now() + 0.5);
@@ -181,7 +201,7 @@ function createGame(E) {
       if (out.length > 1 || Math.random() < 0.3) return out;
     }
   }
-  function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: st.rhythmPrev }; newRhythm(); }
+  function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: st.rhythmPrev }; RH.eighths ? newRhythmG() : newRhythm(); }
   function newRhythm() {
     const s = st.sub, clef = st.inst.clef; let r;
     const sounded = (rr) => rr[0].concat(rr[1]).filter((n) => !n.rest).length, pairs = (rr) => rr[0].concat(rr[1]).filter((n) => n.pair).length;
@@ -191,7 +211,7 @@ function createGame(E) {
     putClef(R1.sf, clef, R1.dyn);
     const mid = fromStep(BOTTOM[clef] + 4);
     s.mid = mid; s.onsets = [];
-    if (CH.rhythm.eighths) { eighthBars(r, clef, mid, s); } else {
+    {
     R1.sf.put('barline', 13.0, 0, M.ink, R1.dyn); R1.sf.put('barline', 20.75, 0, M.ink, R1.dyn); R1.sf.put('thick', 21.25, 0, M.ink, R1.dyn);
     r.forEach((bar, bi) => bar.forEach((n) => {
       const x0 = bi ? 13.0 : 5.0, su = n.d === 4 ? x0 + 1.6 : x0 + 0.95 + n.beat * 1.72;
@@ -201,43 +221,105 @@ function createGame(E) {
     })); }
     say(`${CH.rhythm.eighths ? 'Two beamed eighth notes share one beat: tap both. ' : ''}${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.`);
   }
-  // two bars spaced by what is in them (a pair of eighths needs room for two heads), on the smaller eighth-note staff
-  function eighthBars(r, clef, mid, s) {
-    const sf = R1.sf, total = sf.len / U, end = total - 0.75, bw = (end - 5.0) / 2;
-    sf.put('barline', 5.0 + bw, 0, M.ink, R1.dyn); sf.put('barline', end, 0, M.ink, R1.dyn); sf.put('thick', total - 0.25, 0, M.ink, R1.dyn);
-    const BASE = (n) => (n.pair ? 3.3 : n.d === 1 ? 1.85 : 2.6), usable = bw - 1.3;
-    r.forEach((bar, bi) => {
-      const x0 = 5.0 + bi * bw;
-      if (bar.length === 1) {                                         // a whole note or whole rest fills the bar
-        const n = bar[0];
-        if (n.rest) sf.put('wholeRest', x0 + bw / 2, 0, M.ink, R1.dyn);
-        else { const su = x0 + 1.6; R1.notes.push({ g: writeNote(R1.dyn, sf, clef, mid, su, 'w', inkLit(), -1), su, d: 4 }); s.onsets.push(bi * 4); }
-        return;
+
+  // ---------------------------------------------------------------- rhythms from Chapter 3 on: 2/4, 3/4 or 4/4, eighths, ties, dots, eighth rests
+  // A bar is a list of symbols { at, dur, kind: 'w'|'h'|'q'|'e', rest, dot, beam (1 or 2 for a beamed pair), flag, tie (to the next), accent }.
+  const RH = CH.rhythm;
+  function genBarG(m) {
+    for (;;) {
+      const out = []; let b = 0;
+      while (b < m - 1e-6) {
+        const left = m - b, c = [];
+        if (b === 0 && m === 4) c.push(['w', 4, 1]);
+        if (RH.dots && left >= 3 && (m === 3 ? b === 0 : b <= 1)) c.push(['dh', 3, 3]);
+        if (left >= 2 && (m === 4 ? b % 2 === 0 : b <= 1)) c.push(['h', 2, 3]);
+        c.push(['q', 1, 5]);
+        if (out.filter((x) => x.beam === 1).length < (m === 2 ? 1 : 2)) c.push(['pair', 1, RH.pairW || 5]);
+        if (RH.dottedQ && left >= 2 && b % 1 === 0) c.push(['dq', 2, 4]);
+        if (RH.eighthRest) c.push(['er', 1, 3]);
+        let r = Math.random() * c.reduce((a, x) => a + x[2], 0), pick = c[c.length - 1];
+        for (const x of c) if ((r -= x[2]) < 0) { pick = x; break; }
+        const rest = (p) => !!RH.rests && Math.random() < p, nm = pick[0];
+        if (nm === 'w') out.push({ at: b, dur: 4, kind: 'w', rest: rest(0.3) });
+        else if (nm === 'dh') out.push({ at: b, dur: 3, kind: 'h', dot: true });
+        else if (nm === 'h') out.push({ at: b, dur: 2, kind: 'h', rest: rest(0.25) });
+        else if (nm === 'q') out.push({ at: b, dur: 1, kind: 'q', rest: rest(0.2) });
+        else if (nm === 'pair') out.push({ at: b, dur: 0.5, kind: 'e', beam: 1 }, { at: b + 0.5, dur: 0.5, kind: 'e', beam: 2 });
+        else if (nm === 'dq') out.push({ at: b, dur: 1.5, kind: 'q', dot: true }, { at: b + 1.5, dur: 0.5, kind: 'e', flag: true });
+        else out.push({ at: b, dur: 0.5, kind: 'e', rest: true }, { at: b + 0.5, dur: 0.5, kind: 'e', flag: true });
+        b += pick[1];
       }
-      const sum = bar.reduce((a, n) => a + BASE(n), 0), extra = usable - sum, k = extra < 0 ? usable / sum : 1;
-      let x = x0 + 0.9;
-      bar.forEach((n) => {
-        const w = extra > 0 ? BASE(n) + extra * n.d / 4 : BASE(n) * k, su = x; x += w;
-        if (n.rest) { sf.put(n.d === 2 ? 'halfRest' : 'rest', n.d === 2 ? su + 0.3 : su + 0.15, 0, M.ink, R1.dyn); return; }
-        if (!n.pair) { R1.notes.push({ g: writeNote(R1.dyn, sf, clef, mid, su, n.d === 2 ? 'h' : 'q', inkLit(), -1), su, d: n.d }); s.onsets.push(bi * 4 + n.beat); return; }
-        const su2 = su + Math.max(1.5, w * 0.44), m1 = inkLit(), m2 = inkLit();
-        const a = writeNote(R1.dyn, sf, clef, mid, su, 'q', m1, -1), b = writeNote(R1.dyn, sf, clef, mid, su2, 'q', m2, -1);
-        const len = su2 - su + 0.13; add(a, box(len, 0.5, 0.12), m1, -0.57 - 0.065 + len / 2, -3.15, 0, { cast: false });   // the beam joins the stem ends
-        R1.notes.push({ g: a, su, d: 0.5 }, { g: b, su: su2, d: 0.5 }); s.onsets.push(bi * 4 + n.beat, bi * 4 + n.beat + 0.5);
+      if (out.length > 1 || Math.random() < 0.25) return out;
+    }
+  }
+  // how much room each symbol wants, in staff spaces
+  const WID = (x) => (x.kind === 'w' ? 3.2 : x.beam ? 1.65 : x.kind === 'e' ? 1.75 : x.dot ? (x.kind === 'h' ? 3.0 : 2.45) : x.kind === 'h' ? 2.6 : 1.85);
+  const METER = () => RH.meter || 4, BARS = (m) => (m === 3 ? 3 : 8 / m);
+  function newRhythmG() {
+    const s = st.sub, clef = st.inst.clef, m = METER(), nb = BARS(m), need = RH.need || [];
+    const has = (rr, f) => rr.flat().some(f);
+    let r, tries = 0;
+    for (;;) {
+      r = Array.from({ length: nb }, () => genBarG(m));
+      if (RH.ties) for (let i = 0; i < nb - 1; i++) { const a = r[i][r[i].length - 1], b = r[i + 1][0]; if (!a.rest && !b.rest && a.kind !== 'e' && b.kind !== 'e' && !a.dot && Math.random() < 0.55) a.tie = true; }
+      if (RH.accents) shuffle(r.flat().filter((x) => !x.rest)).slice(0, 2).forEach((x) => { x.accent = true; });
+      const flat = r.flat(), nat = r.reduce((a, bar) => a + 1.3 + bar.reduce((q, x) => q + WID(x), 0), 0);
+      if (++tries > 500) break;
+      if (JSON.stringify(r) === s.prev || flat[0].rest || flat.filter((x) => !x.rest).length < 3 || nat > 31 || r.every((bar) => bar.length === 1)) continue;
+      if (need.includes('pair') && !has(r, (x) => x.beam)) continue;
+      if (need.includes('tie') && !has(r, (x) => x.tie)) continue;
+      if (need.includes('dh') && !has(r, (x) => x.dot && x.kind === 'h')) continue;
+      if (need.includes('dq') && !has(r, (x) => x.dot && x.kind === 'q')) continue;
+      if (need.includes('er') && !has(r, (x) => x.rest && x.kind === 'e')) continue;
+      break;
+    }
+    s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = []; s.cin = m === 3 ? 3 : 4; s.total = nb * m;
+    // the staff is drawn afresh each time, as large as the two (or three, or four) bars allow
+    const nat = r.map((bar) => 1.3 + bar.reduce((q, x) => q + WID(x), 0)), sumNat = nat.reduce((a, b) => a + b, 0);
+    const RS = Math.min(0.92, 4.3 / (U * (5.75 + sumNat))), total = 4.3 / (U * RS), free = total - 5.75 - sumNat;
+    clear(R1.dynRoot); const st0 = new THREE.Group(); st0.scale.setScalar(RS); R1.dynRoot.add(st0);
+    const sf = R1.sf = staff(st0, -2.15 / RS, total * U, -0.05 / RS - 2 * U); R1.dyn = new THREE.Group(); st0.add(R1.dyn);
+    R1.notes = []; R1.tapAt = []; R1.stoneAt = [-9, -9, -9, -9];
+    putClef(sf, clef, R1.dyn); sf.put(m === 4 ? 'four' : m === 3 ? 'three' : 'two', 3.8, 2, M.ink, R1.dyn); sf.put('four', 3.8, 0, M.ink, R1.dyn);
+    const mid = fromStep(BOTTOM[clef] + 4); s.mid = mid; s.onsets = []; s.accents = [];
+    let x = 5.0, prev = null;
+    r.forEach((bar, bi) => {
+      const bw = nat[bi] + free / nb, x0 = x, extra = bw - nat[bi];
+      let cx = x0 + 0.9; bar.forEach((n) => { n.su = cx; cx += WID(n) + extra * n.dur / m; });
+      x = x0 + bw; sf.put('barline', x, 0, M.ink, R1.dyn);
+      bar.forEach((n, k) => {
+        if (n.rest) { sf.put(n.kind === 'w' ? 'wholeRest' : n.kind === 'h' ? 'halfRest' : n.kind === 'e' ? 'eighthRest' : 'rest', n.kind === 'w' ? x0 + bw / 2 : n.su + (n.kind === 'q' ? 0.15 : 0.3), 0, M.ink, R1.dyn); prev = n; return; }
+        const tied = prev && prev.tie && !prev.rest, mat = tied ? prev.mat : inkLit();
+        const nn = writeNote(R1.dyn, sf, clef, mid, n.su, n.kind === 'e' ? 'q' : n.kind, mat, -1); n.g = nn; n.mat = mat;
+        if (n.dot) add(nn, gly('dot')[0], mat, 1.15, 0.5, 0, { cast: false });
+        if (n.flag) add(nn, gly('flagDown')[0], mat, 0, 0, 0, { cast: false });
+        if (n.beam === 2) { const pn = bar[k - 1], len = n.su - pn.su + 0.13; add(pn.g, box(len, 0.5, 0.12), pn.mat, -0.57 - 0.065 + len / 2, -3.15, 0, { cast: false }); }
+        if (n.accent) { sf.put('accent', n.su, 4.8, mat, R1.dyn); s.accents.push(bi * m + n.at); }
+        if (tied) arcOn(sf, prev.su + 0.6, n.su - 0.6, 2.8, 1, mat, R1.dyn);
+        else { R1.notes.push({ g: nn, su: n.su, d: n.dur + (n.tie ? (bi + 1 < nb ? r[bi + 1][0].dur : 0) : 0) }); s.onsets.push(bi * m + n.at); }
+        prev = n;
       });
     });
+    sf.put('thick', x + 0.5, 0, M.ink, R1.dyn);
+    const tips = [];
+    if (has(r, (x) => x.beam)) tips.push('Two beamed eighth notes share one beat: tap both.');
+    if (has(r, (x) => x.tie)) tips.push('A tie joins two notes into one: tap only the first.');
+    if (has(r, (x) => x.dot)) tips.push('A dot adds half the note\'s length.');
+    if (RH.rests && has(r, (x) => x.rest)) tips.push('Rests are silent: no tap.');
+    say(`${tips.join(' ')} Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for ${s.cin} count-in beats, then tap the drum or press Space on every note.`);
   }
   function runRhythm(tapping) {
     const s = st.sub; if (!s || s.phase !== 'ready' && s.phase !== 'result') return;
     if (s.phase === 'result') return;
     audio();
-    const beat = 60 / st.bpm, t0 = now() + 0.4, ts = t0 + 4 * beat;
+    const beat = 60 / st.bpm, t0 = now() + 0.4, cin = s.cin || 4, total = s.total || 8, ts = t0 + cin * beat;
     s.phase = tapping ? 'count' : 'listen'; s.t0 = t0; s.ts = ts; s.beat = beat; s.taps = []; s.tapping = tapping; s.hit = s.onsets.map(() => false); s.extra = 0;
     R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); });
-    say(tapping ? 'Count in: 1, 2, 3, 4…' : 'Listen…');
-    if (R1.sig) { R1.sig.flashAt = []; R1.sig.sweep = { t0: toAmb(t0), t1: toAmb(ts + 8 * beat), beat }; if (!tapping) s.onsets.forEach((o) => R1.sig.flashAt.push(toAmb(ts + o * beat))); }
-    for (let b = 0; b < 4; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
-    for (let b = 0; b < 8; b++) snd.play('tock', { gain: 0.14, f: 700 }, ts + b * beat);
+    say(tapping ? `Count in: ${[1, 2, 3, 4].slice(0, cin).join(', ')}…` : 'Listen…');
+    if (R1.sig) { R1.sig.flashAt = []; R1.sig.sweep = { t0: toAmb(t0), t1: toAmb(ts + total * beat), beat }; if (!tapping) s.onsets.forEach((o) => R1.sig.flashAt.push(toAmb(ts + o * beat))); }
+    sig('onRhythm', { t0: toAmb(t0), ts: toAmb(ts), beat, cin, total, tapping, onsets: s.onsets.map((o) => toAmb(ts + o * beat)), accents: (s.accents || []).map((o) => toAmb(ts + o * beat)) });
+    for (let b = 0; b < cin; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
+    for (let b = 0; b < total; b++) snd.play('tock', { gain: 0.14, f: 700 }, ts + b * beat);
     atAudio(ts - beat * 0.5, () => { if (tapping) { s.phase = 'tap'; say('Tap the drum (or Space) on every note!'); } });
     s.onsets.forEach((o, j) => {
       const tn = ts + o * beat, n = R1.notes[j];
@@ -246,7 +328,7 @@ function createGame(E) {
       if (tapping) atAudio(tn + beat / 2 + 0.02, () => { if (s.phase === 'tap' && !s.hit[j]) { tintTo(n.g.userData.mat, C.bad); set(n.g.userData.mat, 1); } });
       if (!tapping) { snd.play('thud', { gain: 0.5, f: 170 }, tn); snd.play('slap', { gain: 0.16 }, tn); snd.pluck(TONIC(), n.d * beat + 0.2, 0.2, tn); atAudio(tn, () => { set(n.g.userData.mat, 1); R1.tapAt.push(G.t); }); atAudio(tn + n.d * beat - 0.05, () => set(n.g.userData.mat, 0)); }
     });
-    atAudio(ts + 8 * beat + 0.35, () => { if (tapping) gradeRhythm(); else { s.phase = 'ready'; say('Your turn: choose Tap it, then tap the drum on every note.'); wispTo(restOf(st.stop), 0.5); } });
+    atAudio(ts + total * beat + 0.35, () => { if (tapping) gradeRhythm(); else { s.phase = 'ready'; say('Your turn: choose Tap it, then tap the drum on every note.'); wispTo(restOf(st.stop), 0.5); } });
   }
   // every touch of the drum sounds and moves the sticks; only taps after the count-in are judged
   function drumHit() { R1.tapAt.push(G.t); snd.play('thud', { gain: 0.45, f: 170 }); snd.play('slap', { gain: 0.14 }); }
@@ -280,10 +362,11 @@ function createGame(E) {
   // ---------------------------------------------------------------- 2. Fingering Trainer
   const KX = 1.38, COL = [0.7, 0.42, 0.14, -0.22, -0.5, -0.78];
   const LAYOUTS = {
-    sax: () => ({ multi: true, plate: [0.46, 1.84], gems: [...[21, 20, 19, 18, 17, 16].map((b, k) => ({ bit: b, x: 0, y: COL[k], label: ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'][k] })), { bit: 3, x: -0.46, y: 0.78, label: 'Octave', small: true, lx: -0.46, ly: 0.55 }] }),
+    sax: () => ({ multi: true, plate: [0.46, 1.84], gems: [...[21, 20, 19, 18, 17, 16].map((b, k) => ({ bit: b, x: 0, y: COL[k], label: ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'][k] })), { bit: 3, x: -0.46, y: 0.78, label: 'Octave', small: true, lx: -0.46, ly: 0.55 }, { bit: 12, x: 0.5, y: -0.84, label: 'Low C', small: true, lx: 0.84, ly: -0.84 }] }),
     clarinet: () => ({ multi: true, plate: [0.46, 1.84], gems: [...[4, 6, 7, 13, 17, 18].map((b, k) => ({ bit: b, x: 0, y: COL[k], label: ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'][k] })),
       { bit: 3, x: -0.46, y: 0.78, label: 'Reg', small: true, lx: -0.46, ly: 0.58 }, { bit: 5, x: -0.46, y: 0.3, label: 'Thumb', small: true, lx: -0.46, ly: 0.1 },
-      { bit: 1, x: 0.5, y: 0.86, label: 'A', small: true, lx: 0.72, ly: 0.86 }, { bit: 2, x: 0.5, y: 0.6, label: 'G♯', small: true, lx: 0.74, ly: 0.6 }] }),
+      { bit: 1, x: 0.5, y: 0.86, label: 'A', small: true, lx: 0.72, ly: 0.86 }, { bit: 2, x: 0.5, y: 0.6, label: 'G♯', small: true, lx: 0.74, ly: 0.6 },
+      { bit: 15, x: -0.46, y: -0.2, label: 'L pinky', small: true, lx: -0.5, ly: -0.42 }, { bit: 22, x: 0.5, y: -0.84, label: 'R pinky', small: true, lx: 0.86, ly: -0.84 }] }),
     flute: () => ({ multi: true, plate: [0.46, 1.84], gems: [...[12, 11, 10, 9, 8, 7].map((b, k) => ({ bit: b, x: 0, y: COL[k], label: ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'][k] })),
       { bit: 13, x: -0.46, y: 0.56, label: 'Thumb', small: true, lx: -0.46, ly: 0.34 }, { bit: 1, x: 0.5, y: 0.0, label: 'G♯', small: true, lx: 0.74, ly: 0.0 }, { bit: 6, x: 0.5, y: -0.8, label: 'E♭', small: true, lx: 0.74, ly: -0.8 }] }),
     valves: () => ({ multi: true, plate: [1.5, 1.2], gems: [...(st.inst.key === 'dhorn' ? [{ bit: 4, x: -0.55, y: 0.38, label: 'Trigger', lx: -0.12, ly: 0.38 }] : []),
@@ -463,6 +546,7 @@ function createGame(E) {
     const N = (n) => parseNote(n);
     const clefOf = term === 'Bass clef' ? 'bass' : 'treble';
     if (term !== 'Treble clef' && term !== 'Bass clef') putClef(sf, 'treble', dyn, ink);
+    const LIT = (o) => Object.assign({ color: '#d9560a', glow: 0.9 }, o);
     const ctxNotes = (list) => list.forEach(([n, su, kind]) => writeNote(dyn, sf, 'treble', N(n), su, kind, ink));
     switch (term) {
       case 'Treble clef': putClef(sf, 'treble', dyn, hl); ctxNotes([['G4', 9, 'q'], ['B4', 12.5, 'h'], ['D5', 16, 'h']]); break;
@@ -483,10 +567,33 @@ function createGame(E) {
       case 'Sharp': writeNote(dyn, sf, 'treble', N('F4'), 12.5, 'w', ink); sf.put('sharp', 11.05, pOf(N('F4'), 'treble'), hl, dyn); break;
       case 'Flat': writeNote(dyn, sf, 'treble', N('B4'), 12.5, 'w', ink); sf.put('flat', 11.05, pOf(N('B4'), 'treble'), hl, dyn); break;
       case 'Natural': writeNote(dyn, sf, 'treble', N('A4'), 12.5, 'w', ink); sf.put('natural', 11.05, pOf(N('A4'), 'treble'), hl, dyn); break;
+      case 'Breath mark': ctxNotes([['G4', 8, 'h'], ['B4', 13.5, 'h']]); sf.put('breath', 10.9, 5.5, hl, dyn); break;
+      case 'Fermata': ctxNotes([['G4', 7.5, 'q'], ['A4', 9.6, 'q']]); writeNote(dyn, sf, 'treble', N('B4'), 13, 'w', ink); sf.put('fermata', 13, 5.6, hl, dyn); sf.put('thick', 17.2, 0, ink, dyn); sf.put('barline', 16.6, 0, ink, dyn); break;
+      case 'Pick-up note': sf.put('four', 4.4, 2, ink, dyn); sf.put('four', 4.4, 0, ink, dyn); writeNote(dyn, sf, 'treble', N('D5'), 7.2, 'q', hl); sf.put('barline', 9.2, 0, ink, dyn); ctxNotes([['G4', 11.2, 'h'], ['B4', 15, 'h']]); sf.put('barline', 18.6, 0, ink, dyn); break;
+      case 'Forte': case 'Mezzo forte': case 'Piano': ctxNotes([['G4', 8, 'h'], ['B4', 12, 'h'], ['D5', 16, 'h']]); text(dyn, { Forte: 'f', 'Mezzo forte': 'mf', Piano: 'p' }[term], sf.X(7.6), sf.Y(-1.1), 0.004, LIT({ height: 0.3, face: 'italic 700 {px}px "Alegreya"' })); break;
+      case 'Eighth note': { ctxNotes([['G4', 7.5, 'q'], ['A4', 15.5, 'q']]); const e = writeNote(dyn, sf, 'treble', N('C5'), 11.5, 'q', hl); add(e, gly('flagDown')[0], hl, 0, 0, 0, { cast: false }); break; }
+      case 'Beam': { ctxNotes([['G4', 7.5, 'q']]); const a = writeNote(dyn, sf, 'treble', N('B4'), 10.5, 'q', ink), b = writeNote(dyn, sf, 'treble', N('B4'), 12.3, 'q', ink); void b; add(a, box(1.93, 0.5, 0.12), hl, -0.57 - 0.065 + 0.965, -3.15, 0, { cast: false }); ctxNotes([['A4', 15.5, 'h']]); break; }
+      case 'Allegro': case 'Moderato': case 'Andante': ctxNotes([['G4', 8.5, 'q'], ['B4', 11, 'q'], ['D5', 13.5, 'q'], ['B4', 16, 'q']]); text(dyn, term, sf.X(9.5), sf.Y(6.6), 0.004, LIT({ height: 0.24, face: '700 {px}px "Alegreya"' })); break;
+      case 'Crescendo': case 'Diminuendo': ctxNotes([['G4', 8, 'q'], ['A4', 10.6, 'q'], ['B4', 13.2, 'q'], ['C5', 15.8, 'q']]); hairpin(sf, 7.6, 16.4, -1.3, term === 'Crescendo', hl, dyn); break;
+      case 'Measure number': sf.put('barline', 10, 0, ink, dyn); ctxNotes([['G4', 7.8, 'q'], ['B4', 12.2, 'h'], ['D5', 15.8, 'h']]); sf.put('barline', 18.4, 0, ink, dyn); text(dyn, '5', sf.X(10.4), sf.Y(5.6), 0.004, LIT({ height: 0.2, face: '700 {px}px "Alegreya"' })); break;
+      case 'Tie': ctxNotes([['G4', 9, 'h'], ['G4', 14.5, 'h']]); sf.put('barline', 11.8, 0, ink, dyn); arcOn(sf, 9.6, 13.9, 0.15, -1, hl, dyn); break;
+      case 'Slur': ctxNotes([['G4', 8, 'q'], ['B4', 10.6, 'q'], ['D5', 13.2, 'q']]); arcOn(sf, 7.8, 13.4, 5.2, 1, hl, dyn); ctxNotes([['B4', 16, 'q']]); break;
+      case 'Dotted half note': { ctxNotes([['B4', 15.8, 'q']]); const e = writeNote(dyn, sf, 'treble', N('G4'), 10.5, 'h', hl); add(e, gly('dot')[0], hl, 1.15, 0.5, 0, { cast: false }); break; }
+      case 'Dotted quarter note': { const e = writeNote(dyn, sf, 'treble', N('A4'), 10.5, 'q', hl); add(e, gly('dot')[0], hl, 1.15, 0.0, 0, { cast: false }); const f = writeNote(dyn, sf, 'treble', N('B4'), 13.2, 'q', ink); add(f, gly('flagDown')[0], ink, 0, 0, 0, { cast: false }); ctxNotes([['G4', 16, 'q']]); break; }
+      case 'Accent': ctxNotes([['G4', 8, 'q'], ['D5', 15.5, 'q']]); writeNote(dyn, sf, 'treble', N('B4'), 11.8, 'q', ink); sf.put('accent', 11.8, 5.0, hl, dyn); break;
+      case 'First ending': case 'Second ending': {
+        sf.put('barline', 6.2, 0, ink, dyn); ctxNotes([['G4', 8.4, 'h'], ['B4', 14.6, 'h']]); sf.put('dots', 11.4, 0, ink, dyn); sf.put('barline', 12.1, 0, ink, dyn); sf.put('thick', 12.7, 0, ink, dyn); sf.put('thick', 19.6, 0, ink, dyn); sf.put('barline', 19.0, 0, ink, dyn);
+        [[6.4, 12.4, '1.'], [13.0, 18.6, '2.']].forEach(([a, b, l], k) => { const m = (k === 0) === (term === 'First ending') ? hl : ink; add(dyn, box((b - a) * U, 0.025, 0.01), m, sf.X((a + b) / 2), sf.Y(6.6), 0.004, { cast: false }); add(dyn, box(0.025, 1.2 * U, 0.01), m, sf.X(a), sf.Y(6.0), 0.004, { cast: false }); text(dyn, l, sf.X(a + 0.9), sf.Y(5.95), 0.004, m === hl ? LIT({ height: 0.18 }) : { height: 0.18 }); });
+        break; }
+      case 'D.C. al Fine': ctxNotes([['G4', 6.5, 'h'], ['B4', 12.5, 'h']]); sf.put('barline', 9.8, 0, ink, dyn); text(dyn, 'Fine', sf.X(9.4), sf.Y(-1.15), 0.004, { height: 0.17, face: 'italic 700 {px}px "Alegreya"' }); sf.put('barline', 16.4, 0, ink, dyn); sf.put('thick', 17.0, 0, ink, dyn); text(dyn, 'D.C. al Fine', sf.X(15.2), sf.Y(-1.15), 0.004, LIT({ height: 0.2, face: 'italic 700 {px}px "Alegreya"' })); break;
+      case 'Eighth rest': ctxNotes([['G4', 7.5, 'q'], ['A4', 15.5, 'q']]); sf.put('eighthRest', 11.5, 0, hl, dyn); break;
       case 'Key signature': sf.put('flat', 4.7, 2, hl, dyn); sf.put('flat', 5.8, 3.5, hl, dyn); sf.put('four', 7.9, 2, ink, dyn); sf.put('four', 7.9, 0, ink, dyn); ctxNotes([['G4', 10.5, 'h'], ['D5', 14, 'h']]); sf.put('barline', 17.5, 0, ink, dyn); break;
       case 'Ledger line': note(dyn, 'w', 0, sf.X(11.5), sf.Y(-1), ink); sf.put('ledger', 11.5, -1, hl, dyn); break;
     }
   }
+  // what the course's cards say each term means
+  const MEANING = { Fermata: 'pause', 'Breath mark': 'take a breath', Forte: 'loud and strong', 'Mezzo forte': 'moderately loud', Piano: 'soft and quiet', Allegro: 'fast and bright', Moderato: 'moderate speed', Andante: 'moderately slow',
+    Crescendo: 'gradually louder', Diminuendo: 'gradually softer', 'D.C. al Fine': 'repeat from the beginning until Fine', Accent: 'play the note stronger', Slur: 'play the notes smoothly', Tie: 'hold for both notes' };
   function setLabel(tb, str) {
     const old = tb.userData.label; tb.remove(old); if (old.material.map) old.material.map.dispose(); old.material.dispose(); old.geometry.dispose();
     tb.userData.label = text(tb, str, 0, -0.005, 0.026, { height: 0.172, maxW: tb.userData.w - 0.12 });
@@ -494,7 +601,7 @@ function createGame(E) {
   function setupTerms() { st.sub = { kind: 'terms', order: st.seqs.terms }; newTerm(); }
   function newTerm() {
     const s = st.sub, ti = s.order[st.q]; s.ti = ti; s.locked = false; s.t0 = G.t;
-    termScene(TERMS[ti]);
+    termScene(TERMS[ti]); sig('onTerm', TERMS[ti]);
     const tp = termPool(), all = tp.fresh.concat(tp.review);
     s.opts = shuffle([ti, ...shuffle(all.filter((j) => j !== ti)).slice(0, tiles.length - 1)]);
     // fewer terms than cards: the spare cards stay hidden (they come back for the ending)
@@ -508,8 +615,39 @@ function createGame(E) {
     { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
     const ck = s.opts.indexOf(s.ti); if (!ok) { tintTo(tiles[ck].userData.mat, C.good); set(tiles[ck].userData.mat, 1); }
     st.stopRes[st.stop] = ok; mark(ok ? 1 : 0); ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
-    say(ok ? `Correct: ${TERMS[s.ti]}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
+    const mean = MEANING[TERMS[s.ti]] ? ` (${MEANING[TERMS[s.ti]]})` : '';
+    say(ok ? `Correct: ${TERMS[s.ti]}${mean}.` : `The answer is ${TERMS[s.ti]}${mean}.`, ok ? 'good' : 'bad');
     at(ok ? 1.1 : 2.0, () => { if (st.stop === NS - 1) R5.hlMats = []; finishStop(); });
+  }
+
+  // ---------------------------------------------------------------- 6. Key Signatures (Units 7-12): name the key the signature shows
+  const KEYSIGS = { C: [], G: [['F', 1]], D: [['F', 1], ['C', 1]], F: [['B', -1]] };
+  const KEYPOS = { treble: { F: 4, C: 2.5, B: 2 }, bass: { F: 3, C: 1.5, B: 1 } };
+  const KEYWHY = { C: 'No sharps or flats is C major.', G: 'One sharp, F♯, is G major.', D: 'Two sharps, F♯ and C♯, is D major.', F: 'One flat, B♭, is F major.' };
+  const TONICW = { treble: { C: 'C5', G: 'G4', D: 'D5', F: 'F4' }, bass: { C: 'C3', G: 'G2', D: 'D3', F: 'F2' } };
+  function keySeq() { if (!CH.keys) return []; let out = []; while (out.length < 3) out = out.concat(shuffle(CH.keys)); out = out.slice(0, 3); for (let k = 1; k < 3; k++) if (out[k] === out[k - 1]) { const j = (k + 1) % 3; [out[k], out[j]] = [out[j], out[k]]; } return out; }
+  function setupKeys() { st.sub = { kind: 'keys', seq: st.seqs.keys }; newKey(); }
+  function newKey() {
+    const s = st.sub, key = s.seq[st.q], clef = st.inst.clef; s.key = key; s.locked = false; s.opts = CH.keys.slice();
+    clear(R6.dyn); putClef(R6.sf, clef, R6.dyn); set(R6.panelM, 0);
+    const hl = inkLit(); KEYSIGS[key].forEach(([L, a], i) => R6.sf.put(a < 0 ? 'flat' : 'sharp', 4.5 + i * 1.1, KEYPOS[clef][L], hl, R6.dyn));
+    R6.sf.put('four', 7.6, 2, M.ink, R6.dyn); R6.sf.put('four', 7.6, 0, M.ink, R6.dyn); R6.sf.put('barline', 21.2, 0, M.ink, R6.dyn);
+    const n = s.opts.length;
+    R6.keys.forEach((kg, k) => { const u = kg.userData; kg.visible = k < n; kg.position.x = (k - (n - 1) / 2) * 1.18; clear(u.labelG); u.turnAt = -9; tintTo(u.tagMat, C.lit); set(u.tagMat, 0); if (k < n) text(u.labelG, `${s.opts[k]} major`, 0, 0, 0.0, { height: 0.15, face: CINZEL, maxW: 0.86 }); });
+    say(`Which key does this signature show? Click its key (or press 1 to ${n}).`);
+  }
+  function pickKey(k) {
+    const s = st.sub; if (!s || s.kind !== 'keys' || s.locked || k >= s.opts.length) return;
+    s.locked = true; audio();
+    const ok = s.opts[k] === s.key, u = R6.keys[k].userData; u.hitAt = G.t; wispTo(world(R6.keys[k], 0, -0.7, 0.25), 0.25, 0.15);
+    snd.play('tock', { gain: 0.5, f: 520 }); tintTo(u.tagMat, ok ? C.good : C.bad); set(u.tagMat, 1);
+    if (ok) {
+      u.turnAt = G.t + 0.15; tintTo(R6.panelM, C.good); snd.play('click', { gain: 0.6 }, now() + 0.4);
+      at(0.6, () => { set(R6.panelM, 0.6); const t = parseNote(TONICW[st.inst.clef][s.key]); [0, 2, 4].forEach((d, i) => snd.chime(concert({ midi: t.midi + d }), 0.15, now() + i * 0.24)); });
+    } else { const cu = R6.keys[s.opts.indexOf(s.key)].userData; tintTo(cu.tagMat, C.good); set(cu.tagMat, 1); }
+    st.stopRes[st.stop] = ok; mark(ok ? 1 : 0); ok ? snd.right() : snd.wrong();
+    say(ok ? `Yes! ${KEYWHY[s.key]}` : `That signature is ${s.key} major. ${KEYWHY[s.key]}`, ok ? 'good' : 'bad');
+    at(ok ? 1.8 : 2.6, () => finishStop());
   }
 
   // ---------------------------------------------------------------- per frame
@@ -558,6 +696,7 @@ function createGame(E) {
     else if (p.kind === 'seal') setSeal(p.acc);
     else if (p.kind === 'shield') strike(p.k);
     else if (p.kind === 'card') pickCard(p.k);
+    else if (p.kind === 'key') pickKey(p.k);
   }
   function keydown(e) {
     const s = st.sub, k = e.key;
@@ -574,6 +713,7 @@ function createGame(E) {
     }
     else if (s.kind === 'read' && /^[1-3]$/.test(k)) strike(+k - 1);
     else if (s.kind === 'terms' && /^[1-8]$/.test(k)) pickCard(+k - 1);
+    else if (s.kind === 'keys' && /^[1-4]$/.test(k)) pickKey(+k - 1);
   }
 
   // ---------------------------------------------------------------- the painted HUD (on the stage's overlay layer)
@@ -651,7 +791,7 @@ function createGame(E) {
           if (s.phase === 'result') col([{ label: 'Next island', fn: nextRhythm }]);
           else col([{ label: 'Listen', fn: () => runRhythm(false), off: busy }, { label: 'Tap it', fn: () => runRhythm(true), off: busy },
             { label: 'Tempo ' + st.bpm, off: busy, fn: () => { st.bpm = st.bpm === 50 ? 80 : st.bpm === 80 ? 120 : 50; saved.bpm = st.bpm; persist(); } }]);
-          if (s.phase === 'tap' || s.phase === 'count' || s.phase === 'listen') { const b = Math.floor((now() - s.t0) / s.beat); if (b >= 0 && b < 12) { ctx.font = `700 ${H * 0.11}px "Texturina"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.008; const txt = b < 4 ? String(b + 1) : s.phase === 'listen' ? '♪' : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.4); ctx.fillText(txt, W * 0.895, H * 0.4); } }
+          if (s.phase === 'tap' || s.phase === 'count' || s.phase === 'listen') { const b = Math.floor((now() - s.t0) / s.beat); if (b >= 0 && b < (s.cin || 4) + (s.total || 8)) { ctx.font = `700 ${H * 0.11}px "Texturina"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.008; const txt = b < (s.cin || 4) ? String(b + 1) : s.phase === 'listen' ? '♪' : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.4); ctx.fillText(txt, W * 0.895, H * 0.4); } }
         } else if (s && s.kind === 'finger') {
           col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(concert(s.n)) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(concert(s.n)); } }]);
         } else if (s && s.kind === 'write') {
@@ -665,7 +805,7 @@ function createGame(E) {
       const y0 = H * 0.635; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.font = `700 ${H * 0.05}px "Texturina"`; ctx.fillStyle = '#ffe2a0'; ctx.fillText(`Chapter ${CH.n} complete · ${finalPct()}% correct`, W / 2, y0);
       ctx.font = `700 ${H * 0.026}px "Alegreya"`;
-      GAMES.forEach((g, i) => { const tl = st.tallies[i], x = W / 2 + (i - 2) * W * 0.17; ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(tl && tl.n ? pctOf(tl) + '%' : st.skipped[i] ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
+      GAMES.forEach((g, i) => { const tl = st.tallies[i], x = W / 2 + (i - (GAMES.length - 1) / 2) * W * (GAMES.length > 5 ? 0.148 : 0.17); ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(tl && tl.n ? pctOf(tl) + '%' : st.skipped[i] ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
       ctx.globalAlpha = 1;
       if (a > 0.9) {
         row([{ label: 'Climb again', fn: begin }], H * 0.86);

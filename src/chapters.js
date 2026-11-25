@@ -1,13 +1,23 @@
 // ================================================================ the chapters: one climb per course unit
 // Each chapter names its unit, its scenery and its music. The game reads everything else (notes, terms, rhythms) from here,
 // so a new chapter is a new entry plus its scenery. Chosen with ?ch=<n>; Chapter 1 when absent.
-const UNITS = /*UNITS_DATA*/[];   // per instrument: { key, name, clef, family, units: [[notes of unit 1], …[unit 12]], fing: { midi: bitmask } }
+const UNITS = /*UNITS_DATA*/[];
+const SCENE_REG = {};   // each chapter's scenery file registers itself here: SCENE_REG[name] = { look, make }   // per instrument: { key, name, clef, family, units: [[notes of unit 1], …[unit 12]], fing: { midi: bitmask } }
 
 // the terms each unit adds in the course's terms game (ReadTermsProblemMakerFYB, year 1); 'Clef' is the instrument's own clef
 const UNIT_TERMS = [
   ['Bar line', 'Quarter note', 'Quarter rest', 'Double bar line', 'Repeat sign', 'Clef'],
   ['Time signature', 'Sharp', 'Flat', 'Natural'],
   ['Key signature', 'Half note', 'Half rest'],
+  ['Whole note', 'Whole rest', 'Breath mark'],
+  ['Fermata', 'Pick-up note'],
+  ['Forte', 'Mezzo forte', 'Piano', 'Eighth note', 'Beam'],
+  ['Allegro', 'Moderato', 'Andante'],
+  ['Crescendo', 'Diminuendo'],
+  ['Measure number', 'Tie', 'Dotted half note', 'Dotted quarter note'],
+  ['Accent', 'First ending', 'Second ending'],
+  ['D.C. al Fine', 'Slur'],
+  ['Eighth rest'],
 ];
 
 const CHAPTERS = [
@@ -30,13 +40,24 @@ const CHAPTERS = [
   },
   {
     n: 3, unit: 3, title: "The Lighthouse at Cloud's End", scene: 'light',
-    rhythm: { rests: true, eighths: true },                     // course level 3: the first eighth notes, in beamed pairs
+    rhythm: { rests: true, eighths: true, need: ['pair'] },     // course level 3: the first eighth notes, in beamed pairs
     // G minor (B-flat's relative), dusk by the sea: a pad under a squeezebox tune, with waves, gulls and a far bell buoy
     music: {
       bpm: 72, voice: 'reed', sea: true,
       chords: [['G3', 'D4', 'G4', 'Bb4'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['F3', 'C4', 'F4', 'A4']],
       tune: [[['D5', 2], ['Bb4', 1], ['G4', 1]], [['G4', 1], ['Bb4', 1], ['Eb5', 2]], [['D5', 1.5], ['C5', 0.5], ['Bb4', 1], ['F5', 1]], [['F5', 2], ['Eb5', 1], ['C5', 1]],
              [['D5', 2], ['G5', 1], ['F5', 1]], [['Eb5', 1], ['D5', 1], ['Bb4', 2]], [['Bb4', 1], ['C5', 1], ['D5', 1], ['F5', 1]], [['C5', 2], ['A4', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 4, unit: 4, title: 'The Crystal Spire', scene: 'ice',
+    rhythm: { rests: true, eighths: true, pairW: 7, need: ['pair'] },   // course level 4: more eighths
+    // E-flat major (B-flat's subdominant), a still night on the ice: a pad under a celesta tune, wind and starry sparkles
+    music: {
+      bpm: 63, voice: 'glass', wind: true, sparkle: true,
+      chords: [['Eb3', 'Bb3', 'Eb4', 'G4'], ['C3', 'G3', 'C4', 'Eb4'], ['Ab2', 'Eb3', 'Ab3', 'C4'], ['Bb2', 'F3', 'Bb3', 'D4']],
+      tune: [[['G5', 1], ['Bb5', 1], ['Eb6', 2]], [['D6', 1], ['C6', 1], ['G5', 2]], [['Ab5', 1], ['C6', 1], ['Eb6', 1], ['C6', 1]], [['Bb5', 3], [null, 1]],
+             [['G5', 1], ['F5', 1], ['Eb5', 1], ['G5', 1]], [['C6', 2], ['Bb5', 1], ['G5', 1]], [['Ab5', 1.5], ['G5', 0.5], ['F5', 1], ['Ab5', 1]], [['G5', 3], [null, 1]]],
     },
   },
 ];

@@ -13,8 +13,9 @@ Pick a chapter in the bar under the game, or open it directly with `?ch=<n>`. Ev
 | 1. The Climb to the Castle | 1 | Mountain citadel | First notes; Unit 1 terms |
 | 2. The Great Tree | 2 | Giant hollow tree | Two new notes per instrument; rests in the rhythms; sharp, flat, natural, time signature |
 | 3. The Lighthouse at Cloud's End | 3 | Sea-stack lighthouse | One new note per instrument; beamed eighth-note pairs; key signature, half note, half rest. The lamp's beams turn in time with each rhythm and flash on its notes. |
+| 4. The Crystal Spire | 4 | Crystal spire on a frozen lake | One new note per instrument (F♯ for alto sax); more eighths; whole note, whole rest, breath mark. Each right answer grows a ringing crystal on the spire. |
 
-From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-tree.js`, `src/scene-light.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
+From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-*.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
 
 The release number shows in the top-left corner of the game (v7 and up). It is the `VERSION` constant at the top of `src/realm-game.js`; add one for every release to the public site.
 

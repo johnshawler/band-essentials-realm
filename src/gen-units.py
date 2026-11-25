@@ -13,7 +13,7 @@ def midi(n):
     return 12 * (int(m.group(3)) + 1) + L[m.group(1)] + {'#': 1, 'b': -1, None: 0}[m.group(2)]
 
 # the keys each fingering layout in the game shows (realm-play.js LAYOUTS); a fingering that needs any other key is reported
-SHOWN = {'sax': {21, 20, 19, 18, 17, 16, 3}, 'clarinet': {4, 6, 7, 13, 17, 18, 3, 5, 1, 2}, 'flute': {12, 11, 10, 9, 8, 7, 13, 1, 6}, 'valves': {1, 2, 3, 4}}
+SHOWN = {'sax': {21, 20, 19, 18, 17, 16, 3, 12}, 'clarinet': {4, 6, 7, 13, 17, 18, 3, 5, 1, 2, 15, 22}, 'flute': {12, 11, 10, 9, 8, 7, 13, 1, 6}, 'valves': {1, 2, 3, 4}}
 
 res = []
 for key, o in old.items():

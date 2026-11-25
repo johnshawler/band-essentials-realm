@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 11; // shown top left; add one for every release to the public site
+  const VERSION = 12; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -12,9 +12,13 @@
     { name: 'Write Notes', line: 'Drag notes to the correct spot on the staff', rounds: 5 },
     { name: 'Read Notes', line: 'Instantly identify written notes', rounds: 6 },
     { name: 'Terms & Symbols', line: 'Master musical vocabulary and symbols', rounds: 6 },
+    // from Unit 7 a sixth game joins, so those climbs have 18 islands
+    ...(CH.keys ? [{ name: 'Key Signatures', line: 'Open the gate with the key that matches the signature', rounds: 3 }] : []),
   ];
   const TERMS = ['Treble clef', 'Bass clef', 'Staff', 'Bar line', 'Double bar line', 'Measure', 'Repeat sign', 'Time signature', 'Whole note', 'Half note',
-    'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line', 'Key signature'];
+    'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line', 'Key signature',
+    'Breath mark', 'Fermata', 'Pick-up note', 'Forte', 'Mezzo forte', 'Piano', 'Eighth note', 'Beam', 'Allegro', 'Moderato', 'Andante', 'Crescendo', 'Diminuendo',
+    'Measure number', 'Tie', 'Dotted half note', 'Dotted quarter note', 'Accent', 'First ending', 'Second ending', 'D.C. al Fine', 'Slur', 'Eighth rest'];
   const END = [
     { x: 96, y: 90, w: 838, h: 122, c: '#F8B73C' }, { x: 96, y: 316, w: 182, h: 379, c: '#5C66DE' }, { x: 376, y: 310, w: 276, h: 75, c: '#EA5900' },
     { x: 382, y: 473, w: 265, h: 63, c: '#FFFFFF' }, { x: 382, y: 633, w: 264, h: 61, c: '#B0B804' }, { x: 750, y: 316, w: 183, h: 379, c: '#FFFFFF' },
@@ -28,7 +32,7 @@
 
   // Story time for the camera: each of the NS islands has a stretch (the camera drifts across it while it is played),
   // with a flight between stretches; after the last island comes the movie's ending, on the same relative timings.
-  const NS = 15;
+  const NG = GAMES.length, NS = 3 * NG;
   const T = { arrive: [], leave: [], flight: 1.2, gap: 0.07 };
   for (let i = 0; i < NS; i++) { T.arrive.push(3 + 4 * i); T.leave.push(6 + 4 * i); }
   T.lift = T.leave[NS - 1]; T.dark0 = T.lift + 0.2; T.dark1 = T.lift + 1.6; T.camEnd = T.lift + 1.4; T.exact0 = T.lift + 2.2; T.exact1 = T.lift + 2.7;
@@ -100,6 +104,20 @@
     thick: () => [box(0.45, 4, DEPTH, 0, 2, DEPTH / 2)],
     dots: () => [disc(0.2, 0, 1.5), disc(0.2, 0, 2.5)],
     ledger: () => [box(1.9, 0.1, DEPTH * 0.8, 0, 0, DEPTH * 0.4)],
+    // time-signature digits (as 'four': two spaces tall, centred on x = 0)
+    two: () => [ribbon([[-0.6, 1.4, 0.3], [-0.3, 1.9, 0.3], [0.3, 1.9, 0.32], [0.55, 1.45, 0.34], [0.3, 0.95, 0.34], [-0.55, 0.15, 0.34]], 40), box(1.25, 0.3, DEPTH, 0.02, 0.15, DEPTH / 2)],
+    three: () => [ribbon([[-0.55, 1.7, 0.28], [-0.15, 1.95, 0.3], [0.35, 1.75, 0.32], [0.35, 1.25, 0.32], [-0.15, 1.05, 0.3]], 30), ribbon([[-0.15, 1.05, 0.3], [0.45, 0.8, 0.34], [0.4, 0.25, 0.34], [-0.15, 0.02, 0.3], [-0.6, 0.3, 0.28]], 30)],
+    // note parts, in a note's own frame (head at 0, 0)
+    flagDown: () => [ribbon([[-0.57, -3.4, 0.36], [-0.1, -2.75, 0.3], [0.45, -2.25, 0.22], [0.5, -1.5, 0.12]], 24)],
+    flagUp: () => [ribbon([[0.57, 3.4, 0.36], [1.05, 2.75, 0.3], [1.55, 2.2, 0.22], [1.45, 1.45, 0.12]], 24)],
+    dot: () => [disc(0.2, 0, 0)],
+    // marks placed on the staff
+    eighthRest: () => [disc(0.27, -0.3, 2.62), ribbon([[-0.3, 2.45, 0.16], [0.0, 2.45, 0.14], [0.3, 2.78, 0.12]], 10), slab(0.15, 1.75, 0.06, 1.95, -0.24)],
+    breath: () => [disc(0.3, 0, 0.35), ribbon([[0.27, 0.4, 0.22], [0.22, -0.2, 0.16], [-0.05, -0.62, 0.06]], 12)],
+    fermata: () => [ribbon([[-1.05, 0, 0.12], [-0.75, 0.75, 0.2], [0, 1.08, 0.24], [0.75, 0.75, 0.2], [1.05, 0, 0.12]], 30), disc(0.2, 0, 0.25)],
+    accent: () => [slab(1.12, 0.16, 0, 0.25, -0.4636), slab(1.12, 0.16, 0, -0.25, 0.4636)],
+    wholeBar: () => [box(1.15, 0.5, DEPTH, 0, 2.75, DEPTH / 2)],
+
   };
   const _gly = {};
   const gly = (name) => _gly[name] || (_gly[name] = GLY[name]());
@@ -161,9 +179,10 @@
       const TALL = S.H > S.W, FOV = TALL ? 40 : 30, tanV = Math.tan(FOV * Math.PI / 360), tanH = tanV * S.W / S.H, LOGO = LAYOUT(S.W, S.H);
       const anims = [];
       // the chapter's look: the castle world is the default; a chapter with its own scenery overrides parts of it
-      const SC = { tree: { look: TREE_LOOK, make: sceneTree }, light: { look: LIGHT_LOOK, make: sceneLight } }[CH.scene], LOOK = SC ? SC.look : null, LIGHT = CH.scene === 'light';
+      const SC = Object.assign({ tree: { look: TREE_LOOK, make: sceneTree }, light: { look: LIGHT_LOOK, make: sceneLight } }, SCENE_REG)[CH.scene], LOOK = SC ? SC.look : null, LIGHT = CH.scene === 'light';
       // Chapter 3: the lighthouse lamp and the scroll's lantern flash on the rhythm's notes (filled in by the game)
-      const SIG = LIGHT ? { flashAt: [], sweep: null } : null;
+      // a chapter's scenery reacts to the game through SIG: the game calls its hooks (onRhythm, onRight, onTerm, onStop) and gives it sounds
+      const SIG = SC ? { flashAt: [], sweep: null } : null;
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -289,10 +308,10 @@
 
       // ------------------------------------------------------------ the islands
       const SUM = (NS - 1) * STEP + 4;
-      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: A0 + (NS - 1) * DA + Math.PI - 0.35 }) : null;
+      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: A0 + (NS - 1) * DA + Math.PI - 0.35, A0, DA, STEP, NS, CH }) : null;
       const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
-      const gameOf = (i) => i % 5;
+      const gameOf = (i) => i % NG;
       const isl = Array.from({ length: NS }, (_, i) => {
         const a = A0 + i * DA, g = group(scene, RAD * Math.sin(a), i * STEP, RAD * Math.cos(a)); g.rotation.y = a;
         ISLET(g, 4.7, 7 + (i % 2), i + 1);
@@ -345,6 +364,17 @@
         if (n.acc) sf.put(n.acc < 0 ? 'flat' : 'sharp', su - (kind === 'w' ? 1.45 : 1.35), p, mat, parent);
         return nn;
       }
+      // a curve on a staff from su1 to su2 at height p, bulging up (dir 1) or down (-1): ties and slurs
+      function arcOn(sf, su1, su2, p, dir, mat, parent) {
+        const L = su2 - su1, g = group(parent, sf.X(su1), sf.Y(p), 0.012); g.scale.setScalar(U);
+        add(g, ribbon([[0, 0, 0.06], [L * 0.2, dir * 0.45, 0.2], [L * 0.5, dir * 0.62, 0.26], [L * 0.8, dir * 0.45, 0.2], [L, 0, 0.06]], 30), mat, 0, 0, 0, { cast: false }); return g;
+      }
+      // a hairpin: open at the end for a crescendo (grow true), at the start for a diminuendo
+      function hairpin(sf, su1, su2, p, grow, mat, parent) {
+        const L = su2 - su1, g = group(parent, sf.X(su1), sf.Y(p), 0.012); g.scale.setScalar(U); const w = 0.75, a = Math.atan2(w, L), len = Math.hypot(L, w);
+        for (const sy of [-1, 1]) { const m = add(g, box(len, 0.15, DEPTH), mat, L / 2, sy * w / 2, DEPTH / 2, { cast: false }); m.rotation.z = (grow ? 1 : -1) * sy * a; }
+        return g;
+      }
       const putClef = (sf, clef, parent, mat) => clef === 'bass' ? sf.put('bassClef', 0.7, 0, mat, parent) : sf.put('clef', 1.7, 0, mat, parent);
       const text = (parent, str, x, y, z, o) => { const l = label(str, o); l.position.set(x, y, z); parent.add(l); if (l.material.userData.glow) lumText.push(l.material); return l; };
       const lumText = [];
@@ -379,6 +409,7 @@
         });
         restLocal[0] = [2.6, PY + 1.25, 1.0];
         R1.sig = SIG;
+        if (CH.rhythm.eighths) { face.visible = false; R1.dynRoot = group(g, 0, PY, 0.022); }   // these chapters draw their staff for each rhythm, sized to fit
         // Chapter 3: a ship's lantern hangs from the right-hand post and flashes with the lighthouse
         if (LIGHT) {
           const px = PW / 2 + 0.34, top = PY + 0.75, iron = std('#2a2a36', 0.6, 0.45, { flatShading: true });
@@ -514,6 +545,32 @@
         Object.assign(R5, { face, sf, deck, dyn: group(face), hlMats: [] });
         anims.push((t) => R5.hlMats.forEach((m) => set(m, 0.75 + 0.25 * Math.sin(t * 7))));
         restLocal[4] = [2.9, PY + 1.35, 1.1];
+      }
+
+      // ---- 6. Key Signatures (Units 7-12): a stone gate holds a staff with the signature; four golden keys hang below it
+      const R6 = {};
+      if (CH.keys) {
+        const g = props[5];
+        for (const sx of [-1, 1]) { add(g, box(0.62, 4.3, 0.7), M.stone, sx * (PW / 2 + 0.42), 2.15, -0.2); add(g, box(0.8, 0.3, 0.86), M.stoneDark, sx * (PW / 2 + 0.42), 4.38, -0.2); }
+        add(g, box(PW + 1.7, 0.5, 0.8), M.stoneDark, 0, 4.15, -0.2);
+        const arch = add(g, new THREE.TorusGeometry(PW / 2 + 0.1, 0.16, 6, 20, Math.PI), M.gold, 0, 3.6, -0.15); arch.scale.y = 0.25;
+        add(g, K.roundedBox(PW + 0.2, PH + 0.3, 0.12, 0.04, 2), M.stoneDark, 0, PY + 0.3, -0.12);
+        const panelM = glowing(C.parch, 0.0, { rough: 0.8, tint: 0.5 }); add(g, K.roundedBox(PW, PH + 0.1, 0.05, 0.04, 2), panelM, 0, PY + 0.3, 0);
+        const face = group(g, 0, PY + 0.3, 0.03), sf = staff(face, -2.15, 4.3, -0.35);
+        const lock = group(g, 0, 1.05, 0.05); add(lock, K.roundedBox(0.9, 0.7, 0.12, 0.05, 2), M.gold); add(lock, cylZ(0.09, 0.14, 10), M.ink, 0, 0.08, 0.04); add(lock, box(0.08, 0.2, 0.14), M.ink, 0, -0.08, 0.04);
+        add(g, box(5.0, 0.07, 0.07), M.woodDark, 0, 1.75, 0.75);
+        const keys = [0, 1, 2, 3].map((k) => {
+          const kg = group(g, (k - 1.5) * 1.18, 1.72, 0.75), body = group(kg);
+          const km = glowing('#c9a040', 0.25, { metal: 0.9, rough: 0.35, tint: 0.85 });
+          add(body, new THREE.TorusGeometry(0.12, 0.035, 6, 14), km, 0, -0.14, 0); add(body, new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), km, 0, -0.55, 0);
+          add(body, box(0.14, 0.07, 0.04), km, 0.07, -0.78, 0); add(body, box(0.1, 0.06, 0.04), km, 0.05, -0.66, 0);
+          const tm = glowing(C.parch, 0.2, { rough: 0.7, tint: 0.92 }), tag = add(body, K.roundedBox(0.98, 0.3, 0.03, 0.03, 2), tm, 0, -1.08, 0.02);
+          pickable(add(kg, box(1.05, 1.35, 0.3), M.hit, 0, -0.65, 0.05, { cast: false }), { kind: 'key', k });
+          kg.userData = { body, mat: km, tagMat: tm, labelG: group(body, 0, -1.08, 0.04), turnAt: -9, hitAt: -9 }; return kg;
+        });
+        Object.assign(R6, { face, sf, dyn: group(face), keys, panelM, lock });
+        anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
+        restLocal[5] = [2.9, PY + 1.5, 1.1];
       }
 
       // ------------------------------------------------------------ between and around the islands
@@ -657,7 +714,7 @@
 
       // ================================================================ the game
       const R = S.R, BASE = { vignette: R.vignette, grain: R.grain, bloom: R.bloom, ca: R.ca, sun: sun.intensity, key: key.intensity, hemi: hemi.intensity, env: scene.environmentIntensity };
-      const GAME = createGame({ G, T, NS, GAMES, TERMS, isl, props, placeProps, launchTiles, resetTiles, R1, R2, R3, R4, R5, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, staff, text, label, clear, pickable, picks, add, group, box, cylZ, gly, M, C, U, PY, DAIS, CINZEL, CINZEL_B, wispTo, restOf, WS, bump, LET });
+      const GAME = createGame({ G, T, NS, GAMES, TERMS, isl, props, placeProps, launchTiles, resetTiles, R1, R2, R3, R4, R5, R6, tiles, S, K, THREE, set, tintTo, glowing, inkLit, note, writeNote, putClef, staff, arcOn, hairpin, text, label, clear, pickable, picks, add, group, box, cylZ, gly, M, C, U, PY, DAIS, CINZEL, CINZEL_B, wispTo, restOf, WS, bump, LET });
       window.GAME = GAME;
       const _s = new THREE.Vector3(), Y_AXIS = new THREE.Vector3(0, 1, 0);
       let endPic = null;
