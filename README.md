@@ -20,6 +20,7 @@ The site opens on a map of the realm: pick a landmark to climb its chapter, or o
 | 8. The Sky Harbour | 8 | Airship mooring spire | High G for alto sax; tied notes in 3/4; crescendo, diminuendo. The sails swell on the crescendo question and fall slack on the diminuendo. |
 | 9. The Clocktower | 9 | Giant clockwork tower | C♯ for alto sax; dotted halves; measure number, tie, dotted half note, dotted quarter note. Key Signatures adds D major. The gears turn and click in time with each rhythm. |
 | 10. The Storm Peak | 10 | Lightning-struck mountain | Low C for alto sax; tied notes and dotted quarters in 2/4, with accents; accent, first ending, second ending. Lightning strikes on every accented note; the storm clears at the summit. |
+| 11. The Dragon's Roost | 11 | Volcano with a dragon's nest | High A and B for alto sax; tied notes and dotted quarters in 3/4; D.C. al Fine, slur. Key Signatures adds F major. The dragon circles the peak in slur-shaped arcs and settles on its nest at the summit. |
 
 From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-*.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
 
