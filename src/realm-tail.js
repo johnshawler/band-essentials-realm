@@ -2,16 +2,27 @@
 const K = window.K, style = window.STYLES[window.STYLES.length - 1];
 const $ = (id) => document.getElementById(id), canvas = $('view'), noteEl = $('note'), sel = $('inst'), bSnd = $('snd'), bRestart = $('restart'), bFs = $('fs'), page = document.querySelector('.page');
 const size = (params.get('size') || '1280x720').split('x').map(Number);
-try {
+// no chapter chosen: show the realm map instead of a climb
+const MAP = !params.has('ch'), chSel = $('chapter'), bMap = $('map');
+CHAPTERS.forEach((c) => { const o = document.createElement('option'); o.value = c.n; o.textContent = `${c.n}. ${c.title}`; chSel.append(o); });
+chSel.addEventListener('change', () => { const u = new URL(location.href); u.searchParams.set('ch', chSel.value); location.href = u.toString(); });
+bMap.addEventListener('click', () => { const u = new URL(location.href); u.searchParams.delete('ch'); location.href = u.toString(); });
+if (MAP) {
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem('be-realm-l1') || '{}') || {}; } catch (e) {}
+  INST.forEach((i) => { const o = document.createElement('option'); o.value = i.key; o.textContent = i.name; sel.append(o); });
+  sel.value = INST.some((i) => i.key === saved.inst) ? saved.inst : 'saxophone';
+  chSel.insertBefore(Object.assign(document.createElement('option'), { value: '', textContent: 'Choose…' }), chSel.firstChild); chSel.value = '';
+  bMap.hidden = true; bSnd.hidden = true; bRestart.hidden = true; noteEl.hidden = true;
+  showRealmMap(document.querySelector('.stage'), sel);
+  window.READY = true;
+}
+if (!MAP) try {
   const S = await K.run(canvas, style, { samples: 2, width: size[0], height: size[1] });
   const GAME = window.GAME;
   INST.forEach((i) => { const o = document.createElement('option'); o.value = i.key; o.textContent = i.name; sel.append(o); });
   sel.value = GAME.inst.key;
   // chapters: picking one reloads the page on it (each chapter builds its own world)
-  const chSel = $('chapter');
-  CHAPTERS.forEach((c) => { const o = document.createElement('option'); o.value = c.n; o.textContent = `${c.n}. ${c.title}`; chSel.append(o); });
   chSel.value = CH.n;
-  chSel.addEventListener('change', () => { const u = new URL(location.href); if (+chSel.value === 1) u.searchParams.delete('ch'); else u.searchParams.set('ch', chSel.value); location.href = u.toString(); });
   sel.addEventListener('change', () => { GAME.setInstrument(sel.value); canvas.focus(); });
   const syncSnd = () => { bSnd.setAttribute('aria-pressed', String(GAME.sound)); bSnd.textContent = GAME.sound ? 'Sound on' : 'Sound off'; };
   bSnd.addEventListener('click', () => { GAME.setSound(!GAME.sound); syncSnd(); }); syncSnd();

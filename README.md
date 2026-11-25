@@ -17,6 +17,7 @@ Pick a chapter in the bar under the game, or open it directly with `?ch=<n>`. Ev
 | 5. The Falls of Echo | 5 | Cliff beside great waterfalls | New notes per instrument (B♭ and high F for alto sax); 2/4 time; fermata, pick-up note. On the fermata question the falls stop in mid-air. |
 | 6. The Deep Mine | 6 | Cavern round a pillar of ore | Low notes (D, E, F for alto sax); 3/4 time; forte, mezzo forte, piano, eighth note, beam. The cave brightens island by island; forte answers boom and piano answers whisper. |
 | 7. The Twin Towers | 7 | Low tower and high tower | High F♯ for alto sax; tied notes; allegro, moderato, andante. Adds the sixth game, Key Signatures (G and C), so the climb has 18 islands. Both tower bells ring F♯ in octaves. |
+| 8. The Sky Harbour | 8 | Airship mooring spire | High G for alto sax; tied notes in 3/4; crescendo, diminuendo. The sails swell on the crescendo question and fall slack on the diminuendo. |
 
 From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-*.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
 

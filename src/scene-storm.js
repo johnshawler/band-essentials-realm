@@ -43,7 +43,8 @@ function sceneStorm(X) {
     add(scene, X.turfGeo(9.2, 51, 14, 0.6), T.grass, 0, SUM + 2, 0, { cast: false });
     // storm clouds wrapped round the mountain below the summit
     const CL = 70, clouds = new THREE.InstancedMesh(ICO, T.cloud, CL); clouds.castShadow = false; scene.add(clouds);
-    const cl = Array.from({ length: CL }, (_, i) => ({ a: K.hash(i, 1) * Math.PI * 2, r: 24 + 60 * K.hash(i, 2), y: -10 + (SUM - 12) * K.hash(i, 3), s: 8 + 10 * K.hash(i, 4), sp: 0.02 + 0.03 * K.hash(i, 5) }));
+    // clouds hug the mountain inside the ring of islands, and a far ring lies well beyond the camera's path
+    const cl = Array.from({ length: CL }, (_, i) => { const near = i < 40, y = -10 + (SUM - 12) * K.hash(i, 3); return { a: K.hash(i, 1) * Math.PI * 2, r: near ? mR(y) + 3 + 4 * K.hash(i, 2) : 150 + 90 * K.hash(i, 2), y: near ? y : -15 + 40 * K.hash(i, 3), s: near ? 3.5 + 3 * K.hash(i, 4) : 16 + 14 * K.hash(i, 4), sp: (near ? 0.03 : 0.01) + 0.02 * K.hash(i, 5) }; });
     // rain: streaks falling all round the climb
     const RN = 700, rain = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03, 1.4, 0.03), std('#b8c4e0', 0, 0.4, { transparent: true, opacity: 0.45 }), RN); rain.castShadow = false; rain.frustumCulled = false; scene.add(rain);
     const rn = Array.from({ length: RN }, (_, i) => ({ a: K.hash(i, 11) * Math.PI * 2, r: 22 + 40 * K.hash(i, 12), y0: K.hash(i, 13), sp: 30 + 15 * K.hash(i, 14) }));
