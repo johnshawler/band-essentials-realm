@@ -463,7 +463,7 @@ const INST = /*INST_DATA*/[];
         restLocal[3] = [2.75, DAIS + 1.6, 1.3];
       }
 
-      // ---- 5. Terms & Symbols: an ice slab over an altar, sixteen rune lights for a timer, eight answer cards
+      // ---- 5. Terms & Symbols: an ice slab over an altar, eight answer cards
       const tiles = [];
       const R5 = {};
       {
@@ -473,8 +473,6 @@ const INST = /*INST_DATA*/[];
         add(g, K.roundedBox(PW, PH, 0.05, 0.04, 2), M.frost, 0, PY, 0.0);
         shards(g, -2.9, 1.0, -0.3, 1.1, M_CYAN, 51, 4); shards(g, 2.95, 1.0, -0.3, 0.9, M_VIOLET, 52, 4);
         const face = group(g, 0, PY, 0.027), sf = staff(face, -2.15, 4.3, -0.55);
-        const NL = 16, TY = 0.76; add(face, box(4.2, 0.03, 0.02), M.goldSmooth, 0, TY - 0.09, 0.01, { cast: false });
-        const lights = Array.from({ length: NL }, (_, k) => { const m = glowing('#b9b3c6', 0.9, { glow: '#30c8ff', to: '#0f9fe0', tint: 1, facet: true, rough: 0.3 }), d = add(face, OCTA, m, -1.95 + k * 3.9 / (NL - 1), TY, 0.05, { cast: false }); d.scale.set(0.07, 0.085, 0.05); d.userData.mat = m; return d; });
         add(g, K.roundedBox(5.3, 0.5, 1.5, 0.05, 2), M.stone, 0, 0.25, 0.3); add(g, box(5.5, 0.12, 1.7), M.stoneDark, 0, 0.06, 0.3); add(g, box(5.0, 0.9, 0.5), M.stone, 0, 0.75, -0.05);
         const deck = group(g, 0, 1.02, 0.55); deck.rotation.x = -0.5;
         add(deck, K.roundedBox(5.0, 1.0, 0.14, 0.04, 2), M.stoneDark, 0, 0, -0.04); add(deck, K.roundedRect(4.84, 0.84, 0.04), std('#3d2a66', 0, 0.8), 0, 0, 0.034, { cast: false });
@@ -486,7 +484,7 @@ const INST = /*INST_DATA*/[];
           tb.userData = { mat, body, label: l, plate, w, h };
           tb.position.set(((k % 4) - 1.5) * 1.17, k < 4 ? 0.19 : -0.19, 0.075); deck.add(tb); tiles.push(tb);
         }
-        Object.assign(R5, { face, sf, lights, deck, dyn: group(face), hlMats: [] });
+        Object.assign(R5, { face, sf, deck, dyn: group(face), hlMats: [] });
         anims.push((t) => R5.hlMats.forEach((m) => set(m, 0.75 + 0.25 * Math.sin(t * 7))));
         restLocal[4] = [2.9, PY + 1.35, 1.1];
       }

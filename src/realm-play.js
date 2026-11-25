@@ -437,21 +437,20 @@ function createGame(E) {
     termScene(TERMS[ti]);
     s.opts = shuffle([ti, ...shuffle(TERMS.map((_, j) => j).filter((j) => j !== ti)).slice(0, 7)]);
     tiles.forEach((tb, k) => { setLabel(tb, TERMS[s.opts[k]]); tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); });
-    say('Name the glowing symbol before the rune lights go out (keys 1 to 8).');
+    say('Name the glowing symbol (keys 1 to 8).');
   }
   function pickCard(k) {
     const s = st.sub; if (!s || s.kind !== 'terms' || s.locked) return;
     s.locked = true; audio();
-    const ok = k >= 0 && s.opts[k] === s.ti, left = Math.max(0, 1 - (G.t - s.t0) / 8);
-    if (k >= 0) { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
+    const ok = s.opts[k] === s.ti;
+    { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
     const ck = s.opts.indexOf(s.ti); if (!ok) { tintTo(tiles[ck].userData.mat, C.good); set(tiles[ck].userData.mat, 1); }
     st.stopRes[st.stop] = ok; mark(ok ? 1 : 0); ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
-    say(ok ? `Correct: ${TERMS[s.ti]}.` : k < 0 ? `Time's up. That is a ${TERMS[s.ti].toLowerCase()}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
+    say(ok ? `Correct: ${TERMS[s.ti]}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
     at(ok ? 1.1 : 2.0, () => { if (st.stop === NS - 1) R5.hlMats = []; finishStop(); });
   }
 
   // ---------------------------------------------------------------- per frame
-  let lastTick = -1;
   function frame(t) {
     G.t = t; ambient();
     for (let i = 0; i < st.events.length; i++) { const e = st.events[i]; if (t >= e.t) { st.events.splice(i--, 1); e.fn(); } }
@@ -462,14 +461,7 @@ function createGame(E) {
     }
     if (G.mode === 'finale') { G.endTau = Math.min(T.end, T.lift + (t - st.endStart)); if (G.endTau >= T.end - 1.2) { G.mode = 'summary'; st.sumAt = t; saveBest(); } }
     if (G.mode === 'summary') { G.endTau = T.end; G.summaryFade = K.seg(t, st.sumAt, st.sumAt + 0.8); }
-    // the terms timer: sixteen rune lights go out over eight seconds
     const s = st.sub;
-    if (G.mode === 'play' && s && s.kind === 'terms') {
-      const left = s.locked ? s.leftAt : Math.max(0, 1 - (t - s.t0) / 8); if (!s.locked) s.leftAt = left;
-      R5.lights.forEach((d, k) => set(d.userData.mat, K.clamp((left * 16 - k) * 3) * (0.85 + 0.15 * Math.sin(t * 8 + k))));
-      const n = Math.ceil(left * 16); if (!s.locked && n !== lastTick) { if (lastTick > n && kit) snd.play('tick', { gain: 0.3, f: 3200 + (n % 2) * 700 }); lastTick = n; }
-      if (!s.locked && left <= 0) pickCard(-1);
-    } else R5.lights.forEach((d) => set(d.userData.mat, 0));
     // the wisp drifts back to its resting place when nothing has happened for a while
     if (G.mode === 'play' && WS.free && t > WS.t0 + WS.dur + 2.5 && !(s && s.kind === 'rhythm' && s.phase !== 'ready' && s.phase !== 'result')) wispTo(restOf(st.stop), 0.6, 0.15);
   }

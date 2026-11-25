@@ -1325,7 +1325,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         restLocal[3] = [2.75, DAIS + 1.6, 1.3];
       }
 
-      // ---- 5. Terms & Symbols: an ice slab over an altar, sixteen rune lights for a timer, eight answer cards
+      // ---- 5. Terms & Symbols: an ice slab over an altar, eight answer cards
       const tiles = [];
       const R5 = {};
       {
@@ -1335,8 +1335,6 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         add(g, K.roundedBox(PW, PH, 0.05, 0.04, 2), M.frost, 0, PY, 0.0);
         shards(g, -2.9, 1.0, -0.3, 1.1, M_CYAN, 51, 4); shards(g, 2.95, 1.0, -0.3, 0.9, M_VIOLET, 52, 4);
         const face = group(g, 0, PY, 0.027), sf = staff(face, -2.15, 4.3, -0.55);
-        const NL = 16, TY = 0.76; add(face, box(4.2, 0.03, 0.02), M.goldSmooth, 0, TY - 0.09, 0.01, { cast: false });
-        const lights = Array.from({ length: NL }, (_, k) => { const m = glowing('#b9b3c6', 0.9, { glow: '#30c8ff', to: '#0f9fe0', tint: 1, facet: true, rough: 0.3 }), d = add(face, OCTA, m, -1.95 + k * 3.9 / (NL - 1), TY, 0.05, { cast: false }); d.scale.set(0.07, 0.085, 0.05); d.userData.mat = m; return d; });
         add(g, K.roundedBox(5.3, 0.5, 1.5, 0.05, 2), M.stone, 0, 0.25, 0.3); add(g, box(5.5, 0.12, 1.7), M.stoneDark, 0, 0.06, 0.3); add(g, box(5.0, 0.9, 0.5), M.stone, 0, 0.75, -0.05);
         const deck = group(g, 0, 1.02, 0.55); deck.rotation.x = -0.5;
         add(deck, K.roundedBox(5.0, 1.0, 0.14, 0.04, 2), M.stoneDark, 0, 0, -0.04); add(deck, K.roundedRect(4.84, 0.84, 0.04), std('#3d2a66', 0, 0.8), 0, 0, 0.034, { cast: false });
@@ -1348,7 +1346,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
           tb.userData = { mat, body, label: l, plate, w, h };
           tb.position.set(((k % 4) - 1.5) * 1.17, k < 4 ? 0.19 : -0.19, 0.075); deck.add(tb); tiles.push(tb);
         }
-        Object.assign(R5, { face, sf, lights, deck, dyn: group(face), hlMats: [] });
+        Object.assign(R5, { face, sf, deck, dyn: group(face), hlMats: [] });
         anims.push((t) => R5.hlMats.forEach((m) => set(m, 0.75 + 0.25 * Math.sin(t * 7))));
         restLocal[4] = [2.9, PY + 1.35, 1.1];
       }
@@ -1987,21 +1985,20 @@ function createGame(E) {
     termScene(TERMS[ti]);
     s.opts = shuffle([ti, ...shuffle(TERMS.map((_, j) => j).filter((j) => j !== ti)).slice(0, 7)]);
     tiles.forEach((tb, k) => { setLabel(tb, TERMS[s.opts[k]]); tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); });
-    say('Name the glowing symbol before the rune lights go out (keys 1 to 8).');
+    say('Name the glowing symbol (keys 1 to 8).');
   }
   function pickCard(k) {
     const s = st.sub; if (!s || s.kind !== 'terms' || s.locked) return;
     s.locked = true; audio();
-    const ok = k >= 0 && s.opts[k] === s.ti, left = Math.max(0, 1 - (G.t - s.t0) / 8);
-    if (k >= 0) { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
+    const ok = s.opts[k] === s.ti;
+    { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
     const ck = s.opts.indexOf(s.ti); if (!ok) { tintTo(tiles[ck].userData.mat, C.good); set(tiles[ck].userData.mat, 1); }
     st.stopRes[st.stop] = ok; mark(ok ? 1 : 0); ok ? (snd.chime('F6', 0.13), snd.right()) : snd.wrong();
-    say(ok ? `Correct: ${TERMS[s.ti]}.` : k < 0 ? `Time's up. That is a ${TERMS[s.ti].toLowerCase()}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
+    say(ok ? `Correct: ${TERMS[s.ti]}.` : `That is a ${TERMS[s.ti].toLowerCase()}.`, ok ? 'good' : 'bad');
     at(ok ? 1.1 : 2.0, () => { if (st.stop === NS - 1) R5.hlMats = []; finishStop(); });
   }
 
   // ---------------------------------------------------------------- per frame
-  let lastTick = -1;
   function frame(t) {
     G.t = t; ambient();
     for (let i = 0; i < st.events.length; i++) { const e = st.events[i]; if (t >= e.t) { st.events.splice(i--, 1); e.fn(); } }
@@ -2012,14 +2009,7 @@ function createGame(E) {
     }
     if (G.mode === 'finale') { G.endTau = Math.min(T.end, T.lift + (t - st.endStart)); if (G.endTau >= T.end - 1.2) { G.mode = 'summary'; st.sumAt = t; saveBest(); } }
     if (G.mode === 'summary') { G.endTau = T.end; G.summaryFade = K.seg(t, st.sumAt, st.sumAt + 0.8); }
-    // the terms timer: sixteen rune lights go out over eight seconds
     const s = st.sub;
-    if (G.mode === 'play' && s && s.kind === 'terms') {
-      const left = s.locked ? s.leftAt : Math.max(0, 1 - (t - s.t0) / 8); if (!s.locked) s.leftAt = left;
-      R5.lights.forEach((d, k) => set(d.userData.mat, K.clamp((left * 16 - k) * 3) * (0.85 + 0.15 * Math.sin(t * 8 + k))));
-      const n = Math.ceil(left * 16); if (!s.locked && n !== lastTick) { if (lastTick > n && kit) snd.play('tick', { gain: 0.3, f: 3200 + (n % 2) * 700 }); lastTick = n; }
-      if (!s.locked && left <= 0) pickCard(-1);
-    } else R5.lights.forEach((d) => set(d.userData.mat, 0));
     // the wisp drifts back to its resting place when nothing has happened for a while
     if (G.mode === 'play' && WS.free && t > WS.t0 + WS.dur + 2.5 && !(s && s.kind === 'rhythm' && s.phase !== 'ready' && s.phase !== 'result')) wispTo(restOf(st.stop), 0.6, 0.15);
   }
