@@ -1,8 +1,8 @@
 # Band Adventures
 
-**Chapter 1: The Climb to the Castle**
+**Twelve chapters, one for each unit of Band Essentials 1**
 
-A playable version of the High Fantasy *Band Essentials* motion graphic. Fifteen floating islands climb a mountain toward the citadel on its summit. Each island holds one exercise from the five Level 1 games, in turn: Read Rhythms, Fingering Trainer, Write Notes, Read Notes and Terms & Symbols, three times round. Reaching the top plays the movie's ending.
+A playable game grown from the High Fantasy *Band Essentials* motion graphic. Each chapter is a climb up a landmark on a stair of floating islands, and each island holds one exercise from the course's games, in turn: Read Rhythms, Fingering Trainer, Write Notes, Read Notes and Terms & Symbols (and Key Signatures from Chapter 7), three times round. Reaching the top plays the movie's ending.
 
 ## Chapters
 
@@ -21,6 +21,7 @@ The site opens on a map of the realm: pick a landmark to climb its chapter, or o
 | 9. The Clocktower | 9 | Giant clockwork tower | C♯ for alto sax; dotted halves; measure number, tie, dotted half note, dotted quarter note. Key Signatures adds D major. The gears turn and click in time with each rhythm. |
 | 10. The Storm Peak | 10 | Lightning-struck mountain | Low C for alto sax; tied notes and dotted quarters in 2/4, with accents; accent, first ending, second ending. Lightning strikes on every accented note; the storm clears at the summit. |
 | 11. The Dragon's Roost | 11 | Volcano with a dragon's nest | High A and B for alto sax; tied notes and dotted quarters in 3/4; D.C. al Fine, slur. Key Signatures adds F major. The dragon circles the peak in slur-shaped arcs and settles on its nest at the summit. |
+| 12. The Star Observatory | 12 | Observatory above the clouds | High C for alto sax; tied notes, dotted quarters and eighth rests in 4/4; eighth rest. Right answers light stars that form a staff across the sky; at the summit the earlier landmarks light up round the horizon. |
 
 From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-*.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
 

@@ -149,7 +149,7 @@ const CHAPTERS = [
     },
   },
 ];
-const RELEASED = 11;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+const RELEASED = 12;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
 CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 
