@@ -3,7 +3,7 @@
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 const INST = /*INST_DATA*/[];
 {
-  const VERSION = 7; // shown top left; add one for every release to the public site
+  const VERSION = 8; // shown top left; add one for every release to the public site
   const TITLE = 'Band Adventures';
   const OPEN_LINE = 'Chapter 1: The Climb to the Castle';
   const GAMES = [
