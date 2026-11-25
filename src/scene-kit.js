@@ -28,7 +28,7 @@ function sceneKit(X) {
     const o = { vertexColors: true, flatShading: flat }; if (emissive) { o.emissive = new THREE.Color(emissive[0]); o.emissiveIntensity = emissive[1]; }
     const m = add(scene, mesh, std('#ffffff', metal, rough, o), 0, 0, 0, { cast: false }); m.receiveShadow = false; return m;
   }
-  const bands = (hexes, h, y0, jitter = 0.35) => { const C = hexes.map((x) => new THREE.Color(x)), c = new THREE.Color(); return (y, f) => c.copy(C[Math.floor((y - y0) / h) % C.length]).lerp(C[0], jitter * K.hash(f, 4)); };
+  const bands = (hexes, h, y0, jitter = 0.35) => { const C = hexes.map((x) => new THREE.Color(x)), c = new THREE.Color(); return (y, f) => c.copy(C[((Math.floor((y - y0) / h) % C.length) + C.length) % C.length]).lerp(C[0], jitter * K.hash(f, 4)); };
   // an island: a rock body, a top (turf, snow, sand...), and timbers or bridges back to the landmark (radius at height y: landR(y))
   function islet(parent, r, depth, seed, { rock, rock2, top, under, landR, strut, strut2, strutR = 0.24, links = true, decor } = {}) {
     add(parent, rockGeo(r, depth, seed), seed % 2 && rock2 ? rock2 : rock, 0, -0.2, 0);

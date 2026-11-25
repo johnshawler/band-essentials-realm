@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 13; // shown top left; add one for every release to the public site
+  const VERSION = 14; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -267,7 +267,7 @@
         if (!LOOK || LOOK.cloudSea !== false) { const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
         for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); } }
       }
-      const drift = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 48); drift.castShadow = false; drift.receiveShadow = false; scene.add(drift);
+      const drift = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 48); drift.castShadow = false; drift.receiveShadow = false; scene.add(drift); drift.visible = !LOOK || LOOK.drift !== false;
       const driftAt = (t) => {
         for (let c = 0; c < 12; c++) { const a = Math.PI + (K.hash(c, 21) - 0.5) * 2.6, r = 70 + K.hash(c, 22) * 150, y = -4 + K.hash(c, 23) * 46, cx = Math.sin(a) * r + (t % 400) * (0.25 + 0.3 * K.hash(c, 24)), cz = Math.cos(a) * r;
           for (let j = 0; j < 4; j++) { const s = (5 + K.hash(c, j + 25) * 6) * (j === 0 ? 1.3 : 1); K.place(drift, c * 4 + j, [cx + (j - 1.5) * 6.5, y + (j % 2) * 1.6 - 1, cz + (K.hash(c, j + 30) - 0.5) * 5], null, [s * 1.3, s * 0.55, s]); } }

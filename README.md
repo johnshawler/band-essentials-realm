@@ -15,6 +15,7 @@ Pick a chapter in the bar under the game, or open it directly with `?ch=<n>`. Ev
 | 3. The Lighthouse at Cloud's End | 3 | Sea-stack lighthouse | One new note per instrument; beamed eighth-note pairs; key signature, half note, half rest. The lamp's beams turn in time with each rhythm and flash on its notes. |
 | 4. The Crystal Spire | 4 | Crystal spire on a frozen lake | One new note per instrument (F♯ for alto sax); more eighths; whole note, whole rest, breath mark. Each right answer grows a ringing crystal on the spire. |
 | 5. The Falls of Echo | 5 | Cliff beside great waterfalls | New notes per instrument (B♭ and high F for alto sax); 2/4 time; fermata, pick-up note. On the fermata question the falls stop in mid-air. |
+| 6. The Deep Mine | 6 | Cavern round a pillar of ore | Low notes (D, E, F for alto sax); 3/4 time; forte, mezzo forte, piano, eighth note, beam. The cave brightens island by island; forte answers boom and piano answers whisper. |
 
 From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-*.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
 

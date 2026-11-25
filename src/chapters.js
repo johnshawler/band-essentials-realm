@@ -93,8 +93,30 @@ const CHAPTERS = [
              [['G5', 1.5], ['F#5', 0.5], ['E5', 1], ['D5', 1]], [['B4', 1], ['E5', 1], ['G5', 2]], [['E5', 1], ['G5', 1], ['C6', 1], ['B5', 1]], [['A5', 2], ['D5', 1], [null, 1]]],
     },
   },
+  {
+    n: 8, unit: 8, title: 'The Sky Harbour', scene: 'harbour', keys: ['G', 'C'],
+    rhythm: { rests: true, eighths: true, ties: true, meter: 3, need: ['tie'] },   // course level 8: tied notes in 3/4
+    // C major, a windy waltz among the airships: a pad under a flute tune, with wind
+    music: {
+      bpm: 88, voice: 'flute', wind: true,
+      chords: [['C3', 'G3', 'C4', 'E4'], ['A2', 'E3', 'A3', 'C4'], ['F2', 'C3', 'F3', 'A3'], ['G2', 'D3', 'G3', 'B3']],
+      tune: [[['E5', 1], ['G5', 1], ['C6', 2]], [['B5', 1], ['A5', 1], ['E5', 2]], [['F5', 1], ['A5', 1], ['C6', 1], ['A5', 1]], [['G5', 3], [null, 1]],
+             [['C6', 1.5], ['B5', 0.5], ['A5', 1], ['G5', 1]], [['E5', 1], ['A5', 1], ['C6', 2]], [['A5', 1], ['G5', 1], ['F5', 1], ['D5', 1]], [['G5', 2], ['B4', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 9, unit: 9, title: 'The Clocktower', scene: 'clock', keys: ['G', 'C', 'D'],
+    rhythm: { rests: true, eighths: true, ties: true, dots: true, need: ['dh'] },   // course level 9: dotted halves in 4/4
+    // D major at sunset among the gears: a pad under a bell tune, with the clock's ticking
+    music: {
+      bpm: 80, voice: 'bellv', ticks: true,
+      chords: [['D3', 'A3', 'D4', 'F#4'], ['B2', 'F#3', 'B3', 'D4'], ['G2', 'D3', 'G3', 'B3'], ['A2', 'E3', 'A3', 'C#4']],
+      tune: [[['F#5', 1], ['A5', 1], ['D6', 2]], [['C#6', 1], ['B5', 1], ['F#5', 2]], [['G5', 1], ['B5', 1], ['D6', 1], ['B5', 1]], [['A5', 3], [null, 1]],
+             [['D6', 1], ['C#6', 1], ['B5', 1], ['A5', 1]], [['F#5', 1], ['B5', 1], ['D6', 2]], [['B5', 1], ['A5', 1], ['G5', 1], ['E5', 1]], [['A5', 2], ['C#5', 1], [null, 1]]],
+    },
+  },
 ];
-const RELEASED = 5;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+const RELEASED = 6;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
 CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 

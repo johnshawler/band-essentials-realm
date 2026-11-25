@@ -956,8 +956,30 @@ const CHAPTERS = [
              [['G5', 1.5], ['F#5', 0.5], ['E5', 1], ['D5', 1]], [['B4', 1], ['E5', 1], ['G5', 2]], [['E5', 1], ['G5', 1], ['C6', 1], ['B5', 1]], [['A5', 2], ['D5', 1], [null, 1]]],
     },
   },
+  {
+    n: 8, unit: 8, title: 'The Sky Harbour', scene: 'harbour', keys: ['G', 'C'],
+    rhythm: { rests: true, eighths: true, ties: true, meter: 3, need: ['tie'] },   // course level 8: tied notes in 3/4
+    // C major, a windy waltz among the airships: a pad under a flute tune, with wind
+    music: {
+      bpm: 88, voice: 'flute', wind: true,
+      chords: [['C3', 'G3', 'C4', 'E4'], ['A2', 'E3', 'A3', 'C4'], ['F2', 'C3', 'F3', 'A3'], ['G2', 'D3', 'G3', 'B3']],
+      tune: [[['E5', 1], ['G5', 1], ['C6', 2]], [['B5', 1], ['A5', 1], ['E5', 2]], [['F5', 1], ['A5', 1], ['C6', 1], ['A5', 1]], [['G5', 3], [null, 1]],
+             [['C6', 1.5], ['B5', 0.5], ['A5', 1], ['G5', 1]], [['E5', 1], ['A5', 1], ['C6', 2]], [['A5', 1], ['G5', 1], ['F5', 1], ['D5', 1]], [['G5', 2], ['B4', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 9, unit: 9, title: 'The Clocktower', scene: 'clock', keys: ['G', 'C', 'D'],
+    rhythm: { rests: true, eighths: true, ties: true, dots: true, need: ['dh'] },   // course level 9: dotted halves in 4/4
+    // D major at sunset among the gears: a pad under a bell tune, with the clock's ticking
+    music: {
+      bpm: 80, voice: 'bellv', ticks: true,
+      chords: [['D3', 'A3', 'D4', 'F#4'], ['B2', 'F#3', 'B3', 'D4'], ['G2', 'D3', 'G3', 'B3'], ['A2', 'E3', 'A3', 'C#4']],
+      tune: [[['F#5', 1], ['A5', 1], ['D6', 2]], [['C#6', 1], ['B5', 1], ['F#5', 2]], [['G5', 1], ['B5', 1], ['D6', 1], ['B5', 1]], [['A5', 3], [null, 1]],
+             [['D6', 1], ['C#6', 1], ['B5', 1], ['A5', 1]], [['F#5', 1], ['B5', 1], ['D6', 2]], [['B5', 1], ['A5', 1], ['G5', 1], ['E5', 1]], [['A5', 2], ['C#5', 1], [null, 1]]],
+    },
+  },
 ];
-const RELEASED = 5;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+const RELEASED = 6;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
 CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 
@@ -971,6 +993,117 @@ const chapterTerms = (clef) => {
   const own = (t) => (t === 'Clef' ? (clef === 'bass' ? 'Bass clef' : 'Treble clef') : t);
   return { fresh: UNIT_TERMS[CH.unit - 1].map(own), review: [].concat(...UNIT_TERMS.slice(0, CH.unit - 1)).map(own) };
 };
+
+// ================================================================ Chapter 9 scenery: the Clocktower
+// A giant clockwork tower of stone and brass at sunset, with clock faces, a swinging pendulum and great gears on its walls. The
+// islands are stone landings on brass gears that jut from the tower and turn slowly. During Read Rhythms every gear turns in
+// time with the tempo, clicking once per beat. At the summit the clock strikes, and beyond it storm clouds gather round a
+// jagged peak (Chapter 10).
+const CLOCK_LOOK = {
+  env: { top: '#3a4a8a', horizon: '#ffa070', bottom: '#3a2a3a', intensity: 0.62, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#ffb080', power: 4.4 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff90a0', power: 1.8 }, { pos: [0, 44, -12], size: [44, 12], color: '#9a90ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffc070', power: 2.4 }] },
+  hemi: ['#ffc8a8', '#3a3040', 0.48], sun: '#ffb880', sunPower: 2.5, fog: '#8a6a7a',
+  sky: [[0, '#1a1e50'], [0.24, '#3a3478'], [0.38, '#8a4a80'], [0.45, '#e87a6a'], [0.49, '#ffb070'], [0.5, '#ffd090'], [0.53, '#a8606a'], [1, '#2a1a2a']],
+  skyGlow: [[0.84, 0.9, 0.22], [0.66, 0.35, 0.16]], glowRGB: '255,170,110', stars: false,
+  sunDisc: { color: '#ffc080', k: 1.6, pos: [-150, 50, -760], r: 56 }, moon2: false,
+  peak: '#4a3a5a', cloud: '#e8a8a0', shards: ['#a0702a', '#ffd070', '#4a6ab0', '#9ad0ff'],
+};
+
+function sceneClock(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, getG, A0, DA, STEP, NS, RAD } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, CONE, ending, glowMat } = kit;
+  const T = {
+    stone: facet('#a89a8c'), stone2: facet('#8a7c70'), slate: facet('#4a4458'), brass: std('#c8963a', 0.9, 0.35, { flatShading: true }), brass2: std('#9a6a2a', 0.9, 0.4, { flatShading: true }),
+    iron: std('#3a3a44', 0.7, 0.45, { flatShading: true }), face: std('#f4ead4', 0, 0.6), ink: std('#2a2030', 0, 0.5), copper: std('#4a9a8a', 0.6, 0.45, { flatShading: true }),
+  };
+  const tR = (y) => K.lerp(13, 9, K.clamp((y + 30) / (SUM + 30)));
+  // a gear: toothed disc with spokes, depth d, lying in the XY plane
+  const gearCache = {};
+  function gearGeo(r, n, d) {
+    const key = `${r}:${n}:${d}`; if (gearCache[key]) return gearCache[key];
+    const s = new THREE.Shape(), ti = r * 0.86;
+    for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 0.25) / n * Math.PI * 2, a2 = (k + 0.5) / n * Math.PI * 2, a3 = (k + 0.75) / n * Math.PI * 2;
+      const P = [[ti, a0], [r, a1], [r, a2], [ti, a3]]; P.forEach(([rr, a], j) => (k === 0 && j === 0 ? s.moveTo : s.lineTo).call(s, Math.cos(a) * rr, Math.sin(a) * rr)); }
+    s.closePath();
+    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2 + 0.3, h = new THREE.Path(), rr = r * 0.48, w = 0.5; h.absarc(Math.cos(a) * rr, Math.sin(a) * rr, r * 0.2, 0, Math.PI * 2, true); void w; s.holes.push(h); }
+    const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false, curveSegments: 6 }); g.translate(0, 0, -d / 2);
+    return (gearCache[key] = g);
+  }
+  const gears = [];   // { m, teeth, dir, slow }
+  const addGear = (parent, r, n, d, mat, x, y, z, rot, dir, slow = 0.1) => { const m = add(parent, gearGeo(r, n, d), mat, x, y, z, { cast: false }); m.rotation.set(rot[0], rot[1], rot[2]); m.rotation.order = 'YXZ'; gears.push({ m, teeth: n, dir, slow, base: rot[2] }); return m; };
+  // during a rhythm, the gears step one tooth per beat; otherwise they creep round
+  let tick = null;
+  SIG.onRhythm = (r) => { tick = r; if (!SIG.snd) return; const off = SIG.now() - getG().t; for (let b = 0; b < r.cin + r.total; b++) SIG.snd.play('tick', { gain: 0.22, f: b < r.cin ? 5200 : 3600 }, r.t0 + b * r.beat + off); };
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 2) { add(g, new THREE.CylinderGeometry(0.06, 0.08, h * 0.6, 6), T.iron, 0, h * 0.3, 0); const l = add(g, new THREE.SphereGeometry(0.2, 8, 6), lum('#7a5a20', '#ffd27a', 2.4), 0, h * 0.62, 0, { cast: false }); void l; }
+    else addGear(g, h * 0.18, 10, 0.12, T.brass2, 0, h * 0.2, 0, [0, 0, 0], seed % 4 ? 1 : -1, 0.4);
+    return g;
+  };
+  // an island: a stone landing on a turning brass gear, held to the tower by an iron arm
+  function islet(parent, r, depth, seed) {
+    const top = add(parent, X.turfGeo(r * 0.92, seed, 11, 0.4), T.stone, 0, 0, 0);
+    add(parent, X.turfGeo(r * 0.98, seed + 1, 11, 0.35), T.stone2, 0, -0.38, 0); void top;
+    addGear(parent, r * 1.08, 24, 0.7, T.brass, 0, -0.95, 0, [Math.PI / 2, 0, 0], seed % 2 ? 1 : -1, 0.05);
+    addGear(parent, r * 0.55, 14, 0.5, T.brass2, r * 0.5, -2.3, -r * 0.3, [Math.PI / 2, 0, 0], seed % 2 ? -1 : 1, 0.09);
+    add(parent, new THREE.CylinderGeometry(0.5, 0.5, 2.8, 10), T.iron, 0, -2.0, 0);
+    parent.updateMatrixWorld(true); const reach = RAD - tR(parent.position.y - 2) + 0.6;
+    beam(parent, [0, -1.6, 0], [0, -1.8, -reach], 0.45, T.iron); beam(parent, [0, -3.0, 0], [0, -1.8, -reach + 2], 0.3, T.iron);
+  }
+  const rocklet = (a, r, y, size, seed) => { const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); addGear(g, size * 1.1, 16, 0.4, seed % 2 ? T.brass : T.copper, 0, 0, 0, [K.hash(seed, 1) * 1.2, a, 0], seed % 2 ? 1 : -1, 0.12); anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g; };
+  const step = kit.stepOf(T.brass2, T.stone2, new THREE.CylinderGeometry(0.55, 0.55, 0.16, 12));
+
+  function landmark() {
+    const c = new THREE.Color(), band = bands(['#a89a8c', '#9a8c80', '#b4a698'], 4, -30), BR = new THREE.Color('#b8883a');
+    column({ y0: -30, y1: SUM + 2, r0: 13, r1: 9, seg: 8, rows: 12, jag: 0.02, wob: 0.3, colour: (y, f) => { c.copy(band(y, f)); if (((y + 30) % 9) < 0.9) c.lerp(BR, 0.8); return c; } });
+    // big gears set into the walls, all round
+    for (let k = 0; k < 16; k++) { const a = k * 2.399 + 0.3, y = -20 + (k / 16) * (SUM + 10), r = tR(y) + 0.3, rr = 3 + 3 * K.hash(k, 4); addGear(scene, rr, 12 + 4 * Math.round(rr), 0.6, k % 3 ? T.brass : T.copper, Math.sin(a) * r, y, Math.cos(a) * r, [0, a, 0], k % 2 ? 1 : -1, 0.08); }
+    // the clock: four faces near the top, hands, a bell cupola above, and a pendulum low on the front
+    const top = group(scene, 0, SUM + 2, 0);
+    add(top, new THREE.BoxGeometry(20, 16, 20), T.stone, 0, 8, 0, { cast: false });
+    const hands = [];
+    for (let k = 0; k < 4; k++) {
+      const f = group(top, 0, 8, 0); f.rotation.y = k * Math.PI / 2; f.translateZ(10.05);
+      add(f, new THREE.CylinderGeometry(7, 7, 0.5, 36), T.brass, 0, 0, 0, { cast: false }).rotation.x = Math.PI / 2;
+      add(f, new THREE.CircleGeometry(6.3, 36), T.face, 0, 0, 0.27, { cast: false });
+      for (let j = 0; j < 12; j++) { const a = j / 12 * Math.PI * 2; add(f, new THREE.BoxGeometry(0.3, 1.0, 0.1), T.ink, Math.sin(a) * 5.4, Math.cos(a) * 5.4, 0.3, { cast: false }).rotation.z = -a; }
+      const h = new THREE.BoxGeometry(0.45, 3.4, 0.12); h.translate(0, 1.5, 0); const m = new THREE.BoxGeometry(0.3, 5, 0.12); m.translate(0, 2.3, 0);
+      hands.push([add(f, h, T.ink, 0, 0, 0.36, { cast: false }), add(f, m, T.ink, 0, 0, 0.42, { cast: false })]);
+    }
+    add(top, new THREE.CylinderGeometry(0.01, 15, 9, 4), T.slate, 0, 20.5, 0, { cast: false }).rotation.y = Math.PI / 4;
+    const bell = group(top, 0, 18.4, 0); add(bell, new THREE.CylinderGeometry(1, 2.1, 2.6, 14, 1, true), T.brass, 0, 0, 0, { cast: false });
+    const pend = group(scene, 0, 4, 0); pend.rotation.y = A0 + (NS / 2) * DA; const pa = group(pend, 0, 0, tR(4) + 1.6);
+    add(pa, new THREE.CylinderGeometry(0.15, 0.15, 14, 6), T.brass2, 0, -7, 0, { cast: false }); add(pa, new THREE.CylinderGeometry(2.2, 2.2, 0.5, 20), T.brass, 0, -14, 0, { cast: false }).rotation.x = Math.PI / 2;
+    let struck = false;
+    anims.push((t) => {
+      const r = tick, on = r && t >= r.t0 && t <= r.ts + r.total * r.beat + 0.3;
+      gears.forEach((g) => {
+        let a;
+        if (on) { const b = (t - r.t0) / r.beat, step = Math.floor(b) + K.ease.out(K.clamp((b % 1) / 0.18)); a = g.dir * step * (Math.PI * 2 / g.teeth); g.hold = a - g.dir * t * g.slow; }
+        else a = g.dir * t * g.slow + (g.hold || 0);
+        g.m.rotation.z = g.base + a;
+      });
+      hands.forEach(([h, m]) => { m.rotation.z = -t * 0.3; h.rotation.z = -t * 0.025 - 1.2; });
+      pa.rotation.z = 0.35 * Math.sin(t * 1.6);
+      if (ending() && !struck && SIG.snd) { struck = true; const n0 = SIG.now(); ['D4', 'D4', 'D4', 'D4', 'A3', 'D4'].forEach((n, k) => { SIG.snd.chime(n, 0.18, n0 + 0.4 + k * 0.9); SIG.snd.play('thud', { gain: 0.25, f: 90 }, n0 + 0.4 + k * 0.9); }); }
+      if (!ending()) struck = false;
+      bell.rotation.z = ending() ? 0.25 * Math.sin(t * 3.5) : 0;
+    });
+  }
+
+  // far off: a jagged black peak wrapped in storm clouds, lightning flickering inside (Chapter 10)
+  function distant() {
+    const g = kit.tease(560), dark = facet('#2a2a36'), cloudM = facet('#4a4a5e');
+    const pk = add(g, new THREE.ConeGeometry(70, 200, 7), dark, 0, 60, 0, { cast: false }); pk.rotation.y = 0.4;
+    for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2, m = add(g, ICO, cloudM, Math.sin(a) * 50, 110 + 30 * K.hash(k, 2), Math.cos(a) * 50, { cast: false }); m.scale.set(40, 16, 34); }
+    const flash = new THREE.PointLight('#b8c8ff', 0, 400, 1); flash.position.set(0, 120, 60); g.add(flash);
+    const fm = kit.glowMat('#cfd8ff', 0); const bolt = add(g, new THREE.BoxGeometry(2, 80, 2), fm, 10, 70, 30, { cast: false }); bolt.rotation.z = 0.2;
+    anims.push((t) => { const p = Math.max(0, Math.sin(t * 0.9) * Math.sin(t * 7.3) - 0.85) * 6.6; flash.intensity = p * 4000; fm.color.setRGB(0.8, 0.85, 1).multiplyScalar(p * 3); bolt.visible = p > 0.05; });
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.clock = { look: CLOCK_LOOK, make: sceneClock };
 
 // ================================================================ Chapter 5 scenery: the Falls of Echo
 // A sheer cliff in the afternoon sun with great waterfalls pouring down its sides into a misty pool, rainbows in the spray.
@@ -1064,6 +1197,101 @@ function sceneFalls(X) {
   return { islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.falls = { look: FALLS_LOOK, make: sceneFalls };
+
+// ================================================================ Chapter 8 scenery: the Sky Harbour
+// A tall mooring spire above the clouds, hung with docks, with airships tied up all round it in a windy blue sky. The islands
+// are docks and crow's nests on timber arms. The wind follows the hairpins: on the Crescendo question every sail swells, on the
+// Diminuendo question they fall slack. From the top, a giant clock face stands in the distance (Chapter 9).
+const HARBOUR_LOOK = {
+  env: { top: '#4a88e8', horizon: '#e8f0ff', bottom: '#8aa0c0', intensity: 0.72, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#fffaf0', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#d8e8ff', power: 2.2 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffe8c0', power: 2.0 }] },
+  hemi: ['#e0ecff', '#8a90a0', 0.6], sun: '#fffaf0', sunPower: 3.0, fog: '#c8d8ee',
+  sky: [[0, '#1e5ac8'], [0.25, '#3a7ce0'], [0.4, '#7ab0f0'], [0.47, '#cfe2f8'], [0.5, '#f0f6ff'], [0.53, '#c8d4e4'], [1, '#8a98b0']],
+  skyGlow: [[0.84, 0.5, 0.22], [0.66, 0.25, 0.16]], glowRGB: '255,250,235', stars: false,
+  sunDisc: { color: '#fffbe8', k: 1.7, pos: [-260, 380, -700], r: 40 }, moon2: false,
+  peak: '#8a96b0', cloud: '#ffffff', shards: ['#2a6ab0', '#8ad0ff', '#b08a2a', '#ffe08a'], peaks: false,
+};
+
+function sceneHarbour(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, A0, DA, STEP, NS, RAD } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, CONE, ending, glowMat } = kit;
+  const T = {
+    rock: facet('#8a8478'), rock2: facet('#6e685e'), plank: facet('#9a7046', 0.85), plank2: facet('#6e4c30', 0.85), rope: facet('#d8c098', 0.9),
+    brass: std('#c8983a', 0.9, 0.35, { flatShading: true }), canvas: std('#f4ecdc', 0, 0.8, { side: THREE.DoubleSide }), canvas2: std('#d84a3a', 0, 0.8, { side: THREE.DoubleSide }),
+    env: facet('#ece0c8', 0.7), env2: facet('#c8b48a', 0.7), hull: facet('#7a5232'), stone: facet('#b8b4ac'),
+  };
+  const sR = (y) => K.lerp(9, 5, K.clamp((y + 30) / (SUM + 30)));
+  // the wind: 1 normally, swelling on crescendo, slack on diminuendo
+  let windTo = 1, wind = 1;
+  SIG.onTerm = (term) => { windTo = term === 'Crescendo' ? 1.9 : term === 'Diminuendo' ? 0.15 : 1; };
+  SIG.onLeave = () => { windTo = 1; };
+  const sails = [];
+  // a sail: a curved sheet whose belly follows the wind
+  function sail(parent, w, h, x, y, z, mat, ry = 0) {
+    const g = new THREE.PlaneGeometry(w, h, 8, 6), p = g.attributes.position, base = Float32Array.from(p.array);
+    const m = add(parent, g, mat, x, y, z, { cast: false }); m.rotation.y = ry; sails.push({ m, p, base, w, h }); return m;
+  }
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 2) { add(g, new THREE.CylinderGeometry(0.05, 0.07, h * 0.8, 5), T.plank2, 0, h * 0.4, 0); const f = add(g, new THREE.ConeGeometry(0.18, 0.9, 8, 1, true), T.canvas2, 0.45, h * 0.75, 0); f.rotation.z = Math.PI / 2; anims.push((t) => { f.rotation.y = 0.3 * Math.sin(t * 2 + seed) * wind; }); }
+    else { for (let k = 0; k < 2; k++) add(g, new THREE.BoxGeometry(0.6, 0.6, 0.6), T.plank, 0.1 * k, 0.3 + 0.6 * k, 0.15 * k).rotation.y = k; }
+    return g;
+  };
+  const decor = (parent, r, seed) => { for (let k = 0; k < 6; k++) { const a = Math.PI * (0.55 + 0.18 * k), px = Math.sin(a) * r, pz = Math.cos(a) * r; add(parent, new THREE.CylinderGeometry(0.06, 0.06, 0.9, 5), T.plank2, px, 0.45, pz); } const mast = add(parent, new THREE.CylinderGeometry(0.1, 0.13, 6, 6), T.plank2, -r * 0.7, 3, -r * 0.4); void mast; sail(parent, 1.8, 2.4, -r * 0.7 + 0.1, 3.6, -r * 0.4 + 0.1, seed % 2 ? T.canvas : T.canvas2, 0.5); };
+  const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.rock, rock2: T.rock2, top: T.plank, under: T.plank2, landR: sR, strut: T.plank2, strut2: T.rope, decor });
+  const rocklet = kit.rocklet({ rock: T.rock, rock2: T.rock2, top: T.plank }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
+  const step = kit.stepOf(T.plank, T.plank2);
+
+  function airship(x, y, z, s, ry, seed) {
+    const g = group(scene, x, y, z); g.rotation.y = ry; g.scale.setScalar(s);
+    const b = add(g, new THREE.SphereGeometry(1, 16, 10), seed % 2 ? T.env : T.env2, 0, 3.4, 0, { cast: false }); b.scale.set(6, 2.2, 2.2);
+    for (const sz of [-1, 1]) add(g, new THREE.CylinderGeometry(0.03, 0.03, 2.6, 4), T.rope, sz * 2.5, 1.4, 0, { cast: false });
+    add(g, new THREE.BoxGeometry(5.4, 0.9, 1.6), T.hull, 0, 0.2, 0, { cast: false }); add(g, new THREE.BoxGeometry(1.2, 0.8, 1.2), T.plank, -1.6, 0.9, 0, { cast: false });
+    add(g, new THREE.CylinderGeometry(0.06, 0.08, 3.2, 5), T.plank2, 1.4, 1.8, 0, { cast: false });
+    sail(g, 1.8, 2.2, 1.45, 2.0, 0.08, seed % 3 ? T.canvas : T.canvas2, Math.PI / 2);
+    const fin = add(g, new THREE.BoxGeometry(0.06, 1.4, 1.2), T.canvas2, 6, 3.4, 0, { cast: false }); void fin;
+    anims.push((t) => { g.position.y = y + 0.4 * Math.sin(t * 0.6 + seed); g.rotation.z = 0.04 * Math.sin(t * 0.5 + seed) * wind; });
+    return g;
+  }
+
+  function landmark() {
+    // the spire: grey stone below, timber cladding higher up, a ring of docks near the top, a beacon on the peak
+    const c = new THREE.Color(), band = bands(['#a8a49c', '#94908a', '#b8b2a8'], 3.2, -30), WOOD = new THREE.Color('#8a6644');
+    column({ y0: -30, y1: SUM + 6, r0: 9, r1: 5, seg: 12, rows: 14, jag: 0.05, wob: 0.6, colour: (y, f) => { c.copy(band(y, f)); if (y > SUM * 0.45 && K.hash(f, 3) > 0.35) c.lerp(WOOD, 0.75); return c; } });
+    for (let k = 0; k < 4; k++) { const y = 6 + k * (SUM - 6) / 3.4; add(scene, new THREE.CylinderGeometry(sR(y) + 2.6, sR(y) + 2.6, 0.5, 16), T.plank, 0, y, 0, { cast: false }); add(scene, new THREE.TorusGeometry(sR(y) + 2.6, 0.06, 4, 24), T.rope, 0, y + 0.8, 0, { cast: false }).rotation.x = Math.PI / 2; }
+    const hg = group(scene, 0, SUM + 6, 0);
+    add(hg, new THREE.CylinderGeometry(6.5, 6, 0.6, 16), T.plank, 0, 0, 0, { cast: false });
+    add(hg, new THREE.CylinderGeometry(0.4, 0.5, 14, 8), T.plank2, 0, 7, 0, { cast: false });
+    const beacon = add(hg, new THREE.SphereGeometry(1, 12, 8), glowMat('#ffd890', 1.8), 0, 14.5, 0, { cast: false }); void beacon;
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; beam(hg, [0, 13.5, 0], [Math.sin(a) * 6.3, 0.3, Math.cos(a) * 6.3], 0.035, T.rope); }
+    const flag = add(hg, new THREE.PlaneGeometry(3, 1.4, 6, 1), T.canvas2, 1.6, 12.6, 0, { cast: false }); flag.material = T.canvas2;
+    // airships moored round the spire, high and low
+    const ships = [];
+    for (let k = 0; k < 7; k++) { const a = Math.PI + (k - 3) * 0.75, y = -6 + k * (SUM / 6.5), r = sR(y) + 13 + 4 * K.hash(k, 2); ships.push(airship(Math.sin(a) * r, y, Math.cos(a) * r, 1.3 + 0.4 * K.hash(k, 3), a + Math.PI / 2, k)); beam(scene, [Math.sin(a) * (sR(y) + 0.5), y + 3, Math.cos(a) * (sR(y) + 0.5)], [Math.sin(a) * (r - 5), y + 3.5, Math.cos(a) * (r - 5)], 0.05, T.rope); }
+    for (let k = 0; k < 5; k++) { const a = (k - 2) * 0.9, y = 4 + k * (SUM / 5), r = RAD + 26 + 10 * K.hash(k, 5); airship(Math.sin(a) * r, y, Math.cos(a) * r, 1.0, a + 0.4, k + 10); }
+    anims.push((t) => {
+      wind += (windTo - wind) * 0.04;
+      sails.forEach((sl, i) => { const { p, base, w, h } = sl, b = 0.55 * wind * (1 + 0.08 * Math.sin(t * 2.4 + i)); for (let v = 0; v < p.count; v++) { const x = base[v * 3], y = base[v * 3 + 1], u = 1 - (2 * x / w) ** 2, q = 1 - (2 * y / h) ** 2; p.setZ(v, b * Math.max(0, u) * (0.6 + 0.4 * Math.max(0, q)) + 0.06 * Math.sin(t * 6 + x * 3 + i) * (2 - wind) * 0.3); } p.needsUpdate = true; sl.m.geometry.computeVertexNormals(); });
+      const fp = flag.geometry.attributes.position; for (let v = 0; v < fp.count; v++) { const x = fp.getX(v); fp.setZ(v, (x + 1.5) * 0.25 * Math.sin(t * 5 * Math.max(0.3, wind) - x * 2)); } fp.needsUpdate = true;
+    });
+  }
+
+  // far off: a giant clock face on a brass-and-stone tower (Chapter 9)
+  function distant() {
+    const g = kit.tease(540), face = Math.atan2(-g.position.x, -g.position.z);
+    add(g, new THREE.CylinderGeometry(24, 34, 150, 8), T.stone, 0, -20, 0, { cast: false });
+    const dial = group(g, 0, 70, 0); dial.rotation.y = face; dial.translateZ(25);
+    add(dial, new THREE.CylinderGeometry(22, 22, 2, 36), T.brass, 0, 0, 0, { cast: false }).rotation.x = Math.PI / 2;
+    add(dial, new THREE.CircleGeometry(19.5, 36), std('#f4ecd8', 0, 0.7), 0, 0, 1.05, { cast: false });
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; add(dial, new THREE.BoxGeometry(1, 3, 0.4), T.hull, Math.sin(a) * 16.5, Math.cos(a) * 16.5, 1.2, { cast: false }).rotation.z = -a; }
+    const hrs = add(dial, new THREE.BoxGeometry(1.4, 10, 0.4), T.hull, 0, 0, 1.4, { cast: false }), mins = add(dial, new THREE.BoxGeometry(0.9, 15, 0.4), T.hull, 0, 0, 1.6, { cast: false });
+    hrs.geometry.translate(0, 4.5, 0); mins.geometry.translate(0, 7, 0);
+    anims.push((t) => { mins.rotation.z = -t * 0.2; hrs.rotation.z = -t * 0.2 / 12 - 1; });
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.harbour = { look: HARBOUR_LOOK, make: sceneHarbour };
 
 // ================================================================ Chapter 4 scenery: the Crystal Spire
 // A spire of blue crystal rising from a frozen lake, at night under an aurora. The islands are snowy crystal outcrops joined to
@@ -1206,7 +1434,7 @@ function sceneKit(X) {
     const o = { vertexColors: true, flatShading: flat }; if (emissive) { o.emissive = new THREE.Color(emissive[0]); o.emissiveIntensity = emissive[1]; }
     const m = add(scene, mesh, std('#ffffff', metal, rough, o), 0, 0, 0, { cast: false }); m.receiveShadow = false; return m;
   }
-  const bands = (hexes, h, y0, jitter = 0.35) => { const C = hexes.map((x) => new THREE.Color(x)), c = new THREE.Color(); return (y, f) => c.copy(C[Math.floor((y - y0) / h) % C.length]).lerp(C[0], jitter * K.hash(f, 4)); };
+  const bands = (hexes, h, y0, jitter = 0.35) => { const C = hexes.map((x) => new THREE.Color(x)), c = new THREE.Color(); return (y, f) => c.copy(C[((Math.floor((y - y0) / h) % C.length) + C.length) % C.length]).lerp(C[0], jitter * K.hash(f, 4)); };
   // an island: a rock body, a top (turf, snow, sand...), and timbers or bridges back to the landmark (radius at height y: landR(y))
   function islet(parent, r, depth, seed, { rock, rock2, top, under, landR, strut, strut2, strutR = 0.24, links = true, decor } = {}) {
     add(parent, rockGeo(r, depth, seed), seed % 2 && rock2 ? rock2 : rock, 0, -0.2, 0);
@@ -1438,7 +1666,7 @@ const MINE_LOOK = {
   sky: [[0, '#1a2050'], [0.25, '#3a3a7a'], [0.4, '#8a5a8a'], [0.46, '#f0905a'], [0.5, '#ffd080'], [0.53, '#a8705a'], [1, '#2a1a1a']],
   skyGlow: [[0.84, 0.95, 0.24], [0.66, 0.35, 0.16]], glowRGB: '255,190,120', stars: false,
   sunDisc: { color: '#ffd090', k: 1.7, pos: [-150, 40, -760], r: 50 }, moon2: false,
-  peak: '#3a2a3a', cloud: '#d89a80', shards: ['#a0400a', '#ffa040', '#1a7a7a', '#60f0d8'], cloudSea: false, peaks: false,
+  peak: '#3a2a3a', cloud: '#d89a80', shards: ['#a0400a', '#ffa040', '#1a7a7a', '#60f0d8'], cloudSea: false, peaks: false, drift: false,
 };
 
 function sceneMine(X) {
@@ -1755,7 +1983,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 13; // shown top left; add one for every release to the public site
+  const VERSION = 14; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -2020,7 +2248,7 @@ function sceneTree(X) {
         if (!LOOK || LOOK.cloudSea !== false) { const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
         for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); } }
       }
-      const drift = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 48); drift.castShadow = false; drift.receiveShadow = false; scene.add(drift);
+      const drift = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 48); drift.castShadow = false; drift.receiveShadow = false; scene.add(drift); drift.visible = !LOOK || LOOK.drift !== false;
       const driftAt = (t) => {
         for (let c = 0; c < 12; c++) { const a = Math.PI + (K.hash(c, 21) - 0.5) * 2.6, r = 70 + K.hash(c, 22) * 150, y = -4 + K.hash(c, 23) * 46, cx = Math.sin(a) * r + (t % 400) * (0.25 + 0.3 * K.hash(c, 24)), cz = Math.cos(a) * r;
           for (let j = 0; j < 4; j++) { const s = (5 + K.hash(c, j + 25) * 6) * (j === 0 ? 1.3 : 1); K.place(drift, c * 4 + j, [cx + (j - 1.5) * 6.5, y + (j % 2) * 1.6 - 1, cz + (K.hash(c, j + 30) - 0.5) * 5], null, [s * 1.3, s * 0.55, s]); } }

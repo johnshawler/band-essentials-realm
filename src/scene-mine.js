@@ -10,7 +10,7 @@ const MINE_LOOK = {
   sky: [[0, '#1a2050'], [0.25, '#3a3a7a'], [0.4, '#8a5a8a'], [0.46, '#f0905a'], [0.5, '#ffd080'], [0.53, '#a8705a'], [1, '#2a1a1a']],
   skyGlow: [[0.84, 0.95, 0.24], [0.66, 0.35, 0.16]], glowRGB: '255,190,120', stars: false,
   sunDisc: { color: '#ffd090', k: 1.7, pos: [-150, 40, -760], r: 50 }, moon2: false,
-  peak: '#3a2a3a', cloud: '#d89a80', shards: ['#a0400a', '#ffa040', '#1a7a7a', '#60f0d8'], cloudSea: false, peaks: false,
+  peak: '#3a2a3a', cloud: '#d89a80', shards: ['#a0400a', '#ffa040', '#1a7a7a', '#60f0d8'], cloudSea: false, peaks: false, drift: false,
 };
 
 function sceneMine(X) {
