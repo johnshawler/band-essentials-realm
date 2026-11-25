@@ -14,7 +14,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; -webkit-
 .bar { width: min(100%, calc((100vh - 84px) * 16 / 9)); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--bar); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
 .bar label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
 select, button { font: 600 14px var(--ui); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
-select { background: #0f161b; max-width: 52vw; }
+select { background: #0f161b; max-width: 44vw; }
 button:hover, select:hover { border-color: var(--muted); }
 button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
@@ -22,6 +22,7 @@ button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
 button.icon { display: inline-grid; place-items: center; padding: 5px; width: 32px; height: 32px; box-sizing: border-box; }
 button.icon svg { width: 18px; height: 18px; }
 button.icon[hidden] { display: none; }
+#fs { margin-left: auto; }
 .page:fullscreen { background: var(--bg); width: 100%; }
 .page:-webkit-full-screen { background: var(--bg); width: 100%; }
 @media (max-width: 640px) { .hint { display: none; } }
@@ -29,10 +30,10 @@ button.icon[hidden] { display: none; }
 <div class="page">
   <div class="stage"><canvas id="view" width="1280" height="720" tabindex="0" aria-label="Band Adventures, Chapter 1: The Climb to the Castle. Click the objects on each island to play."></canvas><div class="note" id="note">Building the realm…</div></div>
   <div class="bar">
+    <label for="chapter">Chapter <select id="chapter"></select></label>
     <label for="inst">Instrument <select id="inst"></select></label>
     <button id="snd" type="button" aria-pressed="true">Sound on</button>
     <button id="restart" type="button">Restart</button>
-    <span class="hint" id="hint">Level 1</span>
     <button id="fs" class="icon" type="button" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="enter" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="exit" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" style="display:none"/></svg></button>
   </div>
 </div>

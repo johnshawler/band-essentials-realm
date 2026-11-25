@@ -22,7 +22,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; -webkit-
 .bar { width: min(100%, calc((100vh - 84px) * 16 / 9)); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--bar); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; }
 .bar label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
 select, button { font: 600 14px var(--ui); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
-select { background: #0f161b; max-width: 52vw; }
+select { background: #0f161b; max-width: 44vw; }
 button:hover, select:hover { border-color: var(--muted); }
 button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
@@ -30,6 +30,7 @@ button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
 button.icon { display: inline-grid; place-items: center; padding: 5px; width: 32px; height: 32px; box-sizing: border-box; }
 button.icon svg { width: 18px; height: 18px; }
 button.icon[hidden] { display: none; }
+#fs { margin-left: auto; }
 .page:fullscreen { background: var(--bg); width: 100%; }
 .page:-webkit-full-screen { background: var(--bg); width: 100%; }
 @media (max-width: 640px) { .hint { display: none; } }
@@ -37,10 +38,10 @@ button.icon[hidden] { display: none; }
 <div class="page">
   <div class="stage"><canvas id="view" width="1280" height="720" tabindex="0" aria-label="Band Adventures, Chapter 1: The Climb to the Castle. Click the objects on each island to play."></canvas><div class="note" id="note">Building the realm…</div></div>
   <div class="bar">
+    <label for="chapter">Chapter <select id="chapter"></select></label>
     <label for="inst">Instrument <select id="inst"></select></label>
     <button id="snd" type="button" aria-pressed="true">Sound on</button>
     <button id="restart" type="button">Restart</button>
-    <span class="hint" id="hint">Level 1</span>
     <button id="fs" class="icon" type="button" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="enter" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="exit" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" style="display:none"/></svg></button>
   </div>
 </div>
@@ -860,15 +861,186 @@ const params = new URLSearchParams(location.search);
   };
 })();
 
-// ================================================================ Band Adventures, Chapter 1: the High Fantasy movie made playable (Level 1)
+// ================================================================ the chapters: one climb per course unit
+// Each chapter names its unit, its scenery and its music. The game reads everything else (notes, terms, rhythms) from here,
+// so a new chapter is a new entry plus its scenery. Chosen with ?ch=<n>; Chapter 1 when absent.
+const UNITS = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","units":[["D5","Eb5","F5"],["Bb4","C5"],["G5"],["A4"],["Ab5"],["Ab4"],["A5","Bb5"],["E5"],["F#5"],["Eb4","F4","G4"],["D4"],["C6"]],"fing":{"74":12160,"75":12224,"77":15936,"70":12864,"72":4160,"79":15424,"69":14400,"80":15426,"68":15426,"81":14400,"82":12864,"76":16192,"78":15552,"63":16320,"65":15936,"67":15424,"62":16256,"84":4160}},{"key":"oboe","name":"Oboe","clef":"treble","family":null,"units":[["D5","Eb5","F5"],["Bb4","C5"],["G5"],["A4"],["Ab5"],["F4","G4","Ab4"],["A5","Bb5"],["E4","E5"],["F#4","F#5"],["Eb4"],["D4"],["C6"]],"fing":{}},{"key":"clarinet","name":"Clarinet","clef":"treble","family":"clarinet","units":[["E4","F4","G4"],["C4","D4"],["A4"],["B3"],["Bb4"],["G3","A3","Bb3"],["F#4"],["F3"],["E3"],["D5","E5","F5"],["C5","G5"],["B4"]],"fing":{"64":48,"65":32,"67":0,"60":240,"62":112,"69":2,"59":131312,"70":10,"55":401648,"57":139504,"58":8432,"66":16,"53":4595952,"52":4628720,"74":401656,"76":139512,"77":8440,"72":4595960,"79":248,"71":4628728}},{"key":"bassoon","name":"Bassoon","clef":"bass","family":null,"units":[["D3","Eb3","F3"],["Bb2"],["C3"],["G3"],["A2"],["Ab2"],["Ab3"],["Bb3"],["E3"],["A3"],["Db3"],["C4"]],"fing":{}},{"key":"saxophone","name":"Alto Saxophone","clef":"treble","family":"sax","units":[["B4","C5","D5"],["G4","A4"],["E5"],["F#4"],["Bb4","F5"],["D4","E4","F4"],["F#5"],["G5"],["C#5"],["C4"],["A5","B5"],["C6"]],"fing":{"71":2097152,"72":1048576,"74":4128776,"67":3670016,"69":3145728,"76":4063240,"66":3801088,"70":2359296,"77":3932168,"62":4128768,"64":4063232,"65":3932160,"78":3801096,"79":3670024,"73":0,"60":4132864,"81":3145736,"83":2097160,"84":1048584}},{"key":"tenorsaxophone","name":"Tenor Saxophone","clef":"treble","family":"sax","units":[["E5","F5","G5"],["C5","D5"],["A5"],["B4"],["Bb5"],["G4","A4","Bb4"],["B5","C6"],["F#5"],["F4"],["E4","F#4"],["D4","C4"],["D6"]],"fing":{"76":4063240,"77":3932168,"79":3670024,"72":1048576,"74":4128776,"81":3145736,"71":2097152,"82":2359304,"67":3670016,"69":3145728,"70":2359296,"83":2097160,"84":1048584,"78":3801096,"65":3932160,"64":4063232,"66":3801088,"62":4128768,"60":4132864,"86":24}},{"key":"trumpet","name":"Trumpet","clef":"treble","family":"valves","units":[["E4","F4","G4"],["C4"],["D4"],["A4"],["B3"],["Bb4"],["Bb3"],["B4"],["C5"],["F#4"],["D5"],["Eb4"]],"fing":{"64":6,"65":2,"67":0,"60":0,"62":10,"69":6,"59":4,"70":2,"58":2,"71":4,"72":0,"66":4,"74":2,"63":12}},{"key":"fhorn","name":"French Horn (F Single)","clef":"treble","family":"valves","units":[["E4","F4","G4"],["C4"],["D4"],["A4"],["B3"],["Bb4"],["Bb3"],["B4"],["C5"],["F#4"],["D5"],["Eb4"]],"fing":{"64":0,"65":2,"67":0,"60":0,"62":2,"69":6,"59":4,"70":2,"58":2,"71":4,"72":0,"66":4,"74":0,"63":4}},{"key":"bbhorn","name":"French Horn (Bb Single)","clef":"treble","family":"valves","units":[["E4","F4","G4"],["C4"],["D4"],["A4"],["B3"],["Bb4"],["Bb3"],["B4"],["C5"],["F#4"],["D5"],["Eb4"]],"fing":{"64":4,"65":0,"67":2,"60":0,"62":6,"69":6,"59":4,"70":2,"58":2,"71":4,"72":0,"66":6,"74":6,"63":2}},{"key":"dhorn","name":"French Horn (Double)","clef":"treble","family":"valves","units":[["E4","F4","G4"],["C4"],["D4"],["A4"],["B3"],["Bb4"],["Bb3"],["B4"],["C5"],["F#4"],["D5"],["Eb4"]],"fing":{"64":0,"65":2,"67":0,"60":0,"62":2,"69":22,"59":4,"70":18,"58":2,"71":20,"72":16,"66":4,"74":22,"63":4}},{"key":"trombone","name":"Trombone","clef":"bass","family":"slide","units":[["D3","Eb3","F3"],["Bb2","C3"],["G3"],["A2"],["Ab3"],["Ab2"],["A3"],["Bb3"],["E3"],["F#3"],["C4"],["G2"]],"fing":{"50":16,"51":8,"53":2,"46":2,"48":64,"55":16,"45":4,"56":8,"44":8,"57":4,"58":2,"52":4,"54":32,"60":8,"43":16}},{"key":"euphonium","name":"Baritone / Euphonium T.C.","clef":"treble","family":"valves","units":[["E4","F4","G4"],["C4"],["D4"],["A4"],["B3"],["Bb4"],["Bb3"],["B4"],["C5"],["F#4"],["D5"],["Eb4"]],"fing":{"64":6,"65":2,"67":0,"60":0,"62":10,"69":6,"59":4,"70":2,"58":2,"71":4,"72":0,"66":4,"74":2,"63":12}},{"key":"baritone","name":"Baritone / Euphonium B.C.","clef":"bass","family":"valves","units":[["D3","Eb3","F3"],["Bb2"],["C3"],["G3"],["A2"],["Ab2"],["Ab3"],["Bb3"],["E3"],["A3"],["Db3"],["C4"]],"fing":{"50":6,"51":2,"53":0,"46":0,"48":10,"55":6,"45":4,"44":2,"56":2,"58":0,"52":4,"57":4,"49":12,"60":2}},{"key":"tuba","name":"Tuba","clef":"bass","family":"valves","units":[["D2","Eb2","F2"],["Bb1"],["C2"],["G2"],["A1"],["Ab2"],["Ab1"],["A2"],["Bb2"],["E2"],["F#2"],["C3"]],"fing":{"38":6,"39":2,"41":0,"34":0,"36":10,"43":6,"33":4,"44":2,"32":2,"45":4,"46":0,"40":4,"42":12,"48":2}},{"key":"electricbass","name":"Electric Bass","clef":"bass","family":"bass","units":[["D3","Eb3","F3"],["Bb2"],["C3"],["G3"],["A2"],["G2"],["Ab2"],["Ab3"],["Bb3"],["E3"],["A3"],["C4","Db3"]],"fing":{"50":3,"51":7,"53":15,"46":6,"48":14,"55":4,"45":2,"43":13,"44":17,"56":8,"58":16,"52":11,"57":12,"60":21,"49":18}},{"key":"bells","name":"Bells (xylophone)","clef":"treble","family":"bells","units":[["D4","Eb4","F4"],["Bb3","C4"],["G4"],["F3"],["G#4","Bb4","C5"],["D5","Eb5","F5"],["G5","Ab5"],["Ab3"],["A5","Bb5"],["E4","E5"],["F#4","F#5"],["A4"]],"fing":{"62":256,"63":512,"65":2048,"58":16,"60":64,"67":8192,"53":2147483648,"68":16384,"70":65536,"72":262144,"74":1048576,"75":2097152,"77":8388608,"79":33554432,"80":67108864,"56":4,"81":134217728,"82":268435456,"64":1024,"76":4194304,"66":4096,"78":16777216,"69":32768}}];   // per instrument: { key, name, clef, family, units: [[notes of unit 1], …[unit 12]], fing: { midi: bitmask } }
+
+// the terms each unit adds in the course's terms game (ReadTermsProblemMakerFYB, year 1); 'Clef' is the instrument's own clef
+const UNIT_TERMS = [
+  ['Bar line', 'Quarter note', 'Quarter rest', 'Double bar line', 'Repeat sign', 'Clef'],
+  ['Time signature', 'Sharp', 'Flat', 'Natural'],
+];
+
+const CHAPTERS = [
+  {
+    n: 1, unit: 1, title: 'The Climb to the Castle', scene: 'castle',
+    rhythm: { rests: false },
+    // concert B-flat: the movie's pad
+    music: { bpm: 60, chords: [['Bb3', 'F4', 'Bb4', 'D5'], ['Eb3', 'G3', 'Bb3', 'F4'], ['G3', 'Bb3', 'D4', 'F4'], ['F3', 'A3', 'C4', 'Eb4']] },
+  },
+  {
+    n: 2, unit: 2, title: 'The Great Tree', scene: 'tree',
+    rhythm: { rests: true },                                    // course level 2: whole, half and quarter rests join in
+    // concert B-flat, a morning in the woods: a pad under a slow wooden-flute tune, with birdsong
+    music: {
+      bpm: 66, birds: true,
+      chords: [['Bb3', 'F4', 'C5', 'D5'], ['G3', 'D4', 'F4', 'Bb4'], ['Eb3', 'Bb3', 'D4', 'G4'], ['F3', 'C4', 'F4', 'A4']],
+      tune: [[['F5', 2], ['D5', 1], ['Bb4', 1]], [['D5', 2], ['G5', 1], ['F5', 1]], [['Eb5', 1], ['F5', 1], ['G5', 2]], [['F5', 1], ['Eb5', 1], ['C5', 2]],
+             [['D5', 1.5], ['C5', 0.5], ['Bb4', 2]], [['Bb4', 1], ['D5', 1], ['G5', 2]], [['G5', 1], ['F5', 1], ['Eb5', 1], ['D5', 1]], [['C5', 3], [null, 1]]],
+    },
+  },
+];
+const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
+
+// every instrument, set up for this chapter: the unit's new notes, and the earlier units' notes for review
+const INST = UNITS.map((u) => {
+  const fresh = u.units[CH.unit - 1], review = [].concat(...u.units.slice(0, CH.unit - 1));
+  return { key: u.key, name: u.name, clef: u.clef, family: u.family, fing: u.fing, fresh, review, notes: review.concat(fresh) };
+});
+// the chapter's terms: [new, review], with 'Clef' read as the instrument's clef
+const chapterTerms = (clef) => {
+  const own = (t) => (t === 'Clef' ? (clef === 'bass' ? 'Bass clef' : 'Treble clef') : t);
+  return { fresh: UNIT_TERMS[CH.unit - 1].map(own), review: [].concat(...UNIT_TERMS.slice(0, CH.unit - 1)).map(own) };
+};
+
+// ================================================================ Chapter 2 scenery: the Great Tree
+// A colossal tree on a golden morning. The islands are mossy shelf fungi on branches spiralling up the trunk; the summit is a
+// treehouse under the canopy. sceneTree(X) gets the stage's helpers and returns what the chapter replaces in the castle world.
+const TREE_LOOK = {
+  env: { top: '#7fa6f0', horizon: '#ffd79a', bottom: '#6a5a3a', intensity: 0.7, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#ffd9a0', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffe6b8', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffc070', power: 2.2 }] },
+  hemi: ['#cfe2ff', '#7a5a30', 0.55], sun: '#ffe2b0', sunPower: 2.8, fog: '#d8c8a8',
+  sky: [[0, '#2f5fb8'], [0.24, '#5f93d8'], [0.38, '#a9c8ea'], [0.46, '#f2dcb0'], [0.49, '#ffd38e'], [0.5, '#ffe2aa'], [0.53, '#e7cf9c'], [0.62, '#b9a882'], [1, '#5e5a44']],
+  skyGlow: [[0.84, 0.75, 0.22], [0.66, 0.3, 0.16]], glowRGB: '255,225,160', stars: false,
+  sunDisc: { color: '#fff1c8', k: 1.5, pos: [-150, 95, -760], r: 52 }, moon2: false,
+  peak: '#6f8f78', cloud: '#f3e3c6', shards: ['#b07a20', '#ffcf6a', '#3f8a3a', '#9ff07a'],
+};
+
+function sceneTree(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, CYL6, M, RAD, SUM } = X;
+  const T = {
+    bark: facet('#6b4a32'), barkDark: facet('#4a3222'), fungus: facet('#ecd3a0', 0.8), rim: facet('#c9874a', 0.8), gill: facet('#d9b27a', 0.85),
+    leafA: facet('#5c9a3c'), leafB: facet('#7fae46'), leafC: facet('#c8b04a'), leafD: facet('#3f7a3a'),
+    plank: facet('#946238', 0.85), plankDark: facet('#5e3c22', 0.85), thatch: facet('#6f8a3a', 0.9), cloth: std('#b8463a', 0, 0.8), rope: facet('#c8a878', 0.9),
+  };
+  const ICO = new THREE.IcosahedronGeometry(1, 1), DOME = new THREE.SphereGeometry(1, 14, 5, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+  const H0 = -45, TOP = SUM + 7;
+  const trunkR = (y) => K.lerp(17, 8.5, K.clamp((y - H0) / (TOP - H0)));
+
+  // a leafy crown: a few faceted blobs
+  const crown = (parent, x, y, z, s, seed, mats = [T.leafA, T.leafB, T.leafD]) => {
+    for (let k = 0; k < 4; k++) {
+      const a = K.hash(seed, k) * 6.3, d = k ? s * 0.55 : 0, m = add(parent, ICO, mats[(seed + k) % mats.length], x + Math.cos(a) * d, y + (k ? -s * 0.15 + K.hash(seed, k + 3) * s * 0.4 : 0), z + Math.sin(a) * d * 0.8);
+      m.scale.set(s * (0.75 + 0.3 * K.hash(seed, k + 6)), s * (0.6 + 0.25 * K.hash(seed, k + 9)), s * (0.75 + 0.3 * K.hash(seed, k + 12))); m.rotation.y = k;
+    }
+  };
+  // a small broadleaf tree for the islands, in place of the castle world's pines
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    add(g, CYL6, T.bark, 0, 0.22 * h, 0).scale.set(0.07 * h, 0.44 * h, 0.07 * h);
+    crown(g, 0, 0.62 * h, 0, 0.26 * h, seed + 3, (seed % 5 === 2) ? [T.leafC, T.leafB, T.leafA] : [T.leafA, T.leafB, T.leafD]);
+    return g;
+  };
+  // an island: a mossy shelf fungus, held out from the trunk on a branch (the branch is left off for islands that float free)
+  const islet = (parent, r, depth, seed, branch = true) => {
+    add(parent, turfGeo(r, seed), M.grass);
+    const cap = add(parent, DOME, T.fungus, 0, -0.3, 0); cap.scale.set(r * 1.04, 1.25 + 0.15 * (seed % 3), r * 1.0);
+    const rim = add(parent, new THREE.TorusGeometry(1, 0.06, 5, 22), T.rim, 0, -0.34, 0); rim.rotation.x = Math.PI / 2; rim.scale.set(r * 1.03, r * 0.99, 2.6);
+    for (let k = 0; k < 2; k++) {
+      const s = r * (0.55 - 0.15 * k), sub = add(parent, DOME, k ? T.gill : T.fungus, (K.hash(seed, k) - 0.5) * r * 0.6, -1.6 - 1.2 * k, -r * 0.35 - k * 0.5); sub.scale.set(s, 0.6 + 0.2 * k, s * 0.85);
+      add(parent, turfGeo(s, seed + k + 5, 9, 0.12), k ? T.gill : T.fungus, sub.position.x, sub.position.y + 0.02, sub.position.z);
+    }
+    if (!branch) return;
+    parent.updateMatrixWorld(true);
+    const wy = parent.position.y, reach = RAD - trunkR(wy - 2.2) + 1.6, len = reach - r * 0.2;
+    const b = add(parent, new THREE.CylinderGeometry(0.75, 1.7, len, 7), T.bark, 0, -2.2, -(r * 0.2 + len / 2)); b.rotation.x = Math.PI / 2 + 0.06;
+    for (let k = 0; k < 2; k++) {
+      const z = -(r * 0.6 + len * (0.35 + 0.3 * k)), side = k ? 1 : -1;
+      const tw = add(parent, new THREE.CylinderGeometry(0.12, 0.3, 4, 5), T.barkDark, side * 1.6, -3.4, z); tw.rotation.z = side * 0.9;
+      crown(parent, side * 3.1, -4.4, z, 1.6, seed * 3 + k);
+    }
+  };
+  // floating seed-islets and plank steps in the air around the stair
+  const rocklet = (a, r, y, size, seed, trees = 2) => {
+    const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed, false);
+    for (let k = 0; k < trees; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.6 + 0.4 * K.hash(seed, k + 8)), k + seed);
+    anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g;
+  };
+  const step = (x, y, z, seed) => { const s = add(scene, new THREE.BoxGeometry(1.15, 0.14, 0.55), seed % 2 ? T.plank : T.plankDark, x, y, z); s.rotation.y = seed * 1.3; return s; };
+
+  // the trunk, its roots in the morning mist, the boughs and the canopy, and the treehouse on top
+  function landmark() {
+    const MH = TOP - H0, tg = new THREE.CylinderGeometry(8.5, 17, MH, 30, 18, false); tg.translate(0, H0 + MH / 2, 0);
+    const p = tg.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), rr = Math.hypot(x, z); if (rr < 1e-4) continue;
+      const ang = Math.atan2(z, x), col = Math.round(ang / (Math.PI * 2) * 30), row = Math.round((y - H0) / MH * 18);
+      const k = 1 + 0.06 * Math.sin(col * 2.1) + 0.05 * (K.hash(col, row, 3) - 0.5) + (y < H0 + 14 ? 0.12 * Math.max(0, Math.sin(col * 1.3)) * (1 - (y - H0) / 14) : 0);
+      p.setXYZ(i, x * k, y + (row > 0 && row < 18 ? (K.hash(row, col, 5) - 0.5) * 1.2 : 0), z * k);
+    }
+    const mesh = tg.toNonIndexed(), pp = mesh.attributes.position, cols = new Float32Array(pp.count * 3), c = new THREE.Color();
+    const A = new THREE.Color('#6b4a32'), B = new THREE.Color('#4e3424'), MOSS = new THREE.Color('#6f9a44');
+    for (let f = 0; f < pp.count; f += 3) {
+      const x = (pp.getX(f) + pp.getX(f + 1) + pp.getX(f + 2)) / 3, z = (pp.getZ(f) + pp.getZ(f + 1) + pp.getZ(f + 2)) / 3, col = Math.round(Math.atan2(z, x) / (Math.PI * 2) * 60);
+      c.copy(col % 2 ? A : B).lerp(A, 0.4 * K.hash(f, 4)); if (K.hash(f, 9) > 0.93) c.lerp(MOSS, 0.7);
+      for (let v = 0; v < 3; v++) { cols[(f + v) * 3] = c.r; cols[(f + v) * 3 + 1] = c.g; cols[(f + v) * 3 + 2] = c.b; }
+    }
+    mesh.setAttribute('color', new THREE.BufferAttribute(cols, 3)); mesh.computeVertexNormals();
+    const tm = add(scene, mesh, std('#ffffff', 0, 0.95, { vertexColors: true, flatShading: true }), 0, 0, 0, { cast: false }); tm.receiveShadow = false;
+    // roots flaring into the mist
+    for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + 0.3, rt = add(scene, ICO, k % 2 ? T.bark : T.barkDark, Math.sin(a) * 19, -22, Math.cos(a) * 19, { cast: false }); rt.scale.set(4, 6, 9); rt.rotation.y = a; }
+    // boughs from the crown of the trunk, then the canopy
+    for (let k = 0; k < 7; k++) {
+      const a = k / 7 * Math.PI * 2 + 0.5, bg = group(scene, 0, SUM + 2 + (k % 3) * 2, 0); bg.rotation.y = a;
+      const b = add(bg, new THREE.CylinderGeometry(0.9, 2.2, 22, 7), T.bark, 0, 6, 9, { cast: false }); b.rotation.x = 1.05;
+    }
+    for (let k = 0; k < 30; k++) {
+      const a = k * 2.399 + 0.4, r = 6 + 22 * Math.sqrt(K.hash(k, 71)), y = SUM + 12 + K.hash(k, 72) * 14 - r * 0.12, s = 6 + 5 * K.hash(k, 73);
+      const m = add(scene, ICO, [T.leafA, T.leafB, T.leafD, T.leafA, T.leafC][k % 5], Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); m.scale.set(s * 1.25, s * 0.8, s * 1.15); m.rotation.y = k;
+    }
+    // the treehouse: a plank deck on the trunk's crown, two round huts, lanterns and a pennant
+    const hg = group(scene, 0, SUM, 0);
+    add(hg, new THREE.CylinderGeometry(10.8, 10.2, 0.6, 18), T.plank, 0, -0.3, 0, { cast: false });
+    for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2; add(hg, new THREE.CylinderGeometry(0.12, 0.12, 1.3, 5), T.plankDark, Math.sin(a) * 10.3, 0.65, Math.cos(a) * 10.3, { cast: false }); }
+    const rail = add(hg, new THREE.TorusGeometry(10.3, 0.09, 4, 36), T.rope, 0, 1.25, 0, { cast: false }); rail.rotation.x = Math.PI / 2;
+    const winM = lum('#6a4a20', '#ffc66a', 2.2);
+    const hut = (x, z, r, h, seed) => {
+      const g = group(hg, x, 0, z); g.rotation.y = seed;
+      add(g, new THREE.CylinderGeometry(r * 0.95, r, h, 9), T.plank, 0, h / 2, 0, { cast: false });
+      add(g, new THREE.ConeGeometry(r * 1.45, r * 1.5, 9), T.thatch, 0, h + r * 0.7, 0, { cast: false });
+      for (let k = 0; k < 3; k++) { const a = k * 2.1, w = add(g, new THREE.BoxGeometry(0.55, 0.75, 0.1), winM, Math.sin(a) * r * 0.96, h * 0.55, Math.cos(a) * r * 0.96, { cast: false }); w.rotation.y = a; }
+      return g;
+    };
+    hut(0, 0, 3.4, 5, 0.3); hut(-5.6, 3.2, 2.0, 3.4, 1.2); hut(5.2, -3.6, 1.8, 3.0, 2.2);
+    const mast = add(hg, new THREE.CylinderGeometry(0.08, 0.1, 5, 5), T.plankDark, 0, 9.6, 0, { cast: false });
+    const flag = add(hg, new THREE.BoxGeometry(1.8, 0.9, 0.04), T.cloth, 0.95, 11.4, 0, { cast: false });
+    const lanterns = [];
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + 0.2, l = add(hg, new THREE.SphereGeometry(0.28, 8, 6), lum('#7a5a20', '#ffd27a', 2.6), Math.sin(a) * 9.6, 2.1, Math.cos(a) * 9.6, { cast: false }); lanterns.push(l); }
+    anims.push((t) => { flag.rotation.y = 0.15 * Math.sin(t * 2.2); lanterns.forEach((l, k) => { l.position.y = 2.1 + 0.06 * Math.sin(t * 1.3 + k); }); });
+    void mast;
+  }
+
+  // far away, other great trees stand in the haze
+  function distant() {
+    for (let k = 0; k < 16; k++) {
+      const a = k / 16 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 470 + K.hash(k, 82) * 220, h = 110 + K.hash(k, 83) * 90, g = group(scene, Math.sin(a) * r, -60, Math.cos(a) * r);
+      add(g, new THREE.CylinderGeometry(h * 0.05, h * 0.09, h, 7), T.barkDark, 0, h / 2, 0, { cast: false });
+      for (let j = 0; j < 4; j++) { const m = add(g, ICO, j % 2 ? T.leafD : T.leafA, (K.hash(k, j) - 0.5) * h * 0.4, h * (0.85 + 0.15 * j), (K.hash(k, j + 4) - 0.5) * h * 0.4, { cast: false }); m.scale.setScalar(h * (0.22 + 0.06 * K.hash(k, j + 8))); }
+    }
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, crown, T };
+}
+
+// ================================================================ Band Adventures: the High Fantasy movie made playable, one chapter per course unit
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
-const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","label":"D, Eb, F","notes":["D5","Eb5","F5"],"fing":{"74":12160,"75":12224,"77":15936}},{"key":"oboe","name":"Oboe","clef":"treble","family":null,"label":"D, Eb, F","notes":["D5","Eb5","F5"],"fing":{}},{"key":"clarinet","name":"Clarinet","clef":"treble","family":"clarinet","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":48,"65":32,"67":0}},{"key":"bassoon","name":"Bassoon","clef":"bass","family":null,"label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{}},{"key":"saxophone","name":"Alto Saxophone","clef":"treble","family":"sax","label":"B, C, D","notes":["B4","C5","D5"],"fing":{"71":2097152,"72":1048576,"74":4128776}},{"key":"tenorsaxophone","name":"Tenor Saxophone","clef":"treble","family":"sax","label":"E, F, G","notes":["E5","F5","G5"],"fing":{"76":4063240,"77":3932168,"79":3670024}},{"key":"trumpet","name":"Trumpet","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":6,"65":2,"67":0}},{"key":"fhorn","name":"French Horn (F Single)","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":0,"65":2,"67":0}},{"key":"bbhorn","name":"French Horn (Bb Single)","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":4,"65":0,"67":2}},{"key":"dhorn","name":"French Horn (Double)","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":0,"65":2,"67":0}},{"key":"trombone","name":"Trombone","clef":"bass","family":"slide","label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{"50":16,"51":8,"53":2}},{"key":"euphonium","name":"Baritone / Euphonium T.C.","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":6,"65":2,"67":0}},{"key":"baritone","name":"Baritone / Euphonium B.C.","clef":"bass","family":"valves","label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{"50":6,"51":2,"53":0}},{"key":"tuba","name":"Tuba","clef":"bass","family":"valves","label":"D, Eb, F","notes":["D2","Eb2","F2"],"fing":{"38":6,"39":2,"41":0}},{"key":"electricbass","name":"Electric Bass","clef":"bass","family":"bass","label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{"50":3,"51":7,"53":15}},{"key":"bells","name":"Bells (xylophone)","clef":"treble","family":"bells","label":"D, Eb, F","notes":["D4","Eb4","F4"],"fing":{"62":256,"63":512,"65":2048}}];
 {
-  const VERSION = 9; // shown top left; add one for every release to the public site
+  const VERSION = 10; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
-  const OPEN_LINE = 'Chapter 1: The Climb to the Castle';
+  const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
   const GAMES = [
     { name: 'Read Rhythms', line: 'Tap and count rhythms in time', rounds: 3 },
     { name: 'Fingering Trainer', line: 'Interactive fingering chart exercises for all instruments', rounds: 5 },
@@ -1023,6 +1195,8 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       const Q = { sun: +(params.get('shadow') || 2048), sky: 1024 };
       const TALL = S.H > S.W, FOV = TALL ? 40 : 30, tanV = Math.tan(FOV * Math.PI / 360), tanH = tanV * S.W / S.H, LOGO = LAYOUT(S.W, S.H);
       const anims = [];
+      // the chapter's look: the castle world is the default; a chapter with its own scenery overrides parts of it
+      const TREE = CH.scene === 'tree', LOOK = TREE ? TREE_LOOK : null;
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -1073,22 +1247,22 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       }
 
       // ------------------------------------------------------------ light
-      K.env(S, { top: '#1c2266', horizon: '#d07a90', bottom: '#3b2b62', intensity: 0.6, blur: 0.06, panels: [
+      K.env(S, LOOK ? LOOK.env : { top: '#1c2266', horizon: '#d07a90', bottom: '#3b2b62', intensity: 0.6, blur: 0.06, panels: [
         { pos: [-22, 24, 40], size: [34, 18], color: '#ffc88c', power: 4.5 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9cc4', power: 2.2 }, { pos: [0, 44, -12], size: [44, 12], color: '#8ea2ff', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb070', power: 2.5 }] });
       const RAD = 36, DA = 0.27, STEP = 2.6, A0 = -(NS - 1) * DA / 2;
-      const SUN_OFF = new THREE.Vector3(-20, 46, 43), sun = K.sun(S, { pos: [-20, 50, RAD + 40], target: [0, 4, RAD - 3], color: '#ffd0a0', power: 2.5, size: 28, soft: 1.0, mapSize: Q.sun, far: 220 });
-      const hemi = new THREE.HemisphereLight('#9a92ff', '#6a3c58', 0.42); scene.add(hemi);
+      const SUN_OFF = new THREE.Vector3(-20, 46, 43), sun = K.sun(S, { pos: [-20, 50, RAD + 40], target: [0, 4, RAD - 3], color: LOOK ? LOOK.sun : '#ffd0a0', power: LOOK ? LOOK.sunPower : 2.5, size: 28, soft: 1.0, mapSize: Q.sun, far: 220 });
+      const hemi = LOOK ? new THREE.HemisphereLight(...LOOK.hemi) : new THREE.HemisphereLight('#9a92ff', '#6a3c58', 0.42); scene.add(hemi);
       const key = new THREE.SpotLight('#ffe6c8', 110, 60, 0.42, 0.9, 1.6); key.castShadow = false; scene.add(key, key.target);
-      const FOG = new THREE.Color(C.fog); scene.fog = new THREE.Fog(FOG.clone(), 60, 900);
+      const FOG = new THREE.Color(LOOK ? LOOK.fog : C.fog); scene.fog = new THREE.Fog(FOG.clone(), 60, 900);
 
       // ------------------------------------------------------------ the sky
       const skyTex = K.canvasTex(2048, 1024, (ctx, w, h) => {
         const g = ctx.createLinearGradient(0, 0, 0, h);
-        [[0, '#070a2c'], [0.22, '#141550'], [0.36, '#2f2278'], [0.44, '#6a3a90'], [0.485, '#d06a88'], [0.5, '#f4a070'], [0.515, '#a8588a'], [0.58, '#3f2c70'], [1, '#141038']].forEach(([s, c]) => g.addColorStop(s, c));
+        (LOOK ? LOOK.sky : [[0, '#070a2c'], [0.22, '#141550'], [0.36, '#2f2278'], [0.44, '#6a3a90'], [0.485, '#d06a88'], [0.5, '#f4a070'], [0.515, '#a8588a'], [0.58, '#3f2c70'], [1, '#141038']]).forEach(([s, c]) => g.addColorStop(s, c));
         ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'lighter';
-        for (const [u, a, r] of [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]]) { ctx.save(); ctx.translate(u * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(255,205,140,${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); }
-        for (let i = 0; i < 1500; i++) { const y = Math.pow(rnd(), 1.5) * h * 0.43, a = (1 - y / (h * 0.45)) * (0.3 + rnd() * 0.7), r = rnd() < 0.04 ? 2.2 : 0.7 + rnd() * 0.9; ctx.fillStyle = `rgba(${rnd() < 0.3 ? '190,215,255' : '255,240,220'},${a})`; ctx.beginPath(); ctx.arc(rnd() * w, y, r, 0, 7); ctx.fill(); }
+        for (const [u, a, r] of (LOOK ? LOOK.skyGlow : [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]])) { ctx.save(); ctx.translate(u * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(${LOOK ? LOOK.glowRGB : '255,205,140'},${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); }
+        if (!LOOK || LOOK.stars) for (let i = 0; i < 1500; i++) { const y = Math.pow(rnd(), 1.5) * h * 0.43, a = (1 - y / (h * 0.45)) * (0.3 + rnd() * 0.7), r = rnd() < 0.04 ? 2.2 : 0.7 + rnd() * 0.9; ctx.fillStyle = `rgba(${rnd() < 0.3 ? '190,215,255' : '255,240,220'},${a})`; ctx.beginPath(); ctx.arc(rnd() * w, y, r, 0, 7); ctx.fill(); }
         ctx.globalCompositeOperation = 'source-over';
       });
       const skyMat = basic('#ffffff', 1, { map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false });
@@ -1098,7 +1272,9 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         for (let i = 0; i < 26; i++) { const x = rnd() * w, y = rnd() * w, r = 8 + rnd() * 44; ctx.fillStyle = `rgba(200,170,190,${0.12 + rnd() * 0.2})`; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
       });
       const moon = new THREE.Mesh(new THREE.SphereGeometry(64, 32, 20), basic('#ffffff', 1.25, { map: moonTex, fog: false })); moon.position.set(-150, 170, -760); scene.add(moon);
-      const moon2 = new THREE.Mesh(new THREE.SphereGeometry(20, 24, 16), basic('#9fe6e0', 1.1, { fog: false })); moon2.position.set(330, 150, -640); scene.add(moon2);
+      if (LOOK && LOOK.sunDisc) { const d = LOOK.sunDisc; moon.material = basic(d.color, d.k, { fog: false }); moon.position.set(...d.pos); moon.scale.setScalar(d.r / 64); }
+      const moon2 = new THREE.Mesh(new THREE.SphereGeometry(20, 24, 16), basic('#9fe6e0', 1.1, { fog: false })); moon2.position.set(330, 150, -640); if (!LOOK || LOOK.moon2 !== false) scene.add(moon2);
+      if (LOOK) { M.peak.color.set(LOOK.peak); M.cloud.color.set(LOOK.cloud); }
       {
         const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks);
         for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
@@ -1139,18 +1315,22 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         return g;
       };
       const shards = (parent, x, y, z, s, mat, seed = 0, n = 4) => { for (let k = 0; k < n; k++) { const m = add(parent, OCTA, mat, x + (K.hash(seed, k) - 0.5) * s * 0.9, y + s * 0.3, z + (K.hash(seed, k + 5) - 0.5) * s * 0.6); const hh = s * (0.45 + 0.6 * K.hash(seed, k + 9)); m.scale.set(hh * 0.3, hh, hh * 0.3); m.rotation.set((K.hash(seed, k + 2) - 0.5) * 0.7, k, (K.hash(seed, k + 3) - 0.5) * 0.7); } };
-      const M_VIOLET = lum('#5a3ad0', '#7a54ff', 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum('#2a8aa0', '#5fe8ff', 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum('#6a4a20', '#ffc070', 2.2);
+      const SH = LOOK ? LOOK.shards : ['#5a3ad0', '#7a54ff', '#2a8aa0', '#5fe8ff'];
+      const M_VIOLET = lum(SH[0], SH[1], 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum(SH[2], SH[3], 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum('#6a4a20', '#ffc070', 2.2);
       const CAP = new THREE.SphereGeometry(1, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2);
       const shroom = (parent, x, y, z, s) => { add(parent, CYL6, M.pale, x, y + s * 0.3, z).scale.set(s * 0.12, s * 0.6, s * 0.12); add(parent, CAP, M_CAP, x, y + s * 0.55, z, { cast: false }).scale.set(s * 0.42, s * 0.3, s * 0.42); };
 
-      // ------------------------------------------------------------ the five islands
+      // ------------------------------------------------------------ the islands
+      const SUM = (NS - 1) * STEP + 4;
+      const LAND = TREE ? sceneTree({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, CYL6, M, RAD, SUM }) : null;
+      const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
       const gameOf = (i) => i % 5;
       const isl = Array.from({ length: NS }, (_, i) => {
         const a = A0 + i * DA, g = group(scene, RAD * Math.sin(a), i * STEP, RAD * Math.cos(a)); g.rotation.y = a;
-        islet(g, 4.7, 7 + (i % 2), i + 1);
+        ISLET(g, 4.7, 7 + (i % 2), i + 1);
         if (gameOf(i) < 4) { const d = add(g, new THREE.CylinderGeometry(1, 1.06, DAIS, 9), M.stone, 0, DAIS / 2, 0.55); d.scale.set(3.25, 1, 1.15); }
-        [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) pine(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
+        [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) PINE(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
         shards(g, (i % 2 ? -1 : 1) * 3.75, 0, 1.3, 0.75, i % 2 ? M_CYAN : M_VIOLET, i * 3 + 1); shards(g, (i % 2 ? 1 : -1) * 3.9, 0, 0.2, 0.5, i % 2 ? M_VIOLET : M_CYAN, i * 3 + 2, 3);
         shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3);
         return { i, g, a, game: gameOf(i) };
@@ -1229,6 +1409,20 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
           sticks.forEach((s, j) => { let hit = 0; R1.tapAt.forEach((tp, k) => { if (k % 2 === j) hit = Math.max(hit, bump(t, tp - 0.02, 0.22)); }); s.rotation.z = (j ? 1 : -1) * (0.1 + 0.36 * Math.min(1, hit * 1.7)); });
         });
         restLocal[0] = [2.6, PY + 1.25, 1.0];
+        // Chapter 2: a woodpecker clings to the right-hand post and taps the rhythm back after the player
+        R1.peckAt = [];
+        if (TREE) {
+          const px = PW / 2 + 0.34, BY = PY + 0.35, bird = group(g, px + 0.26, BY, -0.06); bird.rotation.y = Math.PI; bird.scale.setScalar(2.1);
+          const ink = std('#24242a', 0, 0.6), white = std('#f2efe6', 0, 0.7), red = std('#d0302a', 0, 0.6), grey = std('#8a8a80', 0.2, 0.5);
+          add(bird, new THREE.SphereGeometry(1, 10, 8), ink, 0, 0, 0).scale.set(0.085, 0.17, 0.08);
+          add(bird, new THREE.SphereGeometry(1, 8, 6), white, -0.04, 0.02, 0).scale.set(0.05, 0.12, 0.06);
+          const tail = add(bird, new THREE.BoxGeometry(0.03, 0.16, 0.07), ink, 0.04, -0.2, 0); tail.rotation.z = -0.35;
+          const head = group(bird, 0, 0.17, 0);
+          add(head, new THREE.SphereGeometry(0.068, 10, 8), ink, 0, 0, 0); add(head, new THREE.SphereGeometry(0.05, 8, 6), red, 0.01, 0.045, 0);
+          add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, 0.035); add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, -0.035);
+          const beak = add(head, new THREE.ConeGeometry(0.022, 0.12, 6), grey, 0.1, 0, 0); beak.rotation.z = -Math.PI / 2;
+          anims.push((t) => { let p = 0; for (const tp of R1.peckAt) p = Math.max(p, bump(t, tp - 0.06, 0.18)); head.rotation.z = -0.55 * Math.min(1, p * 1.8); head.position.x = 0.05 * Math.min(1, p * 1.8); bird.position.y = BY + 0.02 * Math.sin(t * 3); });
+        }
       }
 
       // ---- 2. Fingering Trainer: a standing stone; the note is cut into its face beside the instrument's keys, set as gems
@@ -1356,13 +1550,13 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       // ------------------------------------------------------------ between and around the islands
       for (let i = 0; i < NS - 1; i++) for (let k = 1; k <= 3; k++) {
         const a = A0 + (i + k / 4) * DA, r = RAD + 0.4 + 0.8 * Math.sin(k * 2.1 + i), y = (i + k / 4) * STEP - 0.25 + 0.2 * Math.sin(k * 1.3 + i * 2);
-        const s = add(scene, new THREE.CylinderGeometry(0.55, 0.3, 0.3, 6), k % 2 ? M.stone : M.rock, r * Math.sin(a), y, r * Math.cos(a)); s.rotation.y = k + i; s.scale.setScalar(0.8 + 0.4 * K.hash(i, k));
+        const s = LAND ? LAND.step(r * Math.sin(a), y, r * Math.cos(a), i * 3 + k) : add(scene, new THREE.CylinderGeometry(0.55, 0.3, 0.3, 6), k % 2 ? M.stone : M.rock, r * Math.sin(a), y, r * Math.cos(a)); if (!LAND) s.rotation.y = k + i; s.scale.setScalar(0.8 + 0.4 * K.hash(i, k));
         anims.push((t) => { s.position.y = y + 0.07 * Math.sin(t * 1.1 + k * 1.9 + i); });
       }
-      const rocklet = (a, r, y, size, seed, trees = 2) => { const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed); for (let k = 0; k < trees; k++) pine(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.5 + 0.4 * K.hash(seed, k + 8)), k); if (seed % 2) shards(g, size * 0.4, 0, size * 0.3, size * 0.4, seed % 4 === 1 ? M_CYAN : M_VIOLET, seed); anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g; };
+      const rocklet = LAND ? LAND.rocklet : (a, r, y, size, seed, trees = 2) => { const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed); for (let k = 0; k < trees; k++) pine(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.5 + 0.4 * K.hash(seed, k + 8)), k); if (seed % 2) shards(g, size * 0.4, 0, size * 0.3, size * 0.4, seed % 4 === 1 ? M_CYAN : M_VIOLET, seed); anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g; };
       for (let i = 0; i < NS - 1; i += 2) rocklet(A0 + (i + 0.5) * DA, RAD + (TALL ? 8.5 : 6.5), (i + 0.5) * STEP - 2.6, 0.95, 60 + i, 1);
       [[Math.PI - 0.5, 46, 16, 6], [Math.PI + 0.5, 60, 2, 8], [Math.PI + 0.1, 80, 26, 7], [Math.PI - 0.95, 70, 30, 5], [Math.PI + 1.0, 52, 22, 5], [2.4, 66, 8, 6], [-2.4, 66, 18, 7], [2.9, 90, 44, 6], [-2.9, 84, 50, 5]].forEach(([a, r, y, s], k) => rocklet(a, r, y, s, 70 + k, 3));
-      const SUM = (NS - 1) * STEP + 4;
+      if (LAND) { LAND.landmark(); LAND.distant(); } else {
       {
         // the mountain: a jagged low-poly peak, violet rock below, pale stone higher, snow on the shoulders; flat-topped for the citadel
         const H0 = -45, MH = SUM - H0, mg = new THREE.CylinderGeometry(13.5, 31, MH, 26, 14, false); mg.translate(0, H0 + MH / 2, 0);
@@ -1398,6 +1592,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         [[-7, 9, 3.5], [7.5, 8, 4.2], [-10.5, -3, 5], [10, -5.5, 4.6]].forEach(([x, z, h], k) => pine(cg, x, 0, z, h, k));
         const big = add(cg, OCTA, lum('#3a8ab0', '#7ff0ff', 2.6, { facet: true, rough: 0.2 }), 0, 41, 0, { cast: false }); big.scale.set(1.5, 3.2, 1.5);
         anims.push((t) => { big.rotation.y = t * 0.5; big.position.y = 41 + 0.5 * Math.sin(t * 0.8); });
+      }
       }
 
       // ------------------------------------------------------------ the wisp: on the flights it keeps the movie's path; on an island it goes where the player acts
@@ -1472,7 +1667,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
       function launchTiles() {
         tiles.forEach((tb, j) => {
           const r = END[TILE_TO_RECT[j]], block = tb.userData.block;
-          scene.attach(tb);
+          tb.visible = true; scene.attach(tb);
           const home = { p: tb.position.clone(), q: tb.quaternion.clone() };
           const goal = { p: new THREE.Vector3().fromArray(endPos).addScaledVector(cz, -DIST - THIN / 2).addScaledVector(cr, (r.x + r.w / 2 - 512) * unit).addScaledVector(cu, (512 - r.y - r.h / 2) * unit + rise), q: endCam.quaternion.clone() };
           const n = new THREE.Vector3(0, 0, 1).applyQuaternion(home.q);
@@ -1488,7 +1683,7 @@ const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","la
         });
       }
       function resetTiles() {
-        tiles.forEach((tb, j) => { R5.deck.add(tb); tb.position.copy(tileLocal[j].p); tb.quaternion.copy(tileLocal[j].q); tb.userData.fly = () => {}; tb.userData.block.visible = false; tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = true; });
+        tiles.forEach((tb, j) => { tb.visible = true; R5.deck.add(tb); tb.position.copy(tileLocal[j].p); tb.quaternion.copy(tileLocal[j].q); tb.userData.fly = () => {}; tb.userData.block.visible = false; tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = true; });
       }
 
       // ================================================================ the game
@@ -1575,7 +1770,8 @@ function createGame(E) {
     tallies: [], stopRes: [], skipped: [], stop: 0, q: 0, res: [], msg: '', msgKind: '', btns: [], hover: -1,
     captionAt: -9, events: [], fly: null, sub: null, bpm: saved.bpm || 80, flash: 0,
   };
-  const pool = () => st.inst.notes.map(parseNote);
+  const pool = () => st.inst.notes.map(parseNote);                  // every note this chapter uses
+  const freshPool = () => st.inst.fresh.map(parseNote), reviewPool = () => st.inst.review.map(parseNote);
   // written-to-sounding shift in semitones (B-flat, E-flat and F instruments; bass sounds an octave down, bells two up)
   const TRANSPOSE = { saxophone: -9, tenorsaxophone: -14, clarinet: -2, trumpet: -2, euphonium: -14, fhorn: -7, bbhorn: -7, dhorn: -7, electricbass: -12, bells: 24 };
   const NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -1603,18 +1799,25 @@ function createGame(E) {
     horn: (n, t = now()) => { if (!kit) return; kit.tone(t, { f: n, type: 'sawtooth', dur: 0.85, gain: 0.11, a: 0.05, hold: 0.45, filter: 'lowpass', f2: 1300, verb: 0.4 }); kit.tone(t, { f: n, type: 'sine', dur: 0.85, gain: 0.1, a: 0.05, hold: 0.45, verb: 0.4 }); },
     gliss: (notes, step = 0.07, gain = 0.09, t = now()) => notes.forEach((n, i) => snd.pluck(n, 0.5, gain * (0.7 + 0.3 * i / notes.length), t + i * step)),
     gust: (dur, gain, t = now()) => kit && kit.noise(t, { dur, color: 'pink', filter: 'bandpass', f: [[0, 300], [dur * 0.5, 900], [dur, 350]], q: 1.4, gain, a: dur * 0.45, verb: 0.3 }),
+    // a soft wooden flute for the chapter tunes, and a songbird's call (two or three quick chirps)
+    flute: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: dur + 0.25, gain: 0.05, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.45 }); kit.tone(t, { f: f * 2, type: 'sine', dur: dur * 0.8, gain: 0.008, a: 0.08, bus: 'music', verb: 0.4 }); kit.noise(t, { dur: 0.05, filter: 'bandpass', f: f * 2, q: 3, gain: 0.006, bus: 'music' }); },
+    bird: (t = now()) => { if (!kit) return; const f0 = 2600 + Math.random() * 1400, n = 2 + Math.floor(Math.random() * 2); for (let k = 0; k < n; k++) kit.tone(t + k * 0.13, { f: [[0, f0], [0.05, f0 * 1.35], [0.1, f0 * 1.1]], type: 'sine', dur: 0.12, gain: 0.018, a: 0.005, pan: 0.5 - Math.random(), verb: 0.35 }); },
     right: () => { snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
     wrong: () => { snd.play('thud', { gain: 0.4, f: 120 }); kit && kit.tone(now(), { f: 'D3', type: 'triangle', dur: 0.4, gain: 0.08, filter: 'lowpass', f2: 900 }); },
   };
-  const CHORDS = [['Bb3', 'F4', 'Bb4', 'D5'], ['Eb3', 'G3', 'Bb3', 'F4'], ['G3', 'Bb3', 'D4', 'F4'], ['F3', 'A3', 'C4', 'Eb4']];
+  const MUS = CH.music, BAR = 240 / MUS.bpm;
+  let ambWin = 0;
   function ambient() {
     if (!kit) return;
     const n = now(), quiet = st.sub && st.sub.kind === 'rhythm' && st.sub.phase !== 'ready' && st.sub.phase !== 'result';
     if (n > ambUntil - 5) {
-      const t0 = Math.max(n + 0.05, ambUntil);
-      kit.music('pad', t0, t0 + 16, { bpm: 60, gain: quiet ? 0.25 : 0.5, chords: CHORDS }); kit.bed('room', t0, t0 + 16, { gain: 0.5 });
-      snd.gust(2.4, 0.035, t0 + 3); snd.gust(2.4, 0.03, t0 + 10);
-      ambUntil = t0 + 15.6;
+      // four bars at a time: the chapter's chords as a pad, and its tune (if it has one) on every other pass
+      const t0 = Math.max(n + 0.05, ambUntil), len = 4 * BAR, w = ambWin++;
+      kit.music('pad', t0, t0 + len, { bpm: MUS.bpm, gain: quiet ? 0.25 : 0.5, chords: MUS.chords }); kit.bed('room', t0, t0 + len, { gain: 0.5 });
+      snd.gust(2.4, 0.035, t0 + 3); snd.gust(2.4, 0.03, t0 + len * 0.62);
+      if (MUS.tune && w % 2 === 1 && !quiet) { let tb = t0; MUS.tune.slice(4 * ((w >> 1) % 2), 4 * ((w >> 1) % 2) + 4).forEach((bar) => bar.forEach(([nt, beats]) => { if (nt) snd.flute(nt, beats * BAR / 4, tb); tb += beats * BAR / 4; })); }
+      if (MUS.birds) for (let k = 0; k < 3; k++) snd.bird(t0 + len * (0.15 + 0.3 * k) + Math.random() * 1.2);
+      ambUntil = t0 + len - 0.4;
     }
   }
   function setSound(on) { soundOn = on; saved.sound = on; persist(); if (outGain) outGain.gain.value = on ? 1 : 0; }
@@ -1627,10 +1830,14 @@ function createGame(E) {
   function flyTo(from, to, dur, then) { flyPath([[0, from], [dur, to]], then); }
   function flyPath(keys, then) { G.mode = 'fly'; st.fly = { keys, t0: G.t, then }; }
   const gameOf = (j) => j % 5, lapOf = (j) => Math.floor(j / 5);
+  // the chapter's terms as indices into TERMS: the ones this unit adds, and earlier units' for review
+  const termIds = (names) => names.map((nm) => TERMS.indexOf(nm)).filter((j) => j >= 0);
+  const termPool = () => { const t = chapterTerms(st.inst.clef); return { fresh: termIds(t.fresh), review: termIds(t.review) }; };
+  function termSeq() { const t = termPool(); return t.review.length ? shuffle(shuffle(t.fresh).slice(0, 2).concat(shuffle(t.review).slice(0, 1))) : shuffle(t.fresh).slice(0, 3); }
   function resetJourney() {
     st.events = []; st.fly = null; st.sub = null; say('');
     st.tallies = GAMES.map(() => ({ c: 0, n: 0 })); st.skipped = GAMES.map(() => false); st.stopRes = new Array(NS).fill(null); st.stop = 0;
-    st.seqs = { finger: noteSeq(3), write: noteSeq(3), read: noteSeq(3), terms: shuffle(TERMS.map((_, j) => j)).slice(0, 3) }; st.rhythmPrev = '';
+    st.seqs = { finger: noteSeq(3), write: noteSeq(3), read: noteSeq(3), terms: termSeq() }; st.rhythmPrev = '';
     G.doneAt = new Array(NS).fill(-1); G.endTau = -1; G.summaryFade = 0;
     resetTiles(); GAMES.forEach((_, g) => placeProps(g, g));
     WS.free = false; WS.pos.copy(restOf(0));
@@ -1657,12 +1864,14 @@ function createGame(E) {
     [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms][g]();
   }
   // percentage correct: questions answered right, or for rhythms, notes tapped in time (extra taps count as misses)
+  // best results, per instrument and chapter (Chapter 1 keeps the key it has always used)
+  const bestKey = () => (CH.n === 1 ? st.inst.key : `ch${CH.n}:${st.inst.key}`);
   const pctOf = (t) => (t.n ? Math.round(100 * t.c / t.n) : 0);
   const mark = (c, n = 1) => { const t = st.tallies[gameOf(st.stop)]; t.c += c; t.n += n; };
   const finalPct = () => { const r = st.tallies.filter((t) => t.n); return r.length ? Math.round(r.reduce((a, t) => a + 100 * t.c / t.n, 0) / r.length) : 0; };
   // one exercise is done: light the island's crystal, then swoop on up the stair
   function saveBest() {
-    const best = ((saved.bestPct = saved.bestPct || {})[st.inst.key] = saved.bestPct[st.inst.key] || []);
+    const best = ((saved.bestPct = saved.bestPct || {})[bestKey()] = saved.bestPct[bestKey()] || []);
     st.tallies.forEach((tl, i) => { if (tl.n) best[i] = Math.max(best[i] == null ? 0 : best[i], pctOf(tl)); }); persist();
   }
   function finishStop() {
@@ -1705,7 +1914,7 @@ function createGame(E) {
         const opts = []; if (b === 0) opts.push([4, 1]); if (b % 2 === 0) opts.push([2, 4]); opts.push([1, 5]);
         let r = Math.random() * opts.reduce((s, o) => s + o[1], 0), d = 1;
         for (const [dd, w] of opts) { if ((r -= w) < 0) { d = dd; break; } }
-        out.push({ beat: b, d }); b += d;
+        out.push({ beat: b, d, rest: CH.rhythm.rests && Math.random() < (d === 4 ? 0.3 : d === 2 ? 0.3 : 0.22) }); b += d;
       }
       if (out.length > 1 || Math.random() < 0.3) return out;
     }
@@ -1713,7 +1922,8 @@ function createGame(E) {
   function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: st.rhythmPrev }; newRhythm(); }
   function newRhythm() {
     const s = st.sub, clef = st.inst.clef; let r;
-    do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1));
+    const sounded = (rr) => rr[0].concat(rr[1]).filter((n) => !n.rest).length;
+    do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1) || sounded(r) < 3 || r[0][0].rest);
     s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = [];
     clear(R1.dyn); R1.notes = []; R1.tapAt = []; R1.stoneAt = [-9, -9, -9, -9];
     putClef(R1.sf, clef, R1.dyn);
@@ -1722,10 +1932,11 @@ function createGame(E) {
     s.mid = mid; s.onsets = [];
     r.forEach((bar, bi) => bar.forEach((n) => {
       const x0 = bi ? 13.0 : 5.0, su = n.d === 4 ? x0 + 1.6 : x0 + 0.95 + n.beat * 1.72;
+      if (n.rest) { R1.sf.put(n.d === 4 ? 'wholeRest' : n.d === 2 ? 'halfRest' : 'rest', (n.d === 4 ? x0 + 3.95 : su + 0.15), 0, M.ink, R1.dyn); return; }
       const nn = writeNote(R1.dyn, R1.sf, clef, mid, su, n.d === 4 ? 'w' : n.d === 2 ? 'h' : 'q', inkLit(), -1);
       R1.notes.push({ g: nn, su, d: n.d }); s.onsets.push(bi * 4 + n.beat);
     }));
-    say('Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.');
+    say(`${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.`);
   }
   function runRhythm(tapping) {
     const s = st.sub; if (!s || s.phase !== 'ready' && s.phase !== 'result') return;
@@ -1769,8 +1980,15 @@ function createGame(E) {
     const ok = hits === N && extra === 0;
     mark(hits, N + extra); st.stopRes[st.stop] = ok; ok ? snd.right() : snd.wrong();
     s.phase = 'result';
-    at(1.8, () => { if (st.sub === s && s.phase === 'result') finishStop(); });
-    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}`, ok ? 'good' : 'bad');
+    let wait = 1.8;
+    if (CH.scene === 'tree') {
+      const t0 = now() + 0.9;
+      s.onsets.forEach((o) => { const tp = t0 + o * s.beat; snd.play('tock', { gain: 0.5, f: 1450 }, tp); snd.play('tock', { gain: 0.28, f: 980 }, tp + 0.045); atAudio(tp, () => R1.peckAt.push(G.t)); });
+      atAudio(t0 - 0.3, () => { if (st.sub === s) wispTo(world(R1.dyn, 2.9, 0.6, 0.35), 0.3, 0.1); });
+      wait = 0.9 + 8 * s.beat + 0.6;
+    }
+    at(wait, () => { if (st.sub === s && s.phase === 'result') finishStop(); });
+    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}${CH.scene === 'tree' ? ' Now listen: the woodpecker taps it back.' : ''}`, ok ? 'good' : 'bad');
     wispTo(restOf(st.stop), 0.5);
   }
   function nextRhythm() { const s = st.sub; if (!s || s.kind !== 'rhythm' || s.phase !== 'result') return; finishStop(); }
@@ -1819,7 +2037,14 @@ function createGame(E) {
     buildKeys(); clear(R2.clefG); putClef(R2.sf, st.inst.clef, R2.clefG);
     st.sub = { kind: 'finger', seq: st.seqs.finger }; newFinger();
   }
-  function noteSeq(n) { let out = []; const p = pool(); while (out.length < n) out = out.concat(shuffle(p)); out = out.slice(0, n); for (let k = 1; k < out.length; k++) if (out[k].name === out[k - 1].name) { const j = (k + 1) % out.length; [out[k], out[j]] = [out[j], out[k]]; } return out; }
+  // a game's three exercises: in Chapter 1 any of the unit's notes; later, two new notes and one from earlier units
+  function noteSeq(n) {
+    if (!st.inst.review.length) return anySeq(n, pool());
+    const f = anySeq(n - 1, freshPool()), r = shuffle(reviewPool())[0], out = shuffle(f.concat([r]));
+    for (let k = 1; k < out.length; k++) if (out[k].name === out[k - 1].name) { const j = (k + 1) % out.length; [out[k], out[j]] = [out[j], out[k]]; }
+    return out;
+  }
+  function anySeq(n, p) { let out = []; while (out.length < n) out = out.concat(shuffle(p)); out = out.slice(0, n); for (let k = 1; k < out.length; k++) if (out[k].name === out[k - 1].name) { const j = (k + 1) % out.length; [out[k], out[j]] = [out[j], out[k]]; } return out; }
   function newFinger() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.locked = false;
     clear(R2.noteG); s.nm = writeNote(R2.noteG, R2.sf, st.inst.clef, n, 8.2, 'w');
@@ -1921,12 +2146,12 @@ function createGame(E) {
   // ---------------------------------------------------------------- 4. Read Notes
   function setupRead() {
     clear(R4.clefG); putClef(R4.sf, st.inst.clef, R4.clefG, R4.gilt);
-    const ch = pool().sort((a, b) => a.midi - b.midi).slice(0, 3);
-    R4.shields.forEach((q, k) => { clear(q.userData.labelG); q.visible = k < ch.length; if (ch[k]) text(q.userData.labelG, pretty(ch[k]), 0, 0.04, 0.012, { height: 0.42, face: CINZEL_B }); });
-    st.sub = { kind: 'read', seq: st.seqs.read, choices: ch }; newRead();
+    st.sub = { kind: 'read', seq: st.seqs.read, choices: [] }; newRead();
   }
   function newRead() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.locked = false; s.t0 = G.t;
+    const others = shuffle(pool().filter((m) => m.name !== n.name)).slice(0, 2), ch = [n].concat(others).sort((a, b) => a.midi - b.midi); s.choices = ch;
+    R4.shields.forEach((q, k) => { clear(q.userData.labelG); q.visible = k < ch.length; if (ch[k]) text(q.userData.labelG, pretty(ch[k]), 0, 0.04, 0.012, { height: 0.42, face: CINZEL_B }); });
     clear(R4.noteG);
     s.nm = writeNote(R4.noteG, R4.sf, st.inst.clef, n, 7.6, 'q', glowing('#8a6a2a', 2.4, { rough: 0.4, rest: 1.25, restGlow: '#ffd88a', glow: C.lit, to: C.lit, tint: 1 }));
     R4.shields.forEach((q) => { tintTo(q.userData.mat, '#e05200'); set(q.userData.mat, 0); });
@@ -1985,12 +2210,14 @@ function createGame(E) {
   function newTerm() {
     const s = st.sub, ti = s.order[st.q]; s.ti = ti; s.locked = false; s.t0 = G.t;
     termScene(TERMS[ti]);
-    s.opts = shuffle([ti, ...shuffle(TERMS.map((_, j) => j).filter((j) => j !== ti)).slice(0, 7)]);
-    tiles.forEach((tb, k) => { setLabel(tb, TERMS[s.opts[k]]); tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); });
-    say('Name the glowing symbol (keys 1 to 8).');
+    const tp = termPool(), all = tp.fresh.concat(tp.review);
+    s.opts = shuffle([ti, ...shuffle(all.filter((j) => j !== ti)).slice(0, tiles.length - 1)]);
+    // fewer terms than cards: the spare cards stay hidden (they come back for the ending)
+    tiles.forEach((tb, k) => { tb.visible = k < s.opts.length; setLabel(tb, k < s.opts.length ? TERMS[s.opts[k]] : ''); tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); });
+    say(`Name the glowing symbol (keys 1 to ${s.opts.length}).`);
   }
   function pickCard(k) {
-    const s = st.sub; if (!s || s.kind !== 'terms' || s.locked) return;
+    const s = st.sub; if (!s || s.kind !== 'terms' || s.locked || k >= s.opts.length) return;
     s.locked = true; audio();
     const ok = s.opts[k] === s.ti;
     { const tb = tiles[k]; tb.userData.hitAt = G.t; wispTo(world(tb, 0.42, 0.05, 0.12), 0.25, 0.15); tintTo(tb.userData.mat, ok ? C.good : C.bad); set(tb.userData.mat, 1); snd.play('tock', { gain: 0.5, f: 760 }); }
@@ -2117,9 +2344,9 @@ function createGame(E) {
     if (G.mode === 'title') {
       strip(OPEN_LINE, TITLE, 1);
       ctx.font = `700 ${H * 0.026}px "Alegreya"`; ctx.textAlign = 'center'; ctx.fillStyle = '#ffe9bc';
-      ctx.fillText(`Level 1 · ${st.inst.name} · notes ${pool().map(pretty).join(', ')}`, W / 2, H * 0.62);
+      ctx.fillText(`Unit ${CH.unit} · ${st.inst.name} · ${st.inst.review.length ? 'new notes' : 'notes'} ${freshPool().map(pretty).join(', ')}`, W / 2, H * 0.62);
       row([{ label: 'Begin', fn: begin }], H * 0.53, W / 2, 1.5);
-      const best = (saved.bestPct || {})[st.inst.key];
+      const best = (saved.bestPct || {})[bestKey()];
       if (best && best.some((b) => b != null)) { ctx.font = `700 ${H * 0.022}px "Alegreya"`; ctx.fillStyle = '#d8cfdf'; ctx.fillText('Best: ' + GAMES.map((g, i) => `${g.name} ${best[i] == null ? '–' : best[i] + '%'}`).join(' · '), W / 2, H * 0.665); }
       return;
     }
@@ -2151,7 +2378,7 @@ function createGame(E) {
     if (G.mode === 'summary') {
       const a = G.summaryFade; ctx.globalAlpha = a;
       const y0 = H * 0.635; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = `700 ${H * 0.05}px "Texturina"`; ctx.fillStyle = '#ffe2a0'; ctx.fillText(`Level 1 complete · ${finalPct()}% correct`, W / 2, y0);
+      ctx.font = `700 ${H * 0.05}px "Texturina"`; ctx.fillStyle = '#ffe2a0'; ctx.fillText(`Chapter ${CH.n} complete · ${finalPct()}% correct`, W / 2, y0);
       ctx.font = `700 ${H * 0.026}px "Alegreya"`;
       GAMES.forEach((g, i) => { const tl = st.tallies[i], x = W / 2 + (i - 2) * W * 0.17; ctx.fillStyle = '#d8cfdf'; ctx.fillText(g.name, x, y0 + H * 0.075); ctx.fillStyle = '#F8B73C'; ctx.fillText(tl && tl.n ? pctOf(tl) + '%' : st.skipped[i] ? 'no chart yet' : 'not played', x, y0 + H * 0.115); });
       ctx.globalAlpha = 1;
@@ -2177,6 +2404,11 @@ try {
   const GAME = window.GAME;
   INST.forEach((i) => { const o = document.createElement('option'); o.value = i.key; o.textContent = i.name; sel.append(o); });
   sel.value = GAME.inst.key;
+  // chapters: picking one reloads the page on it (each chapter builds its own world)
+  const chSel = $('chapter');
+  CHAPTERS.forEach((c) => { const o = document.createElement('option'); o.value = c.n; o.textContent = `${c.n}. ${c.title}`; chSel.append(o); });
+  chSel.value = CH.n;
+  chSel.addEventListener('change', () => { const u = new URL(location.href); if (+chSel.value === 1) u.searchParams.delete('ch'); else u.searchParams.set('ch', chSel.value); location.href = u.toString(); });
   sel.addEventListener('change', () => { GAME.setInstrument(sel.value); canvas.focus(); });
   const syncSnd = () => { bSnd.setAttribute('aria-pressed', String(GAME.sound)); bSnd.textContent = GAME.sound ? 'Sound on' : 'Sound off'; };
   bSnd.addEventListener('click', () => { GAME.setSound(!GAME.sound); syncSnd(); }); syncSnd();
@@ -2219,7 +2451,7 @@ try {
   canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = GAME.pointer('move', ...at(e)) ? 'pointer' : 'default'; });
   canvas.addEventListener('pointerup', (e) => GAME.pointer('up', ...at(e)));
   canvas.addEventListener('pointercancel', (e) => GAME.pointer('up', ...at(e)));
-  addEventListener('keydown', (e) => { if (e.target === sel || e.target.tagName === 'BUTTON') return; GAME.keydown(e); });
+  addEventListener('keydown', (e) => { if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return; GAME.keydown(e); });
   noteEl.hidden = true; canvas.focus();
   window.READY = true;
 

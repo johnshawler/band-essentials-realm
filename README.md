@@ -4,6 +4,17 @@
 
 A playable version of the High Fantasy *Band Essentials* motion graphic. Fifteen floating islands climb a mountain toward the citadel on its summit. Each island holds one exercise from the five Level 1 games, in turn: Read Rhythms, Fingering Trainer, Write Notes, Read Notes and Terms & Symbols, three times round. Reaching the top plays the movie's ending.
 
+## Chapters
+
+Pick a chapter in the bar under the game, or open it directly with `?ch=<n>`. Every chapter is open from the start.
+
+| Chapter | Unit | Landmark | New in this unit |
+| --- | --- | --- | --- |
+| 1. The Climb to the Castle | 1 | Mountain citadel | First notes; Unit 1 terms |
+| 2. The Great Tree | 2 | Giant hollow tree | Two new notes per instrument; rests in the rhythms; sharp, flat, natural, time signature. A woodpecker taps each rhythm back. |
+
+From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-tree.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
+
 The release number shows in the top-left corner of the game (v7 and up). It is the `VERSION` constant at the top of `src/realm-game.js`; add one for every release to the public site.
 
 Results are percentages: each game's percentage covers its three exercises, and the final result is the average of the five games. Every note the game plays is at concert pitch for the chosen instrument, so it sits in the B-flat of the music.

@@ -1,12 +1,11 @@
-// ================================================================ Band Adventures, Chapter 1: the High Fantasy movie made playable (Level 1)
+// ================================================================ Band Adventures: the High Fantasy movie made playable, one chapter per course unit
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
-const INST = /*INST_DATA*/[];
 {
-  const VERSION = 9; // shown top left; add one for every release to the public site
+  const VERSION = 10; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
-  const OPEN_LINE = 'Chapter 1: The Climb to the Castle';
+  const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
   const GAMES = [
     { name: 'Read Rhythms', line: 'Tap and count rhythms in time', rounds: 3 },
     { name: 'Fingering Trainer', line: 'Interactive fingering chart exercises for all instruments', rounds: 5 },
@@ -161,6 +160,8 @@ const INST = /*INST_DATA*/[];
       const Q = { sun: +(params.get('shadow') || 2048), sky: 1024 };
       const TALL = S.H > S.W, FOV = TALL ? 40 : 30, tanV = Math.tan(FOV * Math.PI / 360), tanH = tanV * S.W / S.H, LOGO = LAYOUT(S.W, S.H);
       const anims = [];
+      // the chapter's look: the castle world is the default; a chapter with its own scenery overrides parts of it
+      const TREE = CH.scene === 'tree', LOOK = TREE ? TREE_LOOK : null;
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -211,22 +212,22 @@ const INST = /*INST_DATA*/[];
       }
 
       // ------------------------------------------------------------ light
-      K.env(S, { top: '#1c2266', horizon: '#d07a90', bottom: '#3b2b62', intensity: 0.6, blur: 0.06, panels: [
+      K.env(S, LOOK ? LOOK.env : { top: '#1c2266', horizon: '#d07a90', bottom: '#3b2b62', intensity: 0.6, blur: 0.06, panels: [
         { pos: [-22, 24, 40], size: [34, 18], color: '#ffc88c', power: 4.5 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9cc4', power: 2.2 }, { pos: [0, 44, -12], size: [44, 12], color: '#8ea2ff', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb070', power: 2.5 }] });
       const RAD = 36, DA = 0.27, STEP = 2.6, A0 = -(NS - 1) * DA / 2;
-      const SUN_OFF = new THREE.Vector3(-20, 46, 43), sun = K.sun(S, { pos: [-20, 50, RAD + 40], target: [0, 4, RAD - 3], color: '#ffd0a0', power: 2.5, size: 28, soft: 1.0, mapSize: Q.sun, far: 220 });
-      const hemi = new THREE.HemisphereLight('#9a92ff', '#6a3c58', 0.42); scene.add(hemi);
+      const SUN_OFF = new THREE.Vector3(-20, 46, 43), sun = K.sun(S, { pos: [-20, 50, RAD + 40], target: [0, 4, RAD - 3], color: LOOK ? LOOK.sun : '#ffd0a0', power: LOOK ? LOOK.sunPower : 2.5, size: 28, soft: 1.0, mapSize: Q.sun, far: 220 });
+      const hemi = LOOK ? new THREE.HemisphereLight(...LOOK.hemi) : new THREE.HemisphereLight('#9a92ff', '#6a3c58', 0.42); scene.add(hemi);
       const key = new THREE.SpotLight('#ffe6c8', 110, 60, 0.42, 0.9, 1.6); key.castShadow = false; scene.add(key, key.target);
-      const FOG = new THREE.Color(C.fog); scene.fog = new THREE.Fog(FOG.clone(), 60, 900);
+      const FOG = new THREE.Color(LOOK ? LOOK.fog : C.fog); scene.fog = new THREE.Fog(FOG.clone(), 60, 900);
 
       // ------------------------------------------------------------ the sky
       const skyTex = K.canvasTex(2048, 1024, (ctx, w, h) => {
         const g = ctx.createLinearGradient(0, 0, 0, h);
-        [[0, '#070a2c'], [0.22, '#141550'], [0.36, '#2f2278'], [0.44, '#6a3a90'], [0.485, '#d06a88'], [0.5, '#f4a070'], [0.515, '#a8588a'], [0.58, '#3f2c70'], [1, '#141038']].forEach(([s, c]) => g.addColorStop(s, c));
+        (LOOK ? LOOK.sky : [[0, '#070a2c'], [0.22, '#141550'], [0.36, '#2f2278'], [0.44, '#6a3a90'], [0.485, '#d06a88'], [0.5, '#f4a070'], [0.515, '#a8588a'], [0.58, '#3f2c70'], [1, '#141038']]).forEach(([s, c]) => g.addColorStop(s, c));
         ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'lighter';
-        for (const [u, a, r] of [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]]) { ctx.save(); ctx.translate(u * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(255,205,140,${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); }
-        for (let i = 0; i < 1500; i++) { const y = Math.pow(rnd(), 1.5) * h * 0.43, a = (1 - y / (h * 0.45)) * (0.3 + rnd() * 0.7), r = rnd() < 0.04 ? 2.2 : 0.7 + rnd() * 0.9; ctx.fillStyle = `rgba(${rnd() < 0.3 ? '190,215,255' : '255,240,220'},${a})`; ctx.beginPath(); ctx.arc(rnd() * w, y, r, 0, 7); ctx.fill(); }
+        for (const [u, a, r] of (LOOK ? LOOK.skyGlow : [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]])) { ctx.save(); ctx.translate(u * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(${LOOK ? LOOK.glowRGB : '255,205,140'},${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); }
+        if (!LOOK || LOOK.stars) for (let i = 0; i < 1500; i++) { const y = Math.pow(rnd(), 1.5) * h * 0.43, a = (1 - y / (h * 0.45)) * (0.3 + rnd() * 0.7), r = rnd() < 0.04 ? 2.2 : 0.7 + rnd() * 0.9; ctx.fillStyle = `rgba(${rnd() < 0.3 ? '190,215,255' : '255,240,220'},${a})`; ctx.beginPath(); ctx.arc(rnd() * w, y, r, 0, 7); ctx.fill(); }
         ctx.globalCompositeOperation = 'source-over';
       });
       const skyMat = basic('#ffffff', 1, { map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false });
@@ -236,7 +237,9 @@ const INST = /*INST_DATA*/[];
         for (let i = 0; i < 26; i++) { const x = rnd() * w, y = rnd() * w, r = 8 + rnd() * 44; ctx.fillStyle = `rgba(200,170,190,${0.12 + rnd() * 0.2})`; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
       });
       const moon = new THREE.Mesh(new THREE.SphereGeometry(64, 32, 20), basic('#ffffff', 1.25, { map: moonTex, fog: false })); moon.position.set(-150, 170, -760); scene.add(moon);
-      const moon2 = new THREE.Mesh(new THREE.SphereGeometry(20, 24, 16), basic('#9fe6e0', 1.1, { fog: false })); moon2.position.set(330, 150, -640); scene.add(moon2);
+      if (LOOK && LOOK.sunDisc) { const d = LOOK.sunDisc; moon.material = basic(d.color, d.k, { fog: false }); moon.position.set(...d.pos); moon.scale.setScalar(d.r / 64); }
+      const moon2 = new THREE.Mesh(new THREE.SphereGeometry(20, 24, 16), basic('#9fe6e0', 1.1, { fog: false })); moon2.position.set(330, 150, -640); if (!LOOK || LOOK.moon2 !== false) scene.add(moon2);
+      if (LOOK) { M.peak.color.set(LOOK.peak); M.cloud.color.set(LOOK.cloud); }
       {
         const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks);
         for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
@@ -277,18 +280,22 @@ const INST = /*INST_DATA*/[];
         return g;
       };
       const shards = (parent, x, y, z, s, mat, seed = 0, n = 4) => { for (let k = 0; k < n; k++) { const m = add(parent, OCTA, mat, x + (K.hash(seed, k) - 0.5) * s * 0.9, y + s * 0.3, z + (K.hash(seed, k + 5) - 0.5) * s * 0.6); const hh = s * (0.45 + 0.6 * K.hash(seed, k + 9)); m.scale.set(hh * 0.3, hh, hh * 0.3); m.rotation.set((K.hash(seed, k + 2) - 0.5) * 0.7, k, (K.hash(seed, k + 3) - 0.5) * 0.7); } };
-      const M_VIOLET = lum('#5a3ad0', '#7a54ff', 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum('#2a8aa0', '#5fe8ff', 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum('#6a4a20', '#ffc070', 2.2);
+      const SH = LOOK ? LOOK.shards : ['#5a3ad0', '#7a54ff', '#2a8aa0', '#5fe8ff'];
+      const M_VIOLET = lum(SH[0], SH[1], 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum(SH[2], SH[3], 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum('#6a4a20', '#ffc070', 2.2);
       const CAP = new THREE.SphereGeometry(1, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2);
       const shroom = (parent, x, y, z, s) => { add(parent, CYL6, M.pale, x, y + s * 0.3, z).scale.set(s * 0.12, s * 0.6, s * 0.12); add(parent, CAP, M_CAP, x, y + s * 0.55, z, { cast: false }).scale.set(s * 0.42, s * 0.3, s * 0.42); };
 
-      // ------------------------------------------------------------ the five islands
+      // ------------------------------------------------------------ the islands
+      const SUM = (NS - 1) * STEP + 4;
+      const LAND = TREE ? sceneTree({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, CYL6, M, RAD, SUM }) : null;
+      const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
       const gameOf = (i) => i % 5;
       const isl = Array.from({ length: NS }, (_, i) => {
         const a = A0 + i * DA, g = group(scene, RAD * Math.sin(a), i * STEP, RAD * Math.cos(a)); g.rotation.y = a;
-        islet(g, 4.7, 7 + (i % 2), i + 1);
+        ISLET(g, 4.7, 7 + (i % 2), i + 1);
         if (gameOf(i) < 4) { const d = add(g, new THREE.CylinderGeometry(1, 1.06, DAIS, 9), M.stone, 0, DAIS / 2, 0.55); d.scale.set(3.25, 1, 1.15); }
-        [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) pine(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
+        [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) PINE(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
         shards(g, (i % 2 ? -1 : 1) * 3.75, 0, 1.3, 0.75, i % 2 ? M_CYAN : M_VIOLET, i * 3 + 1); shards(g, (i % 2 ? 1 : -1) * 3.9, 0, 0.2, 0.5, i % 2 ? M_VIOLET : M_CYAN, i * 3 + 2, 3);
         shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3);
         return { i, g, a, game: gameOf(i) };
@@ -367,6 +374,20 @@ const INST = /*INST_DATA*/[];
           sticks.forEach((s, j) => { let hit = 0; R1.tapAt.forEach((tp, k) => { if (k % 2 === j) hit = Math.max(hit, bump(t, tp - 0.02, 0.22)); }); s.rotation.z = (j ? 1 : -1) * (0.1 + 0.36 * Math.min(1, hit * 1.7)); });
         });
         restLocal[0] = [2.6, PY + 1.25, 1.0];
+        // Chapter 2: a woodpecker clings to the right-hand post and taps the rhythm back after the player
+        R1.peckAt = [];
+        if (TREE) {
+          const px = PW / 2 + 0.34, BY = PY + 0.35, bird = group(g, px + 0.26, BY, -0.06); bird.rotation.y = Math.PI; bird.scale.setScalar(2.1);
+          const ink = std('#24242a', 0, 0.6), white = std('#f2efe6', 0, 0.7), red = std('#d0302a', 0, 0.6), grey = std('#8a8a80', 0.2, 0.5);
+          add(bird, new THREE.SphereGeometry(1, 10, 8), ink, 0, 0, 0).scale.set(0.085, 0.17, 0.08);
+          add(bird, new THREE.SphereGeometry(1, 8, 6), white, -0.04, 0.02, 0).scale.set(0.05, 0.12, 0.06);
+          const tail = add(bird, new THREE.BoxGeometry(0.03, 0.16, 0.07), ink, 0.04, -0.2, 0); tail.rotation.z = -0.35;
+          const head = group(bird, 0, 0.17, 0);
+          add(head, new THREE.SphereGeometry(0.068, 10, 8), ink, 0, 0, 0); add(head, new THREE.SphereGeometry(0.05, 8, 6), red, 0.01, 0.045, 0);
+          add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, 0.035); add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, -0.035);
+          const beak = add(head, new THREE.ConeGeometry(0.022, 0.12, 6), grey, 0.1, 0, 0); beak.rotation.z = -Math.PI / 2;
+          anims.push((t) => { let p = 0; for (const tp of R1.peckAt) p = Math.max(p, bump(t, tp - 0.06, 0.18)); head.rotation.z = -0.55 * Math.min(1, p * 1.8); head.position.x = 0.05 * Math.min(1, p * 1.8); bird.position.y = BY + 0.02 * Math.sin(t * 3); });
+        }
       }
 
       // ---- 2. Fingering Trainer: a standing stone; the note is cut into its face beside the instrument's keys, set as gems
@@ -494,13 +515,13 @@ const INST = /*INST_DATA*/[];
       // ------------------------------------------------------------ between and around the islands
       for (let i = 0; i < NS - 1; i++) for (let k = 1; k <= 3; k++) {
         const a = A0 + (i + k / 4) * DA, r = RAD + 0.4 + 0.8 * Math.sin(k * 2.1 + i), y = (i + k / 4) * STEP - 0.25 + 0.2 * Math.sin(k * 1.3 + i * 2);
-        const s = add(scene, new THREE.CylinderGeometry(0.55, 0.3, 0.3, 6), k % 2 ? M.stone : M.rock, r * Math.sin(a), y, r * Math.cos(a)); s.rotation.y = k + i; s.scale.setScalar(0.8 + 0.4 * K.hash(i, k));
+        const s = LAND ? LAND.step(r * Math.sin(a), y, r * Math.cos(a), i * 3 + k) : add(scene, new THREE.CylinderGeometry(0.55, 0.3, 0.3, 6), k % 2 ? M.stone : M.rock, r * Math.sin(a), y, r * Math.cos(a)); if (!LAND) s.rotation.y = k + i; s.scale.setScalar(0.8 + 0.4 * K.hash(i, k));
         anims.push((t) => { s.position.y = y + 0.07 * Math.sin(t * 1.1 + k * 1.9 + i); });
       }
-      const rocklet = (a, r, y, size, seed, trees = 2) => { const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed); for (let k = 0; k < trees; k++) pine(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.5 + 0.4 * K.hash(seed, k + 8)), k); if (seed % 2) shards(g, size * 0.4, 0, size * 0.3, size * 0.4, seed % 4 === 1 ? M_CYAN : M_VIOLET, seed); anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g; };
+      const rocklet = LAND ? LAND.rocklet : (a, r, y, size, seed, trees = 2) => { const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed); for (let k = 0; k < trees; k++) pine(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.5 + 0.4 * K.hash(seed, k + 8)), k); if (seed % 2) shards(g, size * 0.4, 0, size * 0.3, size * 0.4, seed % 4 === 1 ? M_CYAN : M_VIOLET, seed); anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g; };
       for (let i = 0; i < NS - 1; i += 2) rocklet(A0 + (i + 0.5) * DA, RAD + (TALL ? 8.5 : 6.5), (i + 0.5) * STEP - 2.6, 0.95, 60 + i, 1);
       [[Math.PI - 0.5, 46, 16, 6], [Math.PI + 0.5, 60, 2, 8], [Math.PI + 0.1, 80, 26, 7], [Math.PI - 0.95, 70, 30, 5], [Math.PI + 1.0, 52, 22, 5], [2.4, 66, 8, 6], [-2.4, 66, 18, 7], [2.9, 90, 44, 6], [-2.9, 84, 50, 5]].forEach(([a, r, y, s], k) => rocklet(a, r, y, s, 70 + k, 3));
-      const SUM = (NS - 1) * STEP + 4;
+      if (LAND) { LAND.landmark(); LAND.distant(); } else {
       {
         // the mountain: a jagged low-poly peak, violet rock below, pale stone higher, snow on the shoulders; flat-topped for the citadel
         const H0 = -45, MH = SUM - H0, mg = new THREE.CylinderGeometry(13.5, 31, MH, 26, 14, false); mg.translate(0, H0 + MH / 2, 0);
@@ -536,6 +557,7 @@ const INST = /*INST_DATA*/[];
         [[-7, 9, 3.5], [7.5, 8, 4.2], [-10.5, -3, 5], [10, -5.5, 4.6]].forEach(([x, z, h], k) => pine(cg, x, 0, z, h, k));
         const big = add(cg, OCTA, lum('#3a8ab0', '#7ff0ff', 2.6, { facet: true, rough: 0.2 }), 0, 41, 0, { cast: false }); big.scale.set(1.5, 3.2, 1.5);
         anims.push((t) => { big.rotation.y = t * 0.5; big.position.y = 41 + 0.5 * Math.sin(t * 0.8); });
+      }
       }
 
       // ------------------------------------------------------------ the wisp: on the flights it keeps the movie's path; on an island it goes where the player acts
@@ -610,7 +632,7 @@ const INST = /*INST_DATA*/[];
       function launchTiles() {
         tiles.forEach((tb, j) => {
           const r = END[TILE_TO_RECT[j]], block = tb.userData.block;
-          scene.attach(tb);
+          tb.visible = true; scene.attach(tb);
           const home = { p: tb.position.clone(), q: tb.quaternion.clone() };
           const goal = { p: new THREE.Vector3().fromArray(endPos).addScaledVector(cz, -DIST - THIN / 2).addScaledVector(cr, (r.x + r.w / 2 - 512) * unit).addScaledVector(cu, (512 - r.y - r.h / 2) * unit + rise), q: endCam.quaternion.clone() };
           const n = new THREE.Vector3(0, 0, 1).applyQuaternion(home.q);
@@ -626,7 +648,7 @@ const INST = /*INST_DATA*/[];
         });
       }
       function resetTiles() {
-        tiles.forEach((tb, j) => { R5.deck.add(tb); tb.position.copy(tileLocal[j].p); tb.quaternion.copy(tileLocal[j].q); tb.userData.fly = () => {}; tb.userData.block.visible = false; tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = true; });
+        tiles.forEach((tb, j) => { tb.visible = true; R5.deck.add(tb); tb.position.copy(tileLocal[j].p); tb.quaternion.copy(tileLocal[j].q); tb.userData.fly = () => {}; tb.userData.block.visible = false; tb.userData.body.visible = tb.userData.label.visible = tb.userData.plate.visible = true; });
       }
 
       // ================================================================ the game
