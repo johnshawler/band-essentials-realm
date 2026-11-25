@@ -52,6 +52,15 @@ try {
   addEventListener('keydown', (e) => { if (e.target === sel || e.target.tagName === 'BUTTON') return; GAME.keydown(e); });
   noteEl.hidden = true; canvas.focus();
   window.READY = true;
+
+  // GitHub Pages lets browsers keep a page for ten minutes; if a newer release is up, fetch it and reload once
+  if (/github\.io$/.test(location.hostname)) {
+    fetch(location.href.split('#')[0], { cache: 'reload' }).then((r) => r.text()).then((src) => {
+      const m = src.match(/const VERSION = (\d+);/), v = m ? +m[1] : 0, key = 'be-realm-reloaded';
+      let tried = null; try { tried = sessionStorage.getItem(key); } catch (e) {}
+      if (v > window.GAME_VERSION && tried !== String(v)) { try { sessionStorage.setItem(key, String(v)); } catch (e) {} location.reload(); }
+    }).catch(() => {});
+  }
 } catch (err) {
   noteEl.textContent = 'This game needs WebGL 2, which did not start in this browser.';
   window.READY = { error: String(err && err.stack || err) };

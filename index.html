@@ -865,7 +865,8 @@ const params = new URLSearchParams(location.search);
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 const INST = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","label":"D, Eb, F","notes":["D5","Eb5","F5"],"fing":{"74":12160,"75":12224,"77":15936}},{"key":"oboe","name":"Oboe","clef":"treble","family":null,"label":"D, Eb, F","notes":["D5","Eb5","F5"],"fing":{}},{"key":"clarinet","name":"Clarinet","clef":"treble","family":"clarinet","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":48,"65":32,"67":0}},{"key":"bassoon","name":"Bassoon","clef":"bass","family":null,"label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{}},{"key":"saxophone","name":"Alto Saxophone","clef":"treble","family":"sax","label":"B, C, D","notes":["B4","C5","D5"],"fing":{"71":2097152,"72":1048576,"74":4128776}},{"key":"tenorsaxophone","name":"Tenor Saxophone","clef":"treble","family":"sax","label":"E, F, G","notes":["E5","F5","G5"],"fing":{"76":4063240,"77":3932168,"79":3670024}},{"key":"trumpet","name":"Trumpet","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":6,"65":2,"67":0}},{"key":"fhorn","name":"French Horn (F Single)","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":0,"65":2,"67":0}},{"key":"bbhorn","name":"French Horn (Bb Single)","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":4,"65":0,"67":2}},{"key":"dhorn","name":"French Horn (Double)","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":0,"65":2,"67":0}},{"key":"trombone","name":"Trombone","clef":"bass","family":"slide","label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{"50":16,"51":8,"53":2}},{"key":"euphonium","name":"Baritone / Euphonium T.C.","clef":"treble","family":"valves","label":"E, F, G","notes":["E4","F4","G4"],"fing":{"64":6,"65":2,"67":0}},{"key":"baritone","name":"Baritone / Euphonium B.C.","clef":"bass","family":"valves","label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{"50":6,"51":2,"53":0}},{"key":"tuba","name":"Tuba","clef":"bass","family":"valves","label":"D, Eb, F","notes":["D2","Eb2","F2"],"fing":{"38":6,"39":2,"41":0}},{"key":"electricbass","name":"Electric Bass","clef":"bass","family":"bass","label":"D, Eb, F","notes":["D3","Eb3","F3"],"fing":{"50":3,"51":7,"53":15}},{"key":"bells","name":"Bells (xylophone)","clef":"treble","family":"bells","label":"D, Eb, F","notes":["D4","Eb4","F4"],"fing":{"62":256,"63":512,"65":2048}}];
 {
-  const VERSION = 8; // shown top left; add one for every release to the public site
+  const VERSION = 9; // shown top left; add one for every release to the public site
+  window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = 'Chapter 1: The Climb to the Castle';
   const GAMES = [
@@ -2221,6 +2222,15 @@ try {
   addEventListener('keydown', (e) => { if (e.target === sel || e.target.tagName === 'BUTTON') return; GAME.keydown(e); });
   noteEl.hidden = true; canvas.focus();
   window.READY = true;
+
+  // GitHub Pages lets browsers keep a page for ten minutes; if a newer release is up, fetch it and reload once
+  if (/github\.io$/.test(location.hostname)) {
+    fetch(location.href.split('#')[0], { cache: 'reload' }).then((r) => r.text()).then((src) => {
+      const m = src.match(/const VERSION = (\d+);/), v = m ? +m[1] : 0, key = 'be-realm-reloaded';
+      let tried = null; try { tried = sessionStorage.getItem(key); } catch (e) {}
+      if (v > window.GAME_VERSION && tried !== String(v)) { try { sessionStorage.setItem(key, String(v)); } catch (e) {} location.reload(); }
+    }).catch(() => {});
+  }
 } catch (err) {
   noteEl.textContent = 'This game needs WebGL 2, which did not start in this browser.';
   window.READY = { error: String(err && err.stack || err) };
