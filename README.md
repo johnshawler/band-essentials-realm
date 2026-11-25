@@ -1,6 +1,10 @@
-# Band Essentials Realm
+# Band Adventures
+
+**Chapter 1: The Climb to the Castle**
 
 A playable version of the High Fantasy *Band Essentials* motion graphic. Fifteen floating islands climb a mountain toward the citadel on its summit. Each island holds one exercise from the five Level 1 games, in turn: Read Rhythms, Fingering Trainer, Write Notes, Read Notes and Terms & Symbols, three times round. Reaching the top plays the movie's ending.
+
+The release number shows in the top-left corner of the game (v7 and up). It is the `VERSION` constant at the top of `src/realm-game.js`; add one for every release to the public site.
 
 Results are percentages: each game's percentage covers its three exercises, and the final result is the average of the five games. Every note the game plays is at concert pitch for the chosen instrument, so it sits in the B-flat of the music.
 

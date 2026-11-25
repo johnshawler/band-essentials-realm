@@ -515,8 +515,12 @@ function createGame(E) {
   }
 
   // ---------------------------------------------------------------- the painted HUD (on the stage's overlay layer)
-  function drawHud(ctx, t, W, H, { TITLE, OPEN_LINE }) {
+  function drawHud(ctx, t, W, H, { TITLE, OPEN_LINE, VERSION }) {
     st.btns = [];
+    // the release number, small in the top-left corner on every screen
+    ctx.font = `700 ${H * 0.025}px "Alegreya"`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = H * 0.005; ctx.strokeStyle = 'rgba(30,16,60,0.7)'; ctx.strokeText('v' + VERSION, H * 0.024, H * 0.019);
+    ctx.fillStyle = 'rgba(255,233,188,0.85)'; ctx.fillText('v' + VERSION, H * 0.024, H * 0.019);
     const scroll = (x, y, w, h, fill, edge) => {
       const n = h * 0.3, path = (i) => { ctx.beginPath(); ctx.moveTo(x - n + i, y + i); ctx.lineTo(x + w + n - i, y + i); ctx.lineTo(x + w - i * 0.4, y + h / 2); ctx.lineTo(x + w + n - i, y + h - i); ctx.lineTo(x - n + i, y + h - i); ctx.lineTo(x + i * 0.4, y + h / 2); ctx.closePath(); };
       path(0); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = edge; ctx.lineWidth = Math.max(2, H * 0.0028); ctx.stroke();

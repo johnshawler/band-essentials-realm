@@ -1,16 +1,17 @@
-// ================================================================ Band Essentials in High Fantasy, playable (Level 1)
+// ================================================================ Band Adventures, Chapter 1: the High Fantasy movie made playable (Level 1)
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 const INST = /*INST_DATA*/[];
 {
-  const TITLE = 'Band Essentials';
-  const OPEN_LINE = 'Fun, engaging games that turn practice into a daily habit';
+  const VERSION = 7; // shown top left; add one for every release to the public site
+  const TITLE = 'Band Adventures';
+  const OPEN_LINE = 'Chapter 1: The Climb to the Castle';
   const GAMES = [
     { name: 'Read Rhythms', line: 'Tap and count rhythms in time', rounds: 3 },
     { name: 'Fingering Trainer', line: 'Interactive fingering chart exercises for all instruments', rounds: 5 },
     { name: 'Write Notes', line: 'Drag notes to the correct spot on the staff', rounds: 5 },
     { name: 'Read Notes', line: 'Instantly identify written notes', rounds: 6 },
-    { name: 'Terms & Symbols', line: 'Race the clock to master musical vocabulary and symbols', rounds: 6 },
+    { name: 'Terms & Symbols', line: 'Master musical vocabulary and symbols', rounds: 6 },
   ];
   const TERMS = ['Treble clef', 'Bass clef', 'Staff', 'Bar line', 'Double bar line', 'Measure', 'Repeat sign', 'Time signature', 'Whole note', 'Half note',
     'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line'];
@@ -22,7 +23,7 @@ const INST = /*INST_DATA*/[];
   const LAYOUT = (W, H) => (H > W
     ? { size: 0.34, cy: 0.315, lines: [[0.53, 0.0406], [0.573, 0.027], [0.618, 0.0437]] }
     : { size: 0.52, cy: 0.315, lines: [[0.69, 0.088], [0.797, 0.056], [0.897, 0.084]] });
-  const END_TEXT = ['Theta Music Band Essentials', 'try it free at', 'bandessentials.com'];
+  const END_TEXT = ['Theta Music Band Adventures', 'try it free at', 'bandessentials.com'];
   const TILE_TO_RECT = [1, 0, 3, 5, 6, 4, 2, 7];
 
   // Story time for the camera: each of the NS islands has a stretch (the camera drifts across it while it is played),
@@ -677,7 +678,7 @@ const INST = /*INST_DATA*/[];
             });
             ctx.globalAlpha = 1;
           }
-          GAME.drawHud(ctx, t, W, H, { TITLE, OPEN_LINE });
+          GAME.drawHud(ctx, t, W, H, { TITLE, OPEN_LINE, VERSION });
         },
       };
     },
