@@ -978,8 +978,41 @@ const CHAPTERS = [
              [['D6', 1], ['C#6', 1], ['B5', 1], ['A5', 1]], [['F#5', 1], ['B5', 1], ['D6', 2]], [['B5', 1], ['A5', 1], ['G5', 1], ['E5', 1]], [['A5', 2], ['C#5', 1], [null, 1]]],
     },
   },
+  {
+    n: 10, unit: 10, title: 'The Storm Peak', scene: 'storm', keys: ['G', 'C', 'D'],
+    rhythm: { rests: true, eighths: true, ties: true, dottedQ: true, accents: true, meter: 2, need: ['dq'] },   // course level 10: tied notes and dotted quarters in 2/4
+    // E minor in the storm: a pad under a low brass tune, with thunder
+    music: {
+      bpm: 92, voice: 'brass', thunder: true, wind: true,
+      chords: [['E3', 'B3', 'E4', 'G4'], ['C3', 'G3', 'C4', 'E4'], ['G2', 'D3', 'G3', 'B3'], ['D3', 'A3', 'D4', 'F#4']],
+      tune: [[['E5', 1.5], ['F#5', 0.5], ['G5', 2]], [['E5', 1], ['G5', 1], ['C6', 2]], [['B5', 1.5], ['A5', 0.5], ['G5', 1], ['D5', 1]], [['F#5', 3], [null, 1]],
+             [['G5', 1], ['F#5', 1], ['E5', 1], ['B4', 1]], [['C5', 1], ['E5', 1], ['G5', 2]], [['B4', 1], ['D5', 1], ['G5', 1], ['B5', 1]], [['A5', 2], ['F#5', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 11, unit: 11, title: "The Dragon's Roost", scene: 'dragon', keys: ['G', 'C', 'D', 'F'],
+    rhythm: { rests: true, eighths: true, ties: true, dottedQ: true, meter: 3, need: ['dq'] },   // course level 11: tied notes and dotted quarters in 3/4
+    // C minor on the volcano: a dark pad under a brass tune, with the mountain's rumble
+    music: {
+      bpm: 76, voice: 'brass', rumble: true,
+      chords: [['C3', 'G3', 'C4', 'Eb4'], ['Ab2', 'Eb3', 'Ab3', 'C4'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['G2', 'D3', 'G3', 'B3']],
+      tune: [[['C5', 1.5], ['D5', 0.5], ['Eb5', 2]], [['C5', 1], ['Eb5', 1], ['Ab5', 2]], [['G5', 1.5], ['F5', 0.5], ['Eb5', 1], ['Bb4', 1]], [['D5', 3], [null, 1]],
+             [['Eb5', 1], ['D5', 1], ['C5', 1], ['G4', 1]], [['Ab4', 1], ['C5', 1], ['Eb5', 2]], [['G5', 1], ['Eb5', 1], ['Bb5', 1], ['G5', 1]], [['B4', 2], ['D5', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 12, unit: 12, title: 'The Star Observatory', scene: 'stars', keys: ['G', 'C', 'D', 'F'],
+    rhythm: { rests: true, eighths: true, ties: true, dottedQ: true, eighthRest: true, need: ['er'] },   // course level 12: tied notes, dotted quarters and the eighth rest in 4/4
+    // home to B-flat for the finale, under the stars: a pad under a celesta tune, with sparkles
+    music: {
+      bpm: 72, voice: 'glass', sparkle: true,
+      chords: [['Bb2', 'F3', 'Bb3', 'D4'], ['G2', 'D3', 'G3', 'Bb3'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['F3', 'C4', 'F4', 'A4']],
+      tune: [[['D6', 1], ['F6', 1], ['Bb6', 2]], [['A6', 1], ['G6', 1], ['D6', 2]], [['Eb6', 1], ['G6', 1], ['Bb6', 1], ['G6', 1]], [['F6', 3], [null, 1]],
+             [['Bb6', 1.5], ['A6', 0.5], ['G6', 1], ['F6', 1]], [['D6', 1], ['G6', 1], ['Bb6', 2]], [['G6', 1], ['F6', 1], ['Eb6', 1], ['C6', 1]], [['Bb5', 3], [null, 1]]],
+    },
+  },
 ];
-const RELEASED = 6;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+const RELEASED = 7;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
 CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 
@@ -1104,6 +1137,103 @@ function sceneClock(X) {
   return { islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.clock = { look: CLOCK_LOOK, make: sceneClock };
+
+// ================================================================ Chapter 11 scenery: the Dragon's Roost
+// A smouldering volcano with lava rivers, crowned by a dragon's nest. The islands are basalt columns and cooled lava shelves.
+// The dragon circles the peak between islands in a chain of rising and falling arcs, like slurs. At the summit it settles on
+// its nest, and far above the clouds a domed observatory floats among the stars (Chapter 12).
+const DRAGON_LOOK = {
+  env: { top: '#4a2a3a', horizon: '#ff7a3a', bottom: '#2a1410', intensity: 0.55, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#ffa070', power: 3.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff6a3a', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#c88aa0', power: 1.8 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb060', power: 2.4 }] },
+  hemi: ['#ffb090', '#4a1a10', 0.5], sun: '#ffb080', sunPower: 2.3, fog: '#6a3a34',
+  sky: [[0, '#1a1022'], [0.22, '#3a1a30'], [0.36, '#7a2a30'], [0.45, '#d85a30'], [0.5, '#ff9a50'], [0.53, '#8a3020'], [1, '#2a0a08']],
+  skyGlow: [[0.3, 0.6, 0.25], [0.7, 0.4, 0.2]], glowRGB: '255,120,60', stars: true,
+  sunDisc: { color: '#ffb070', k: 1.4, pos: [-150, 60, -760], r: 50 }, moon2: false,
+  peak: '#3a2224', cloud: '#7a4a48', shards: ['#a02a0a', '#ff7a2a', '#a07a2a', '#ffd070'], cloudSea: false,
+};
+
+function sceneDragon(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, getG, NS, RAD } = X;
+  const kit = sceneKit(X), { beam, column, ICO, OCT, CONE, ending, glowMat } = kit;
+  const T = {
+    basalt: facet('#3a3436'), basalt2: facet('#2c2628'), ash: facet('#5a4e4c'), crust: facet('#4a3a36'),
+    lava: lum('#8a2a0a', '#ff6a1a', 2.2, { facet: true, rough: 0.6 }), ember: lum('#6a2a0a', '#ffa040', 2.6),
+    scale: facet('#7a2a3a'), scale2: facet('#a83a3a'), belly: facet('#e8b86a'), wing: std('#5a1a2a', 0, 0.7, { side: THREE.DoubleSide, flatShading: true }), horn: facet('#e8e0c8'),
+    twig: facet('#6a4a2a'), gold: std('#d8a840', 1, 0.3, { flatShading: true }),
+  };
+  const H0 = -40, vR = (y) => K.lerp(30, 9, K.clamp((y - H0) / (SUM - H0)));
+  const HEX = new THREE.CylinderGeometry(1, 1, 1, 6);
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 2) { for (let k = 0; k < 3; k++) { const c = add(g, HEX, T.basalt2, (k - 1) * 0.35 * h * 0.4, 0.2 * h * (1 + 0.4 * k), (k % 2) * 0.2); c.scale.set(0.16 * h, 0.4 * h * (1 + 0.4 * k), 0.16 * h); } }
+    else { add(g, CYL6, T.twig, 0, 0.2 * h, 0).scale.set(0.04 * h, 0.4 * h, 0.04 * h); add(g, OCT, T.ember, 0, 0.45 * h, 0, { cast: false }).scale.setScalar(0.08 * h); }
+    return g;
+  };
+  // basalt-column islands: a cluster of hex columns under a cooled-lava crust, with a glowing seam
+  const decor = (parent, r, seed) => { for (let k = 0; k < 9; k++) { const a = K.hash(seed, k) * Math.PI * 2, d = r * (0.2 + 0.7 * K.hash(seed, k + 9)), h = 2 + 4 * K.hash(seed, k + 18); const c = add(parent, HEX, k % 2 ? T.basalt : T.basalt2, Math.cos(a) * d, -h / 2 - 0.3, Math.sin(a) * d); c.scale.set(0.9, h, 0.9); } add(parent, new THREE.TorusGeometry(r * 0.98, 0.07, 4, 22), T.lava, 0, -0.32, 0).rotation.x = Math.PI / 2; };
+  const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.basalt, rock2: T.basalt2, top: T.crust, under: T.ash, landR: vR, strut: T.basalt2, strutR: 0.8, decor });
+  const rocklet = kit.rocklet({ rock: T.basalt, rock2: T.basalt2, top: T.crust }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
+  const step = kit.stepOf(T.basalt, T.basalt2, new THREE.CylinderGeometry(0.5, 0.5, 0.35, 6));
+
+  function dragon() {
+    const d = group(scene), body = group(d);
+    const torso = add(body, ICO, T.scale, 0, 0, 0, { cast: false }); torso.scale.set(1.2, 1.1, 3.2);
+    add(body, ICO, T.belly, 0, -0.45, 0.2, { cast: false }).scale.set(0.9, 0.6, 2.6);
+    const neck = add(body, CONE, T.scale, 0, 0.9, 3.4, { cast: false }); neck.scale.set(0.7, 2.6, 0.7); neck.rotation.x = 1.0;
+    const head = group(body, 0, 1.9, 4.8); add(head, ICO, T.scale2, 0, 0, 0, { cast: false }).scale.set(0.7, 0.6, 1.3); add(head, CONE, T.horn, 0.35, 0.5, -0.4, { cast: false }).scale.set(0.12, 0.7, 0.12); add(head, CONE, T.horn, -0.35, 0.5, -0.4, { cast: false }).scale.set(0.12, 0.7, 0.12);
+    for (const sx of [-0.3, 0.3]) add(head, new THREE.SphereGeometry(0.1, 6, 4), glowMat('#ffd040', 2), sx, 0.15, 0.9);
+    const tail = add(body, CONE, T.scale, 0, 0, -5.2, { cast: false }); tail.scale.set(0.8, 5, 0.8); tail.rotation.x = -Math.PI / 2;
+    const wings = [-1, 1].map((sx) => { const w = group(body, sx * 0.9, 0.6, 0.6); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 1.4, sx * 7, 0.5, -0.5, 0, 0, -2.2, sx * 7, 0.5, -0.5, sx * 4.5, 0, -3.2, 0, 0, -2.2], 3)); g.computeVertexNormals(); add(w, g, T.wing, 0, 0, 0, { cast: false }); return w; });
+    d.scale.setScalar(1.4);
+    return { d, body, wings, head };
+  }
+
+  function landmark() {
+    // the volcano: dark rock streaked with lava rivers, a glowing crater and the dragon's nest on its lip
+    const c = new THREE.Color(), DARK = new THREE.Color('#2e2628'), ASH = new THREE.Color('#4a3e3c');
+    column({ y0: H0, y1: SUM, r0: 30, r1: 9, seg: 30, rows: 16, jag: 0.12, wob: 1.6, colour: (y, f) => c.copy(K.hash(f, 3) > 0.5 ? DARK : ASH) });
+    for (let k = 0; k < 7; k++) {
+      const a0 = k / 7 * Math.PI * 2 + 0.3, pts = [];
+      for (let j = 0; j <= 14; j++) { const y = SUM - j * (SUM - H0 - 15) / 14, a = a0 + 0.15 * Math.sin(j * 0.8 + k); pts.push(new THREE.Vector3(Math.sin(a) * (vR(y) + 0.3), y, Math.cos(a) * (vR(y) + 0.3))); }
+      add(scene, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.9, 5), T.lava, 0, 0, 0, { cast: false });
+    }
+    const crater = add(scene, new THREE.CylinderGeometry(7, 7, 0.6, 20), glowMat('#ff7a2a', 1.8), 0, SUM - 0.2, 0, { cast: false }); void crater;
+    add(scene, new THREE.TorusGeometry(8.2, 1.6, 6, 24), T.basalt, 0, SUM + 0.3, 0, { cast: false }).rotation.x = Math.PI / 2;
+    const nest = group(scene, 0, SUM + 1.6, 0);
+    for (let k = 0; k < 40; k++) { const a = k / 40 * Math.PI * 2, tw = add(nest, new THREE.CylinderGeometry(0.15, 0.15, 5, 4), T.twig, Math.sin(a) * 5.2, 0.4 + 0.5 * (k % 3), Math.cos(a) * 5.2, { cast: false }); tw.rotation.set(1.2, a + 0.6, 0.2); }
+    for (let k = 0; k < 3; k++) add(nest, new THREE.SphereGeometry(1, 10, 8), T.gold, (k - 1) * 1.6, 0.6, 0.4 * k, { cast: false }).scale.set(0.9, 1.2, 0.9);
+    // the lava sea below and embers rising
+    const sea = kit.water(H0 + 18, '#3a1a10', 0.6, 0); sea.material.emissive = new THREE.Color('#ff4a10'); sea.material.emissiveIntensity = 0.35;
+    const EM = 120, emb = new THREE.InstancedMesh(OCT, T.ember, EM); emb.castShadow = false; emb.frustumCulled = false; scene.add(emb);
+    // the dragon: circling the peak in arcs (slurs), settling on its nest at the summit
+    const D = dragon(); let land = 0;
+    anims.push((t) => {
+      for (let i = 0; i < EM; i++) { const a = K.hash(i, 1) * Math.PI * 2, r = 20 + 40 * K.hash(i, 2), u = (t * (0.03 + 0.03 * K.hash(i, 3)) + K.hash(i, 4)) % 1; K.place(emb, i, [Math.sin(a + u) * r, H0 + 18 + u * (SUM + 30), Math.cos(a + u) * r], [t, i, 0], 0.15 * (1 - u)); }
+      emb.instanceMatrix.needsUpdate = true;
+      land += ((ending() ? 1 : 0) - land) * 0.02;
+      const w = t * 0.16, R = 52 - 8 * Math.sin(t * 0.07), arc = Math.abs(Math.sin(t * 0.9)), y = SUM * 0.55 + 10 * Math.sin(t * 0.11) + 7 * arc;
+      const fly = new THREE.Vector3(Math.sin(w) * R, y, Math.cos(w) * R), perch = new THREE.Vector3(0, SUM + 4.5, 0);
+      D.d.position.copy(fly).lerp(perch, land);
+      D.d.rotation.set(-0.35 * Math.cos(t * 0.9) * Math.sign(Math.sin(t * 0.9)) * (1 - land), w + Math.PI / 2 + land * 1.2, -0.35 * (1 - land));
+      const flap = Math.sin(t * (land > 0.5 ? 2 : 4.2)) * (0.6 - 0.35 * land); D.wings[0].rotation.z = flap; D.wings[1].rotation.z = -flap;
+      D.head.rotation.x = 0.15 * Math.sin(t * 1.3);
+    });
+  }
+
+  // high above the clouds: a domed observatory floating among the stars (Chapter 12)
+  function distant() {
+    const g = kit.tease(560); g.position.y = 140;
+    add(g, new THREE.ConeGeometry(30, 40, 9), facet('#4a4a6a'), 0, -20, 0, { cast: false }).rotation.x = Math.PI;
+    add(g, X.turfGeo(30, 3, 12, 2), facet('#6a6a8a'), 0, 0, 0, { cast: false });
+    add(g, new THREE.CylinderGeometry(12, 13, 10, 20), facet('#d8d8e8'), 0, 5, 0, { cast: false });
+    add(g, new THREE.SphereGeometry(12, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), std('#eef0ff', 0.4, 0.3), 0, 10, 0, { cast: false });
+    const tel = add(g, new THREE.CylinderGeometry(1.6, 2.4, 16, 12), T.gold, 0, 22, 0, { cast: false }); tel.rotation.z = 0.7;
+    for (let k = 0; k < 30; k++) { const s = add(g, OCT, glowMat('#fff4d0', 2), (K.hash(k, 1) - 0.5) * 160, 10 + K.hash(k, 2) * 90, (K.hash(k, 3) - 0.5) * 60, { cast: false }); s.scale.setScalar(0.8 + K.hash(k, 4) * 1.4); }
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.dragon = { look: DRAGON_LOOK, make: sceneDragon };
 
 // ================================================================ Chapter 5 scenery: the Falls of Echo
 // A sheer cliff in the afternoon sun with great waterfalls pouring down its sides into a misty pool, rainbows in the spray.
@@ -1750,6 +1880,196 @@ function sceneMine(X) {
 }
 SCENE_REG.mine = { look: MINE_LOOK, make: sceneMine };
 
+// ================================================================ Chapter 12 scenery: the Star Observatory
+// The last and tallest climb: an observatory tower rising through the clouds into the night. The islands are floating platforms
+// of stone and starlight, and constellations take the shapes of notes and rests. Each right answer lights stars in the sky; by
+// the summit they form a five-line staff. At the summit the telescope turns over the realm and the earlier chapters' landmarks
+// light up round the horizon one by one.
+const STARS_LOOK = {
+  env: { top: '#10163a', horizon: '#3a3a7a', bottom: '#141a36', intensity: 0.5, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffd8a0', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#a090ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#a8c8ff', power: 1.8 }] },
+  hemi: ['#b0b8ff', '#1e2240', 0.5], sun: '#d0d8ff', sunPower: 1.8, fog: '#1e2448',
+  sky: [[0, '#02030e'], [0.25, '#060a24'], [0.4, '#121a48'], [0.47, '#2a2a6a'], [0.5, '#4a3a7a'], [0.53, '#1a1a40'], [1, '#0a0c1e']],
+  skyGlow: [[0.84, 0.25, 0.22], [0.5, 0.2, 0.2]], glowRGB: '170,150,255', stars: true, moon2: true,
+  peak: '#2a2c4a', cloud: '#3a3e6a', shards: ['#3a4ab0', '#a8c0ff', '#a08a3a', '#ffe8a0'], peaks: false,
+};
+
+function sceneStars(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, getG, NS, RAD } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, OCT, CONE, ending, glowMat } = kit;
+  const T = {
+    stone: facet('#8a8aa8'), stone2: facet('#6a6a8a'), white: facet('#e8e8f4'), brass: std('#c8a050', 0.9, 0.3, { flatShading: true }),
+    star: lum('#6a6aa0', '#fff4c8', 2.2, { facet: true, rough: 0.3 }), glass: lum('#3a3a8a', '#9ab0ff', 1.4, { facet: true, rough: 0.2 }),
+  };
+  const tR = (y) => K.lerp(11, 7, K.clamp((y + 30) / (SUM + 30)));
+  const starGeo = new THREE.OctahedronGeometry(1, 0);
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 2) { add(g, new THREE.CylinderGeometry(0.06, 0.08, h * 0.6, 6), T.brass, 0, h * 0.3, 0); add(g, new THREE.SphereGeometry(0.22, 10, 8), T.glass, 0, h * 0.64, 0, { cast: false }); }
+    else kit.cluster(g, 0, 0, 0, h * 0.35, T.glass, seed, 3);
+    return g;
+  };
+  // floating platforms of stone, rimmed with starlight
+  const decor = (parent, r, seed) => { add(parent, new THREE.TorusGeometry(r * 1.0, 0.06, 4, 28), T.star, 0, -0.32, 0).rotation.x = Math.PI / 2; for (let k = 0; k < 5; k++) { const a = K.hash(seed, k) * 6.3, s = add(parent, starGeo, T.star, Math.cos(a) * r * 0.6, -2.5 - 2 * K.hash(seed, k + 5), Math.sin(a) * r * 0.6, { cast: false }); s.scale.setScalar(0.18); } };
+  const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.stone2, rock2: T.stone, top: T.white, under: T.stone, decor });
+  const rocklet = kit.rocklet({ rock: T.stone2, rock2: T.stone, top: T.white }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
+  const step = kit.stepOf(T.glass, T.stone, new THREE.OctahedronGeometry(0.4, 0));
+
+  // the sky staff: five lines of stars on a great arc behind the tower, lit three at a time by right answers
+  const STAFF = [], PER = 22;
+  const skyStar = (x, y, z, s) => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff2c8'), fog: false, transparent: true, opacity: 0.12 }); const o = new THREE.Mesh(starGeo, m); o.position.set(x, y, z); o.scale.setScalar(s); scene.add(o); return { o, m, at: -9 }; };
+  // the arc runs all the way round behind the tower, so some of it is in view from every island
+  for (let line = 0; line < 5; line++) for (let k = 0; k < PER; k++) { const a = 0.8 + 4.7 * k / (PER - 1), r = 430; STAFF.push(skyStar(Math.sin(a) * r, 62 + line * 11, Math.cos(a) * r, 2.2)); }
+  const order = STAFF.map((_, i) => i).sort((a, b) => (a % PER) - (b % PER) || a - b);   // round the arc, a column at a time
+  let lit = 0, tNow = 0;
+  const light = (n) => { for (let k = 0; k < n && lit < order.length; k++) STAFF[order[lit++]].at = tNow + k * 0.12; };
+  SIG.onRight = (stop, info) => { light(4); if (SIG.snd) SIG.snd.chime(info.note ? info.note.replace(/(-?\d)$/, (d) => String(Math.max(5, Math.min(6, +d)))) : 'F6', 0.08, SIG.now() + 0.3); };
+
+  function landmark() {
+    // the tower: pale stone with brass bands, rising through the clouds; a domed observatory on top with a turning telescope
+    const c = new THREE.Color(), band = bands(['#9a9ab8', '#8a8aa8', '#a8a8c4'], 4, -30), BR = new THREE.Color('#b89a50');
+    column({ y0: -30, y1: SUM + 2, r0: 11, r1: 7, seg: 16, rows: 14, jag: 0.02, wob: 0.3, colour: (y, f) => { c.copy(band(y, f)); if (((y + 30) % 10) < 0.8) c.lerp(BR, 0.8); return c; } });
+    const winM = glowMat('#ffd890', 1.4);
+    for (let k = 0; k < 30; k++) { const a = k * 2.399, y = -20 + k * (SUM + 20) / 30, r = tR(y) + 0.05, w = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.4), winM); w.position.set(Math.sin(a) * r, y, Math.cos(a) * r); w.rotation.y = a; scene.add(w); }
+    const top = group(scene, 0, SUM + 2, 0);
+    add(top, new THREE.CylinderGeometry(9.5, 9, 6, 24), T.white, 0, 3, 0, { cast: false });
+    add(top, new THREE.SphereGeometry(9.2, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), std('#eef0ff', 0.5, 0.25), 0, 6, 0, { cast: false });
+    const scope = group(top, 0, 10, 0), tube = add(scope, new THREE.CylinderGeometry(1.2, 1.8, 14, 14), T.brass, 0, 5, 0, { cast: false }); tube.position.set(0, 4, 3); tube.rotation.x = 0.8;
+    // constellations shaped like a quarter note, a pair of eighths and a quarter rest
+    const cons = [
+      { at: [Math.PI + 0.9, 125], pts: [[0, 0], [1.2, 0.5], [2.2, 0.2], [1.6, -0.6], [0.3, -0.5], [2.4, 0.5], [2.6, 3], [2.7, 5.5], [2.8, 8]] },
+      { at: [Math.PI - 0.8, 128], pts: [[0, 0], [1, 0.5], [1.6, 0], [5, 0], [6, 0.5], [6.6, 0], [1.6, 3], [1.6, 6], [6.6, 3], [6.6, 6], [3, 6.3], [5, 6.3]] },
+      { at: [Math.PI + 1.9, 120], pts: [[0, 6], [1.2, 4.6], [0.2, 3.3], [1.3, 2], [0.4, 1], [1, 0]] },
+    ];
+    cons.forEach(({ at: [a, y], pts }) => { const r = 380, cx = Math.sin(a) * r, cz = Math.cos(a) * r, rx = Math.cos(a), rz = -Math.sin(a); pts.forEach(([u, v]) => skyStar(cx + rx * u * 5, y + v * 5, cz + rz * u * 5, 1.6).m.opacity = 0.9); });
+    // the earlier landmarks on the horizon
+    const marks = [];
+    const shapes = [
+      [[new THREE.ConeGeometry(14, 30, 6), 0, 15, 0], [new THREE.CylinderGeometry(2, 2, 14, 8), 0, 37, 0]],
+      [[new THREE.CylinderGeometry(3, 6, 34, 8), 0, 17, 0], [new THREE.IcosahedronGeometry(12, 0), 0, 40, 0]],
+      [[new THREE.CylinderGeometry(6, 8, 18, 8), 0, 9, 0], [new THREE.CylinderGeometry(2, 3, 18, 10), 0, 27, 0]],
+      [[new THREE.ConeGeometry(5, 46, 6), 0, 23, 0]],
+      [[new THREE.BoxGeometry(30, 30, 10), 0, 15, 0]],
+      [[new THREE.CylinderGeometry(8, 12, 22, 8), 0, 11, 0]],
+      [[new THREE.CylinderGeometry(2.5, 3, 20, 8), -8, 10, 0], [new THREE.CylinderGeometry(3, 3.5, 34, 8), 8, 17, 0]],
+      [[new THREE.CylinderGeometry(2, 4, 36, 8), 0, 18, 0], [new THREE.SphereGeometry(4, 10, 8), 10, 26, 0]],
+      [[new THREE.BoxGeometry(10, 34, 10), 0, 17, 0], [new THREE.CylinderGeometry(5, 5, 1, 20), 0, 26, 5.5]],
+      [[new THREE.ConeGeometry(12, 40, 5), 0, 20, 0]],
+      [[new THREE.CylinderGeometry(4, 16, 26, 10), 0, 13, 0]],
+    ];
+    shapes.forEach((parts, k) => {
+      const a = X.spireA - 1.0 + 2.0 * k / (shapes.length - 1), r = 560, g = group(scene, Math.sin(a) * r, 10, Math.cos(a) * r);
+      const m = new THREE.MeshStandardMaterial({ color: '#2a2c4a', emissive: new THREE.Color('#ffd890'), emissiveIntensity: 0, flatShading: true, fog: false });
+      parts.forEach(([geo, x, y, z]) => add(g, geo, m, x, y, z, { cast: false })); g.scale.setScalar(1.6); marks.push(m);
+    });
+    // a spiral of drifting star motes round the tower
+    const MO = 160, motes = new THREE.InstancedMesh(starGeo, glowMat('#fff0c0', 1.6), MO); motes.castShadow = false; motes.frustumCulled = false; scene.add(motes);
+    let endAt = -1;
+    anims.push((t) => {
+      tNow = t;
+      for (let i = 0; i < MO; i++) { const u = (i / MO + t * 0.004) % 1, a = u * Math.PI * 14 + i, r = tR(u * SUM) + 3 + 2 * Math.sin(t + i); K.place(motes, i, [Math.sin(a) * r, -20 + u * (SUM + 30), Math.cos(a) * r], [t, i, 0], 0.12 + 0.06 * Math.sin(t * 3 + i)); }
+      motes.instanceMatrix.needsUpdate = true;
+      if (ending()) { if (endAt < 0) { endAt = t; light(order.length); } } else endAt = -1;
+      STAFF.forEach((s) => { const u = s.at < 0 ? 0 : K.clamp((t - s.at) / 0.5); s.m.opacity = 0.12 + 0.88 * u; s.o.scale.setScalar(2.2 * (1 + 0.6 * (s.at < 0 ? 0 : Math.max(0, 1 - (t - s.at) / 0.6)))); s.o.rotation.y = t * 0.5; });
+      marks.forEach((m, k) => { m.emissiveIntensity = endAt < 0 ? 0 : 1.6 * K.clamp((t - endAt - 0.4 - k * 0.35) / 0.5); });
+      scope.rotation.y = endAt < 0 ? 0.15 * Math.sin(t * 0.1) : 0.15 * Math.sin(t * 0.1) + K.clamp((t - endAt) / 4) * Math.PI * 1.2;
+    });
+  }
+  function distant() {}
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.stars = { look: STARS_LOOK, make: sceneStars };
+
+// ================================================================ Chapter 10 scenery: the Storm Peak
+// A jagged black mountain wrapped in a thunderstorm, rain sweeping past and lightning flashing. The islands are wind-carved
+// rock shelves climbing through the cloud layer. During Read Rhythms lightning strikes on every accented note. The storm thins
+// near the top, and at the summit the player breaks through into calm sky; to the south a volcano smokes (Chapter 11).
+const STORM_LOOK = {
+  env: { top: '#3a4466', horizon: '#6a7088', bottom: '#1a1c26', intensity: 0.5, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.0 }, { pos: [34, 10, 22], size: [14, 22], color: '#a0a8c8', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a90c0', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#b8c0e0', power: 1.6 }] },
+  hemi: ['#a8b0d8', '#24242e', 0.48], sun: '#d8e0ff', sunPower: 1.7, fog: '#3a3e52',
+  sky: [[0, '#4a6aa8'], [0.18, '#3a4a78'], [0.3, '#2a3050'], [0.42, '#22263a'], [0.5, '#3a3e52'], [0.53, '#1e2030'], [1, '#12141c']],
+  skyGlow: [[0.84, 0.2, 0.2], [0.3, 0.15, 0.2]], glowRGB: '180,190,255', stars: false,
+  sunDisc: { color: '#e8ecff', k: 1.2, pos: [-200, 420, -650], r: 34 }, moon2: false,
+  peak: '#2a2c38', cloud: '#5a5e74', shards: ['#3a4ab0', '#a0b8ff', '#6a3ab0', '#d0a8ff'],
+};
+
+function sceneStorm(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, getG, NS } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, OCT, CONE, ending, glowMat } = kit;
+  const T = { rock: facet('#3a3a44'), rock2: facet('#2a2a34'), grass: facet('#4a6a4a'), grass2: facet('#3a5a40'), bark: facet('#3a302c'), cloud: facet('#4a4e62', 1), cloud2: facet('#5e6278', 1) };
+  const H0 = -40, mR = (y) => K.lerp(22, 9, K.clamp((y - H0) / (SUM - H0)));
+  // a bent, windswept tree, or a jag of rock
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 2) { const r = add(g, CONE, T.rock2, 0, 0.3 * h, 0); r.scale.set(0.25 * h, 0.6 * h, 0.2 * h); r.rotation.z = 0.25; return g; }
+    const t = add(g, CYL6, T.bark, 0.1 * h, 0.25 * h, 0); t.scale.set(0.05 * h, 0.5 * h, 0.05 * h); t.rotation.z = -0.35;
+    for (let k = 0; k < 2; k++) { const c = add(g, ICO, T.grass2, 0.3 * h + 0.15 * h * k, 0.52 * h - 0.05 * h * k, 0); c.scale.set(0.22 * h, 0.1 * h, 0.18 * h); }
+    return g;
+  };
+  const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.rock, rock2: T.rock2, top: T.grass, under: T.rock2, landR: mR, strut: T.rock, strutR: 0.9 });
+  const rocklet = kit.rocklet({ rock: T.rock, rock2: T.rock2, top: T.grass2 }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
+  const step = kit.stepOf(T.rock, T.rock2, new THREE.DodecahedronGeometry(0.45, 0));
+
+  // the storm's strength: 1 down in it, easing off over the top islands, gone at the summit
+  let stormTo = 1, storm = 1;
+  SIG.onStop = (j) => { stormTo = j >= NS - 3 ? 0.35 - 0.1 * (j - (NS - 3)) : 1; };
+  const strikes = [];   // scene times of lightning
+  SIG.onRhythm = (r) => { r.accents.forEach((t) => strikes.push(t)); if (!SIG.snd) return; const off = SIG.now() - getG().t; r.accents.forEach((t) => SIG.snd.thunder(t + off + 0.25, 0.8)); };
+
+  function landmark() {
+    const c = new THREE.Color(), band = bands(['#34343e', '#2a2a32', '#3e3e48'], 3.4, H0);
+    column({ y0: H0, y1: SUM + 2, r0: 22, r1: 9, seg: 14, rows: 16, jag: 0.22, wob: 2.4, colour: (y, f) => c.copy(band(y, f)) });
+    for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2 + K.hash(k, 1), y = H0 + 10 + K.hash(k, 2) * (SUM - H0 - 10), r = mR(y), m = add(scene, CONE, T.rock2, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); m.scale.set(3, 10 + 8 * K.hash(k, 3), 3); m.rotation.set(Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5); }
+    const crown = add(scene, CONE, T.rock, 0, SUM + 9, 0, { cast: false }); crown.scale.set(9, 16, 9);
+    add(scene, X.turfGeo(9.2, 51, 14, 0.6), T.grass, 0, SUM + 2, 0, { cast: false });
+    // storm clouds wrapped round the mountain below the summit
+    const CL = 70, clouds = new THREE.InstancedMesh(ICO, T.cloud, CL); clouds.castShadow = false; scene.add(clouds);
+    const cl = Array.from({ length: CL }, (_, i) => ({ a: K.hash(i, 1) * Math.PI * 2, r: 24 + 60 * K.hash(i, 2), y: -10 + (SUM - 12) * K.hash(i, 3), s: 8 + 10 * K.hash(i, 4), sp: 0.02 + 0.03 * K.hash(i, 5) }));
+    // rain: streaks falling all round the climb
+    const RN = 700, rain = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03, 1.4, 0.03), std('#b8c4e0', 0, 0.4, { transparent: true, opacity: 0.45 }), RN); rain.castShadow = false; rain.frustumCulled = false; scene.add(rain);
+    const rn = Array.from({ length: RN }, (_, i) => ({ a: K.hash(i, 11) * Math.PI * 2, r: 22 + 40 * K.hash(i, 12), y0: K.hash(i, 13), sp: 30 + 15 * K.hash(i, 14) }));
+    // lightning: bolts round the peak, a flash light, and the sky lighting up
+    const flash = new THREE.PointLight('#c8d4ff', 0, 300, 1.2); flash.position.set(0, SUM + 20, 40); scene.add(flash);
+    const boltM = glowMat('#e0e8ff', 0), bolts = [];
+    for (let k = 0; k < 4; k++) {
+      const pts = [], a = k * 1.7 + 0.5, r = 30 + 12 * k; let x = Math.sin(a) * r, z = Math.cos(a) * r;
+      for (let j = 0; j <= 8; j++) { pts.push(new THREE.Vector3(x, SUM + 30 - j * (SUM + 40) / 8, z)); x += (K.hash(k, j) - 0.5) * 8; z += (K.hash(k, j + 9) - 0.5) * 8; }
+      const b = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0), 40, 0.35, 4), boltM); b.visible = false; scene.add(b); bolts.push(b);
+    }
+    const amb = new THREE.AmbientLight('#c8d4ff', 0); scene.add(amb);
+    let nextRandom = 4, last = 0, which = 0;
+    anims.push((t) => {
+      const dt = Math.min(0.1, Math.max(0, t - last)); last = t;
+      storm += ((ending() ? 0 : stormTo) - storm) * 0.02;
+      cl.forEach((q, i) => { const a = q.a + t * q.sp; K.place(clouds, i, [Math.sin(a) * q.r, q.y + 1.5 * Math.sin(t * 0.2 + i), Math.cos(a) * q.r], [0, a, 0], [q.s * 1.5, q.s * 0.55, q.s]); });
+      clouds.instanceMatrix.needsUpdate = true;
+      rn.forEach((q, i) => { const y = SUM + 25 - ((q.y0 * (SUM + 60) + t * q.sp) % (SUM + 60)); K.place(rain, i, [Math.sin(q.a + 0.2 * y / 30) * q.r, y, Math.cos(q.a + 0.2 * y / 30) * q.r], [0.25, q.a, 0], storm > 0.05 ? 1 : 0.0001); });
+      rain.instanceMatrix.needsUpdate = true; rain.material.opacity = 0.45 * storm;
+      // a random strike now and then while the storm is up
+      if (t > nextRandom && storm > 0.3) { strikes.push(t); nextRandom = t + 5 + 7 * Math.random(); if (SIG.snd) SIG.snd.thunder(SIG.now() + 0.6 + Math.random(), 0.6 * storm); }
+      let f = 0; for (const s of strikes) { const u = t - s; if (u >= 0 && u < 0.45) { f = Math.max(f, (u < 0.08 ? 1 : 0.5 * (1 - u / 0.45)) * (u > 0.12 && u < 0.18 ? 0.3 : 1)); if (u < dt + 0.01) which = (which + 1) % bolts.length; } }
+      flash.intensity = f * 9000; amb.intensity = f * 2.2; boltM.color.setRGB(0.9, 0.93, 1).multiplyScalar(f * 3);
+      bolts.forEach((b, k) => { b.visible = f > 0.15 && k === which; });
+      while (strikes.length && t - strikes[0] > 2) strikes.shift();
+    });
+  }
+
+  // far to the south: a volcano with a glowing crater and a column of smoke (Chapter 11)
+  function distant() {
+    const g = kit.tease(560), vm = facet('#3a2a2a');
+    add(g, new THREE.CylinderGeometry(18, 110, 150, 12), vm, 0, -5, 0, { cast: false });
+    const crater = add(g, new THREE.CylinderGeometry(16, 16, 2, 16), glowMat('#ff6a20', 1.8), 0, 70, 0, { cast: false }); void crater;
+    const smoke = [];
+    for (let k = 0; k < 10; k++) { const m = add(g, ICO, facet('#4a4446', 1), 0, 80 + k * 14, 0, { cast: false }); m.scale.setScalar(12 + k * 3); smoke.push(m); }
+    anims.push((t) => smoke.forEach((m, k) => { const u = ((t * 0.05 + k / 10) % 1); m.position.set(u * 60, 75 + u * 150, u * 10); m.scale.setScalar(10 + u * 40); }));
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.storm = { look: STORM_LOOK, make: sceneStorm };
+
 // ================================================================ Chapter 7 scenery: the Twin Towers
 // Two stone towers on neighbouring crags, a low one and a high one, stand for the octave between Chapter 4's F♯ and this unit's
 // high F♯. The islands climb between them, and arched bridges shaped like ties link each island to the next. Each tower has a
@@ -1983,7 +2303,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 14; // shown top left; add one for every release to the public site
+  const VERSION = 15; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -2538,19 +2858,19 @@ function sceneTree(X) {
         add(g, K.roundedBox(PW + 0.2, PH + 0.3, 0.12, 0.04, 2), M.stoneDark, 0, PY + 0.3, -0.12);
         const panelM = glowing(C.parch, 0.0, { rough: 0.8, tint: 0.5 }); add(g, K.roundedBox(PW, PH + 0.1, 0.05, 0.04, 2), panelM, 0, PY + 0.3, 0);
         const face = group(g, 0, PY + 0.3, 0.03), sf = staff(face, -2.15, 4.3, -0.35);
-        const lock = group(g, 0, 1.05, 0.05); add(lock, K.roundedBox(0.9, 0.7, 0.12, 0.05, 2), M.gold); add(lock, cylZ(0.09, 0.14, 10), M.ink, 0, 0.08, 0.04); add(lock, box(0.08, 0.2, 0.14), M.ink, 0, -0.08, 0.04);
-        add(g, box(5.0, 0.07, 0.07), M.woodDark, 0, 1.75, 0.75);
+        const lock = group(g, 0, 0.7, 0.05); add(lock, K.roundedBox(0.9, 0.7, 0.12, 0.05, 2), M.gold); add(lock, cylZ(0.09, 0.14, 10), M.ink, 0, 0.08, 0.04); add(lock, box(0.08, 0.2, 0.14), M.ink, 0, -0.08, 0.04);
+        add(g, box(5.0, 0.07, 0.07), M.woodDark, 0, 2.12, 0.75);
         const keys = [0, 1, 2, 3].map((k) => {
-          const kg = group(g, (k - 1.5) * 1.18, 1.72, 0.75), body = group(kg);
+          const kg = group(g, (k - 1.5) * 1.18, 2.1, 0.75), body = group(kg);
           const km = glowing('#c9a040', 0.25, { metal: 0.9, rough: 0.35, tint: 0.85 });
-          add(body, new THREE.TorusGeometry(0.12, 0.035, 6, 14), km, 0, -0.14, 0); add(body, new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), km, 0, -0.55, 0);
-          add(body, box(0.14, 0.07, 0.04), km, 0.07, -0.78, 0); add(body, box(0.1, 0.06, 0.04), km, 0.05, -0.66, 0);
-          const tm = glowing(C.parch, 0.2, { rough: 0.7, tint: 0.92 }), tag = add(body, K.roundedBox(0.98, 0.3, 0.03, 0.03, 2), tm, 0, -1.08, 0.02);
-          pickable(add(kg, box(1.05, 1.35, 0.3), M.hit, 0, -0.65, 0.05, { cast: false }), { kind: 'key', k });
-          kg.userData = { body, mat: km, tagMat: tm, labelG: group(body, 0, -1.08, 0.04), turnAt: -9, hitAt: -9 }; return kg;
+          add(body, new THREE.TorusGeometry(0.11, 0.035, 6, 14), km, 0, -0.12, 0); add(body, new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6), km, 0, -0.42, 0);
+          add(body, box(0.14, 0.07, 0.04), km, 0.07, -0.6, 0); add(body, box(0.1, 0.06, 0.04), km, 0.05, -0.5, 0);
+          const tm = glowing(C.parch, 0.2, { rough: 0.7, tint: 0.92 }), tag = add(body, K.roundedBox(0.98, 0.3, 0.03, 0.03, 2), tm, 0, -0.86, 0.02);
+          pickable(add(kg, box(1.05, 1.1, 0.3), M.hit, 0, -0.5, 0.05, { cast: false }), { kind: 'key', k });
+          kg.userData = { body, mat: km, tagMat: tm, labelG: group(body, 0, -0.86, 0.04), turnAt: -9, hitAt: -9 }; return kg;
         });
         Object.assign(R6, { face, sf, dyn: group(face), keys, panelM, lock });
-        anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
+        anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = u.turnAt < 0 ? 0 : K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
         restLocal[5] = [2.9, PY + 1.5, 1.1];
       }
 

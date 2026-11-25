@@ -115,8 +115,41 @@ const CHAPTERS = [
              [['D6', 1], ['C#6', 1], ['B5', 1], ['A5', 1]], [['F#5', 1], ['B5', 1], ['D6', 2]], [['B5', 1], ['A5', 1], ['G5', 1], ['E5', 1]], [['A5', 2], ['C#5', 1], [null, 1]]],
     },
   },
+  {
+    n: 10, unit: 10, title: 'The Storm Peak', scene: 'storm', keys: ['G', 'C', 'D'],
+    rhythm: { rests: true, eighths: true, ties: true, dottedQ: true, accents: true, meter: 2, need: ['dq'] },   // course level 10: tied notes and dotted quarters in 2/4
+    // E minor in the storm: a pad under a low brass tune, with thunder
+    music: {
+      bpm: 92, voice: 'brass', thunder: true, wind: true,
+      chords: [['E3', 'B3', 'E4', 'G4'], ['C3', 'G3', 'C4', 'E4'], ['G2', 'D3', 'G3', 'B3'], ['D3', 'A3', 'D4', 'F#4']],
+      tune: [[['E5', 1.5], ['F#5', 0.5], ['G5', 2]], [['E5', 1], ['G5', 1], ['C6', 2]], [['B5', 1.5], ['A5', 0.5], ['G5', 1], ['D5', 1]], [['F#5', 3], [null, 1]],
+             [['G5', 1], ['F#5', 1], ['E5', 1], ['B4', 1]], [['C5', 1], ['E5', 1], ['G5', 2]], [['B4', 1], ['D5', 1], ['G5', 1], ['B5', 1]], [['A5', 2], ['F#5', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 11, unit: 11, title: "The Dragon's Roost", scene: 'dragon', keys: ['G', 'C', 'D', 'F'],
+    rhythm: { rests: true, eighths: true, ties: true, dottedQ: true, meter: 3, need: ['dq'] },   // course level 11: tied notes and dotted quarters in 3/4
+    // C minor on the volcano: a dark pad under a brass tune, with the mountain's rumble
+    music: {
+      bpm: 76, voice: 'brass', rumble: true,
+      chords: [['C3', 'G3', 'C4', 'Eb4'], ['Ab2', 'Eb3', 'Ab3', 'C4'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['G2', 'D3', 'G3', 'B3']],
+      tune: [[['C5', 1.5], ['D5', 0.5], ['Eb5', 2]], [['C5', 1], ['Eb5', 1], ['Ab5', 2]], [['G5', 1.5], ['F5', 0.5], ['Eb5', 1], ['Bb4', 1]], [['D5', 3], [null, 1]],
+             [['Eb5', 1], ['D5', 1], ['C5', 1], ['G4', 1]], [['Ab4', 1], ['C5', 1], ['Eb5', 2]], [['G5', 1], ['Eb5', 1], ['Bb5', 1], ['G5', 1]], [['B4', 2], ['D5', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 12, unit: 12, title: 'The Star Observatory', scene: 'stars', keys: ['G', 'C', 'D', 'F'],
+    rhythm: { rests: true, eighths: true, ties: true, dottedQ: true, eighthRest: true, need: ['er'] },   // course level 12: tied notes, dotted quarters and the eighth rest in 4/4
+    // home to B-flat for the finale, under the stars: a pad under a celesta tune, with sparkles
+    music: {
+      bpm: 72, voice: 'glass', sparkle: true,
+      chords: [['Bb2', 'F3', 'Bb3', 'D4'], ['G2', 'D3', 'G3', 'Bb3'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['F3', 'C4', 'F4', 'A4']],
+      tune: [[['D6', 1], ['F6', 1], ['Bb6', 2]], [['A6', 1], ['G6', 1], ['D6', 2]], [['Eb6', 1], ['G6', 1], ['Bb6', 1], ['G6', 1]], [['F6', 3], [null, 1]],
+             [['Bb6', 1.5], ['A6', 0.5], ['G6', 1], ['F6', 1]], [['D6', 1], ['G6', 1], ['Bb6', 2]], [['G6', 1], ['F6', 1], ['Eb6', 1], ['C6', 1]], [['Bb5', 3], [null, 1]]],
+    },
+  },
 ];
-const RELEASED = 6;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+const RELEASED = 7;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
 CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 

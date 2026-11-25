@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 14; // shown top left; add one for every release to the public site
+  const VERSION = 15; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -557,19 +557,19 @@
         add(g, K.roundedBox(PW + 0.2, PH + 0.3, 0.12, 0.04, 2), M.stoneDark, 0, PY + 0.3, -0.12);
         const panelM = glowing(C.parch, 0.0, { rough: 0.8, tint: 0.5 }); add(g, K.roundedBox(PW, PH + 0.1, 0.05, 0.04, 2), panelM, 0, PY + 0.3, 0);
         const face = group(g, 0, PY + 0.3, 0.03), sf = staff(face, -2.15, 4.3, -0.35);
-        const lock = group(g, 0, 1.05, 0.05); add(lock, K.roundedBox(0.9, 0.7, 0.12, 0.05, 2), M.gold); add(lock, cylZ(0.09, 0.14, 10), M.ink, 0, 0.08, 0.04); add(lock, box(0.08, 0.2, 0.14), M.ink, 0, -0.08, 0.04);
-        add(g, box(5.0, 0.07, 0.07), M.woodDark, 0, 1.75, 0.75);
+        const lock = group(g, 0, 0.7, 0.05); add(lock, K.roundedBox(0.9, 0.7, 0.12, 0.05, 2), M.gold); add(lock, cylZ(0.09, 0.14, 10), M.ink, 0, 0.08, 0.04); add(lock, box(0.08, 0.2, 0.14), M.ink, 0, -0.08, 0.04);
+        add(g, box(5.0, 0.07, 0.07), M.woodDark, 0, 2.12, 0.75);
         const keys = [0, 1, 2, 3].map((k) => {
-          const kg = group(g, (k - 1.5) * 1.18, 1.72, 0.75), body = group(kg);
+          const kg = group(g, (k - 1.5) * 1.18, 2.1, 0.75), body = group(kg);
           const km = glowing('#c9a040', 0.25, { metal: 0.9, rough: 0.35, tint: 0.85 });
-          add(body, new THREE.TorusGeometry(0.12, 0.035, 6, 14), km, 0, -0.14, 0); add(body, new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), km, 0, -0.55, 0);
-          add(body, box(0.14, 0.07, 0.04), km, 0.07, -0.78, 0); add(body, box(0.1, 0.06, 0.04), km, 0.05, -0.66, 0);
-          const tm = glowing(C.parch, 0.2, { rough: 0.7, tint: 0.92 }), tag = add(body, K.roundedBox(0.98, 0.3, 0.03, 0.03, 2), tm, 0, -1.08, 0.02);
-          pickable(add(kg, box(1.05, 1.35, 0.3), M.hit, 0, -0.65, 0.05, { cast: false }), { kind: 'key', k });
-          kg.userData = { body, mat: km, tagMat: tm, labelG: group(body, 0, -1.08, 0.04), turnAt: -9, hitAt: -9 }; return kg;
+          add(body, new THREE.TorusGeometry(0.11, 0.035, 6, 14), km, 0, -0.12, 0); add(body, new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6), km, 0, -0.42, 0);
+          add(body, box(0.14, 0.07, 0.04), km, 0.07, -0.6, 0); add(body, box(0.1, 0.06, 0.04), km, 0.05, -0.5, 0);
+          const tm = glowing(C.parch, 0.2, { rough: 0.7, tint: 0.92 }), tag = add(body, K.roundedBox(0.98, 0.3, 0.03, 0.03, 2), tm, 0, -0.86, 0.02);
+          pickable(add(kg, box(1.05, 1.1, 0.3), M.hit, 0, -0.5, 0.05, { cast: false }), { kind: 'key', k });
+          kg.userData = { body, mat: km, tagMat: tm, labelG: group(body, 0, -0.86, 0.04), turnAt: -9, hitAt: -9 }; return kg;
         });
         Object.assign(R6, { face, sf, dyn: group(face), keys, panelM, lock });
-        anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
+        anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = u.turnAt < 0 ? 0 : K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
         restLocal[5] = [2.9, PY + 1.5, 1.1];
       }
 
