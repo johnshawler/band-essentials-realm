@@ -1019,7 +1019,7 @@ const CHAPTERS = [
     },
   },
 ];
-const RELEASED = 8;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+const RELEASED = 9;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
 CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 
@@ -2311,7 +2311,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 16; // shown top left; add one for every release to the public site
+  const VERSION = 17; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;

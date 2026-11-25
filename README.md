@@ -6,7 +6,7 @@ A playable version of the High Fantasy *Band Essentials* motion graphic. Fifteen
 
 ## Chapters
 
-Pick a chapter in the bar under the game, or open it directly with `?ch=<n>`. Every chapter is open from the start.
+The site opens on a map of the realm: pick a landmark to climb its chapter, or open one directly with `?ch=<n>`. The Map button in the bar goes back to the map. Every chapter is open from the start, and the map shows your best result in each for the chosen instrument.
 
 | Chapter | Unit | Landmark | New in this unit |
 | --- | --- | --- | --- |
@@ -18,12 +18,13 @@ Pick a chapter in the bar under the game, or open it directly with `?ch=<n>`. Ev
 | 6. The Deep Mine | 6 | Cavern round a pillar of ore | Low notes (D, E, F for alto sax); 3/4 time; forte, mezzo forte, piano, eighth note, beam. The cave brightens island by island; forte answers boom and piano answers whisper. |
 | 7. The Twin Towers | 7 | Low tower and high tower | High F♯ for alto sax; tied notes; allegro, moderato, andante. Adds the sixth game, Key Signatures (G and C), so the climb has 18 islands. Both tower bells ring F♯ in octaves. |
 | 8. The Sky Harbour | 8 | Airship mooring spire | High G for alto sax; tied notes in 3/4; crescendo, diminuendo. The sails swell on the crescendo question and fall slack on the diminuendo. |
+| 9. The Clocktower | 9 | Giant clockwork tower | C♯ for alto sax; dotted halves; measure number, tie, dotted half note, dotted quarter note. Key Signatures adds D major. The gears turn and click in time with each rhythm. |
 
 From Chapter 2 on, each game's three exercises use two of the unit's new notes (or terms) and one from earlier units. Chapters are defined in `src/chapters.js`; a chapter's scenery lives in its own file (`src/scene-*.js`). Notes come from each instrument's fingering data in the staging repo: `python3 src/gen-units.py <staging repo> src/units-data.json`.
 
 The release number shows in the top-left corner of the game (v7 and up). It is the `VERSION` constant at the top of `src/realm-game.js`; add one for every release to the public site.
 
-Results are percentages: each game's percentage covers its three exercises, and the final result is the average of the five games. Every note the game plays is at concert pitch for the chosen instrument, so it sits in the B-flat of the music.
+Results are percentages: each game's percentage covers its three exercises, and the final result is the average of the games (five, or six from Chapter 7 when Key Signatures joins). Every note the game plays is at concert pitch for the chosen instrument, so it sits in the B-flat of the music.
 
 Play it at https://johnshawler.github.io/band-essentials-realm/
 
