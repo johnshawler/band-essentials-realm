@@ -923,7 +923,42 @@ const CHAPTERS = [
              [['G5', 1], ['F5', 1], ['Eb5', 1], ['G5', 1]], [['C6', 2], ['Bb5', 1], ['G5', 1]], [['Ab5', 1.5], ['G5', 0.5], ['F5', 1], ['Ab5', 1]], [['G5', 3], [null, 1]]],
     },
   },
+  {
+    n: 5, unit: 5, title: 'The Falls of Echo', scene: 'falls',
+    rhythm: { rests: true, eighths: true, meter: 2, need: ['pair'] },  // course level 5: 2/4 with quarters and eighths
+    // F major (B-flat's dominant), a bright afternoon by the water: a pad under a harp tune, the falls' roar
+    music: {
+      bpm: 76, voice: 'harp', water: true, birds: true,
+      chords: [['F3', 'C4', 'F4', 'A4'], ['D3', 'A3', 'D4', 'F4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['C3', 'G3', 'C4', 'E4']],
+      tune: [[['C5', 1], ['F5', 1], ['A5', 2]], [['G5', 1], ['F5', 1], ['D5', 2]], [['Bb4', 1], ['D5', 1], ['F5', 1], ['D5', 1]], [['E5', 3], [null, 1]],
+             [['A5', 1.5], ['G5', 0.5], ['F5', 1], ['C5', 1]], [['D5', 1], ['F5', 1], ['A5', 2]], [['Bb5', 1], ['A5', 1], ['G5', 1], ['F5', 1]], [['G5', 2], ['C5', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 6, unit: 6, title: 'The Deep Mine', scene: 'mine',
+    rhythm: { rests: true, eighths: true, meter: 3, need: ['pair'] },  // course level 6: 3/4 with halves, quarters and eighths
+    // D minor, deep underground: a low pad under a marimba tune, dripping water and the mine's rumble
+    music: {
+      bpm: 69, voice: 'marimba', drips: true, rumble: true,
+      chords: [['D3', 'A3', 'D4', 'F4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['G2', 'D3', 'G3', 'Bb3'], ['A2', 'E3', 'A3', 'C#4']],
+      tune: [[['D5', 1], ['F5', 1], ['A5', 1], ['F5', 1]], [['Bb4', 1], ['D5', 1], ['F5', 2]], [['G5', 1], ['F5', 1], ['D5', 1], ['Bb4', 1]], [['A4', 1], ['C#5', 1], ['E5', 2]],
+             [['F5', 1], ['E5', 1], ['D5', 1], ['A4', 1]], [['Bb4', 1], ['F5', 1], ['D5', 2]], [['G4', 1], ['Bb4', 1], ['D5', 1], ['G5', 1]], [['E5', 2], ['A4', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 7, unit: 7, title: 'The Twin Towers', scene: 'towers', keys: ['G', 'C'],
+    rhythm: { rests: true, eighths: true, ties: true, need: ['tie'] },   // course level 7: tied notes in 4/4
+    // G major, a bright march between the towers: a pad under a brass tune, with wind
+    music: {
+      bpm: 84, voice: 'brass', wind: true, birds: true,
+      chords: [['G3', 'D4', 'G4', 'B4'], ['E3', 'B3', 'E4', 'G4'], ['C3', 'G3', 'C4', 'E4'], ['D3', 'A3', 'D4', 'F#4']],
+      tune: [[['D5', 1], ['G5', 1], ['B5', 2]], [['A5', 1], ['G5', 1], ['E5', 2]], [['C5', 1], ['E5', 1], ['G5', 1], ['E5', 1]], [['F#5', 3], [null, 1]],
+             [['G5', 1.5], ['F#5', 0.5], ['E5', 1], ['D5', 1]], [['B4', 1], ['E5', 1], ['G5', 2]], [['E5', 1], ['G5', 1], ['C6', 1], ['B5', 1]], [['A5', 2], ['D5', 1], [null, 1]]],
+    },
+  },
 ];
+const RELEASED = 5;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 
 // every instrument, set up for this chapter: the unit's new notes, and the earlier units' notes for review
@@ -936,6 +971,99 @@ const chapterTerms = (clef) => {
   const own = (t) => (t === 'Clef' ? (clef === 'bass' ? 'Bass clef' : 'Treble clef') : t);
   return { fresh: UNIT_TERMS[CH.unit - 1].map(own), review: [].concat(...UNIT_TERMS.slice(0, CH.unit - 1)).map(own) };
 };
+
+// ================================================================ Chapter 5 scenery: the Falls of Echo
+// A sheer cliff in the afternoon sun with great waterfalls pouring down its sides into a misty pool, rainbows in the spray.
+// The islands are grassy ledges tied back to the cliff with rope bridges. On the Fermata question every waterfall stops in
+// mid-air until the player answers. From the top, far off and low, a mine entrance glows (Chapter 6).
+const FALLS_LOOK = {
+  env: { top: '#6a9ae0', horizon: '#ffe0b0', bottom: '#4a6a5a', intensity: 0.7, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#fff0c8', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#c8f0ff', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffd090', power: 2.0 }] },
+  hemi: ['#d0e4ff', '#4a6a40', 0.55], sun: '#fff0d0', sunPower: 2.9, fog: '#b8d0d8',
+  sky: [[0, '#2a64c0'], [0.25, '#4a88d8'], [0.4, '#8ab8e8'], [0.47, '#d8e8f0'], [0.5, '#f4ead0'], [0.53, '#a8b8a0'], [1, '#4a5a48']],
+  skyGlow: [[0.84, 0.6, 0.22], [0.66, 0.25, 0.16]], glowRGB: '255,240,200', stars: false,
+  sunDisc: { color: '#fff6dc', k: 1.6, pos: [-260, 330, -700], r: 44 }, moon2: false,
+  peak: '#6a8a7a', cloud: '#f4f0e8', shards: ['#2a8a9a', '#7ff0e8', '#3a8a4a', '#b0f08a'], cloudSea: false,
+};
+
+function sceneFalls(X) {
+  const { THREE, K, scene, add, group, std, facet, anims, CYL6, SUM, SIG } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, CONE, ending } = kit;
+  const T = {
+    rock: facet('#7a6e62'), rock2: facet('#5e544c'), grass: facet('#5f9a44'), moss: facet('#4a7a3a'), plank: facet('#8a6a46', 0.85), rope: facet('#c8b088', 0.9),
+    leaf: facet('#4f8a3a'), leaf2: facet('#6aa448'), bark: facet('#5a4632'), fern: facet('#3e7a3a'),
+  };
+  const H0 = -26, POOL = -20, cR = (y) => K.lerp(16, 11, K.clamp((y - H0) / (SUM - H0)));
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 3 === 2) { for (let k = 0; k < 5; k++) { const f = add(g, CONE, T.fern, Math.cos(k * 1.26) * 0.25 * h * 0.3, 0.12 * h, Math.sin(k * 1.26) * 0.25 * h * 0.3); f.scale.set(0.05 * h, 0.45 * h, 0.14 * h); f.rotation.set(Math.sin(k * 1.26) * 0.9, k * 1.26, Math.cos(k * 1.26) * 0.9); } return g; }
+    add(g, CYL6, T.bark, 0, 0.22 * h, 0).scale.set(0.06 * h, 0.44 * h, 0.06 * h);
+    for (let k = 0; k < 3; k++) { const a = K.hash(seed, k) * 6.3, m = add(g, ICO, k % 2 ? T.leaf : T.leaf2, Math.cos(a) * 0.12 * h * (k ? 1 : 0), 0.62 * h + k * 0.05 * h, Math.sin(a) * 0.12 * h * (k ? 1 : 0)); m.scale.set(0.24 * h, 0.2 * h, 0.24 * h); }
+    return g;
+  };
+  // ledges hang off the cliff on rope bridges: two ropes and a run of planks back to the rock
+  const decor = (parent, r, seed) => { for (let k = 0; k < 3; k++) { const a = Math.PI * (0.75 + 0.25 * k), m = add(parent, ICO, T.moss, Math.sin(a) * r * 0.95, -0.25, Math.cos(a) * r * 0.95); m.scale.set(0.9, 0.35, 0.9); } };
+  const islet = (parent, r, depth, seed) => {
+    kit.islet(parent, r, depth, seed, { rock: T.rock, rock2: T.rock2, top: T.grass, under: T.moss, decor });
+    parent.updateMatrixWorld(true);
+    const reach = X.RAD - cR(parent.position.y - 1) + 0.6, n = Math.floor(reach / 0.7);
+    for (let k = 0; k < n; k++) { const z = -r * 0.85 - k * 0.7, sag = -0.25 - 1.4 * Math.sin(Math.PI * k / n); add(parent, new THREE.BoxGeometry(1.5, 0.08, 0.5), T.plank, 0, sag, z); }
+    for (const sx of [-1, 1]) { const pts = []; for (let k = 0; k <= 8; k++) { const u = k / 8; pts.push(new THREE.Vector3(sx * 0.75, 0.55 - 1.4 * Math.sin(Math.PI * u), -r * 0.85 - u * (reach - r * 0.85))); } add(parent, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.04, 4), T.rope); }
+  };
+  const rocklet = kit.rocklet({ rock: T.rock, rock2: T.rock2, top: T.grass }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * 0.9, k * 3); });
+  const step = kit.stepOf(T.plank, T.rock);
+
+  // the falls: curtains of water on the cliff's flanks (they stop in mid-air on the Fermata question)
+  const falls = [];
+  let frozen = false;
+  SIG.onTerm = (term) => { frozen = term === 'Fermata'; };
+  SIG.onLeave = () => { frozen = false; };
+  function landmark() {
+    const c = new THREE.Color(), MOSS = new THREE.Color('#5a7a44'), WET = new THREE.Color('#3a3634'), band = bands(['#8a7c6c', '#76695c', '#9a8a76', '#6a5e52'], 3.1, H0);
+    column({ y0: H0, y1: SUM + 1, r0: 16, r1: 11, seg: 26, rows: 16, jag: 0.09, wob: 1.2, colour: (y, f) => { c.copy(band(y, f)); if (K.hash(f, 12) > 0.86) c.lerp(MOSS, 0.6); if (y < POOL + 4) c.lerp(WET, 0.6); return c; } });
+    add(scene, X.turfGeo(11.4, 77, 20, 0.6), T.grass, 0, SUM + 1, 0, { cast: false });
+    // the spring on top that feeds them
+    const springM = std('#4ab0d8', 0.2, 0.1, { emissive: new THREE.Color('#2a7aa0'), emissiveIntensity: 0.3 });
+    add(scene, new THREE.CylinderGeometry(6, 6, 0.2, 24), springM, 0, SUM + 1.25, 0, { cast: false });
+    for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2, b = add(scene, ICO, T.rock, Math.sin(a) * 6.6, SUM + 1.4, Math.cos(a) * 6.6, { cast: false }); b.scale.set(1.2, 0.8, 1.2); }
+    for (let k = 0; k < 6; k++) tree(scene, Math.sin(k + 0.5) * 9.4, SUM + 1, Math.cos(k + 0.5) * 9.4, 4 + K.hash(k, 3) * 2, k * 3);
+    const tex = K.canvasTex(128, 512, (ctx, w, h) => { const r = K.rng(4); ctx.fillStyle = '#7ac8e8'; ctx.fillRect(0, 0, w, h); for (let i = 0; i < 520; i++) { ctx.fillStyle = `rgba(255,255,255,${0.25 + r() * 0.6})`; ctx.fillRect(r() * w, r() * h, 1 + r() * 4, 10 + r() * 50); } });
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(1, 3);
+    const fallM = std('#ffffff', 0, 0.25, { map: tex, transparent: true, opacity: 0.92, emissive: new THREE.Color('#2a6a8a'), emissiveIntensity: 0.35, side: THREE.DoubleSide });
+    [[-1.25, 0.34], [-0.3, 0.42], [0.65, 0.36], [1.55, 0.34], [Math.PI, 0.6]].forEach(([a, w]) => {
+      const g = new THREE.CylinderGeometry(11 + 0.9, 16 + 1.4, SUM + 1 - POOL, 14, 1, true, a - w / 2, w); g.translate(0, (SUM + 1 + POOL) / 2, 0);
+      const m = add(scene, g, fallM, 0, 0, 0, { cast: false }); falls.push(m);
+    });
+    // the pool, mist and foam at the foot, and rainbows in the spray
+    kit.water(POOL, '#2a7a8a', 0.25, 0.1);
+    const mistTex = K.canvasTex(128, 128, (ctx, w) => { const g = ctx.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,0.8)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, w); });
+    const mists = [];
+    for (let k = 0; k < 26; k++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTex, transparent: true, opacity: 0.45, depthWrite: false })); const a = K.hash(k, 1) * Math.PI * 2, r = 17 + 8 * K.hash(k, 2); sp.position.set(Math.sin(a) * r, POOL + 2 + 5 * K.hash(k, 3), Math.cos(a) * r); sp.scale.setScalar(12 + 10 * K.hash(k, 4)); scene.add(sp); mists.push(sp); }
+    const rbTex = K.canvasTex(8, 256, (ctx, w, h) => { const cols = ['#000000', '#ff3030', '#ff9a20', '#fff040', '#40e060', '#40a0ff', '#7040ff', '#000000']; const g = ctx.createLinearGradient(0, 0, 0, h); cols.forEach((cc, i) => g.addColorStop(i / (cols.length - 1), cc)); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); });
+    const rbM = new THREE.MeshBasicMaterial({ map: rbTex, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+    [[-0.3, 24], [1.55, 28]].forEach(([a, R]) => { const rg = new THREE.RingGeometry(R - 2.4, R, 48, 1, 0, Math.PI), pa = rg.attributes.position, ua = rg.attributes.uv; for (let i = 0; i < pa.count; i++) ua.setXY(i, 0.5, (Math.hypot(pa.getX(i), pa.getY(i)) - (R - 2.4)) / 2.4); const rb = new THREE.Mesh(rg, rbM); const d = 24; rb.position.set(Math.sin(a) * d, POOL, Math.cos(a) * d); rb.rotation.y = a; scene.add(rb); });
+    let off = 0, last = 0;
+    anims.push((t) => {
+      const dt = Math.min(0.1, Math.max(0, t - last)); last = t; if (!frozen) off += dt * 0.9; tex.offset.y = off;
+      fallM.emissiveIntensity = frozen ? 0.9 + 0.2 * Math.sin(t * 4) : 0.35;
+      mists.forEach((m, k) => { m.material.opacity = frozen ? 0.2 : 0.35 + 0.12 * Math.sin(t * 0.8 + k); m.position.y += frozen ? 0 : 0.004 * Math.sin(t + k); });
+      rbM.opacity = 0.3 + 0.08 * Math.sin(t * 0.6) + (ending() ? 0.25 : 0);
+    });
+  }
+
+  // far off and low: other cliffs, and the glowing mouth of a mine (Chapter 6)
+  function distant() {
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 240 + K.hash(k, 82) * 300, h = 40 + K.hash(k, 83) * 70, w = 20 + 20 * K.hash(k, 84); if (Math.abs(((a - X.spireA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.25) continue; add(scene, new THREE.CylinderGeometry(w * 0.7, w, h, 7), k % 2 ? T.rock : T.rock2, Math.sin(a) * r, POOL + h / 2, Math.cos(a) * r, { cast: false }).rotation.y = k; add(scene, X.turfGeo(w * 0.72, k, 9, 1.2), T.grass, Math.sin(a) * r, POOL + h, Math.cos(a) * r, { cast: false }); }
+    const g = kit.tease(520);
+    add(g, new THREE.SphereGeometry(60, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), T.rock2, 0, -12, 0, { cast: false }).scale.y = 0.7;
+    const glow = kit.glowMat('#ffa040', 1.8), mouth = new THREE.Mesh(new THREE.CircleGeometry(9, 20, 0, Math.PI), glow); g.add(mouth); mouth.position.set(0, -12, 0); mouth.rotation.y = Math.atan2(-g.position.x, -g.position.z); mouth.translateZ(60.5);
+    for (let k = 0; k < 5; k++) { const l = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 6), kit.glowMat('#ffd080', 2)); g.add(l); l.position.copy(mouth.position); l.rotation.copy(mouth.rotation); l.translateX((k - 2) * 7); l.translateY(-4 + Math.abs(k - 2) * 2); l.translateZ(4); }
+    anims.push((t) => { glow.color.setRGB(1, 0.63, 0.25).multiplyScalar(1.6 + 0.3 * Math.sin(t * 2.3) + (ending() ? 0.8 : 0)); });
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.falls = { look: FALLS_LOOK, make: sceneFalls };
 
 // ================================================================ Chapter 4 scenery: the Crystal Spire
 // A spire of blue crystal rising from a frozen lake, at night under an aurora. The islands are snowy crystal outcrops joined to
@@ -1298,6 +1426,202 @@ function sceneLight(X) {
   return { islet, tree, rocklet, step, landmark, distant, T };
 }
 
+// ================================================================ Chapter 6 scenery: the Deep Mine
+// A vast cavern round a pillar of rock laced with glowing ore, lit by lanterns. The climb starts deep down (fitting the low new
+// notes) on scaffold platforms and works up toward a ring of daylight; the cavern grows lighter at every island, and the top
+// islands rise out of it into sunrise. Forte answers boom through the cave and piano answers whisper. From the top, two towers
+// stand across the valley (Chapter 7).
+const MINE_LOOK = {
+  env: { top: '#ffb070', horizon: '#6a4a3a', bottom: '#1a120e', intensity: 0.38, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#ffb070', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9040', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#ffd8a0', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#60d0c0', power: 1.4 }] },
+  hemi: ['#ffcf9a', '#2a1c14', 0.34], sun: '#ffc890', sunPower: 1.8, fog: '#2a1e18',
+  sky: [[0, '#1a2050'], [0.25, '#3a3a7a'], [0.4, '#8a5a8a'], [0.46, '#f0905a'], [0.5, '#ffd080'], [0.53, '#a8705a'], [1, '#2a1a1a']],
+  skyGlow: [[0.84, 0.95, 0.24], [0.66, 0.35, 0.16]], glowRGB: '255,190,120', stars: false,
+  sunDisc: { color: '#ffd090', k: 1.7, pos: [-150, 40, -760], r: 50 }, moon2: false,
+  peak: '#3a2a3a', cloud: '#d89a80', shards: ['#a0400a', '#ffa040', '#1a7a7a', '#60f0d8'], cloudSea: false, peaks: false,
+};
+
+function sceneMine(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, NS } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, OCT, CONE, ending, glowMat } = kit;
+  const T = {
+    rock: facet('#5a4a44'), rock2: facet('#443834'), plank: facet('#8a6440', 0.85), plank2: facet('#6a4a30', 0.85), iron: std('#3a3a40', 0.7, 0.45, { flatShading: true }),
+    ore: lum('#a0400a', '#ffa040', 1.6, { facet: true, rough: 0.3 }), ore2: lum('#1a6a6a', '#60f0d8', 1.4, { facet: true, rough: 0.3 }), lamp: lum('#7a4a10', '#ffc060', 3.0),
+  };
+  const H0 = -40, WALL = 112, RIM = SUM - 4, pR = (y) => K.lerp(15, 10, K.clamp((y - H0) / (SUM - H0)));
+  // the cave's own light: dim at the bottom, brighter island by island
+  const amb = new THREE.AmbientLight('#ffcf9a', 0.15); scene.add(amb);
+  let target = 0, level = 0;
+  SIG.onStop = (j) => { target = j / (NS - 1); };
+  // forte booms, mezzo forte rings out, piano whispers
+  SIG.onRight = (stop, info) => {
+    const s = SIG.snd; if (!s || !info.term) return; const t = SIG.now();
+    if (info.term === 'Forte') { s.play('impact', { gain: 0.7 }, t + 0.15); s.play('impact', { gain: 0.35 }, t + 0.55); s.play('impact', { gain: 0.15 }, t + 0.95); }
+    else if (info.term === 'Mezzo forte') { s.play('thud', { gain: 0.5, f: 110 }, t + 0.15); s.play('thud', { gain: 0.25, f: 110 }, t + 0.5); }
+    else if (info.term === 'Piano') { s.chime('F6', 0.03, t + 0.15); s.chime('F6', 0.015, t + 0.55); }
+  };
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 3 === 0) { add(g, new THREE.CylinderGeometry(0.05, 0.06, h * 0.55, 5), T.plank2, 0, h * 0.27, 0); add(g, box3(0.4, 0.05, 0.05), T.iron, 0.18, h * 0.53, 0); const l = add(g, new THREE.SphereGeometry(0.16, 8, 6), T.lamp, 0.34, h * 0.45, 0, { cast: false }); void l; return g; }
+    if (seed % 3 === 1) { kit.cluster(g, 0, 0, 0, h * 0.35, seed % 2 ? T.ore : T.ore2, seed, 4); return g; }
+    const cart = group(g, 0, 0.3, 0); add(cart, box3(1.0, 0.5, 0.65), T.plank2, 0, 0.25, 0); add(cart, box3(1.04, 0.06, 0.69), T.iron, 0, 0.5, 0); for (const sx of [-0.32, 0.32]) for (const sz of [-0.33, 0.33]) { const w = add(cart, new THREE.CylinderGeometry(0.13, 0.13, 0.06, 10), T.iron, sx, 0, sz); w.rotation.x = Math.PI / 2; }
+    kit.cluster(cart, 0, 0.45, 0, 0.5, T.ore, seed, 3); return g;
+  };
+  const box3 = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  // scaffold platforms: a rock ledge with a plank deck and timber struts back to the pillar
+  const decor = (parent, r, seed) => { for (let k = 0; k < 4; k++) { const a = Math.PI * (0.6 + 0.27 * k), px = Math.sin(a) * r * 0.95, pz = Math.cos(a) * r * 0.95; add(parent, new THREE.CylinderGeometry(0.14, 0.14, 2.6, 6), T.plank2, px, -1.0, pz); } };
+  const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.rock, rock2: T.rock2, top: T.plank, under: T.plank2, landR: pR, strut: T.plank2, strut2: T.iron, decor });
+  const rocklet = kit.rocklet({ rock: T.rock, rock2: T.rock2, top: T.rock2 }, (g, size, seed) => kit.cluster(g, 0, 0, 0, size * 0.8, seed % 2 ? T.ore : T.ore2, seed, 4));
+  const step = kit.stepOf(T.plank, T.plank2);
+
+  function landmark() {
+    const c = new THREE.Color(), band = bands(['#5a4a44', '#4a3c38', '#665650', '#3e322e'], 2.6, H0);
+    column({ y0: H0, y1: SUM, r0: 15, r1: 10, seg: 24, rows: 18, jag: 0.1, wob: 1.1, colour: (y, f) => c.copy(band(y, f)) });
+    // ore veins and lanterns round the pillar, and a ladder of rails
+    for (let k = 0; k < 60; k++) { const a = K.hash(k, 21) * Math.PI * 2, y = H0 + 4 + K.hash(k, 22) * (SUM - H0 - 6), r = pR(y), m = add(scene, OCT, k % 3 ? T.ore : T.ore2, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); m.scale.set(0.6, 1.4 + K.hash(k, 23), 0.6); m.rotation.set(Math.cos(a) * 1.1, 0, -Math.sin(a) * 1.1); }
+    const lamps = [];
+    for (let k = 0; k < 28; k++) { const a = k * 2.399, y = H0 + 6 + (k / 28) * (SUM - H0 - 6), r = pR(y) + 0.5, l = add(scene, new THREE.SphereGeometry(0.4, 8, 6), T.lamp, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); lamps.push(l); }
+    // the cavern: an inward-facing wall, banded and studded with ore, open above to the sky; a floor far below
+    const wg = new THREE.CylinderGeometry(WALL, WALL * 1.15, RIM - H0 + 10, 40, 10, true); wg.translate(0, (RIM + H0 - 10) / 2, 0);
+    const p = wg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), y = p.getY(i), k = 1 + 0.1 * (K.hash(Math.round(Math.atan2(z, x) * 7), Math.round(y / 6), 3) - 0.5); p.setX(i, x * k); p.setZ(i, z * k); }
+    const wm = wg.toNonIndexed(), wp = wm.attributes.position, wc = new Float32Array(wp.count * 3), wb = bands(['#3a302c', '#2e2622', '#463a34'], 5, H0);
+    for (let f = 0; f < wp.count; f += 3) { const col = wb((wp.getY(f) + wp.getY(f + 1) + wp.getY(f + 2)) / 3, f); for (let v = 0; v < 3; v++) { wc[(f + v) * 3] = col.r; wc[(f + v) * 3 + 1] = col.g; wc[(f + v) * 3 + 2] = col.b; } }
+    wm.setAttribute('color', new THREE.BufferAttribute(wc, 3)); wm.computeVertexNormals();
+    add(scene, wm, std('#ffffff', 0, 0.95, { vertexColors: true, flatShading: true, side: THREE.BackSide }), 0, 0, 0, { cast: false });
+    add(scene, new THREE.TorusGeometry(WALL, 6, 6, 40), T.rock2, 0, RIM + 1, 0, { cast: false }).rotation.x = Math.PI / 2;
+    const fl = add(scene, new THREE.CircleGeometry(WALL * 1.2, 40), T.rock2, 0, H0 + 1, 0, { cast: false }); fl.rotation.x = -Math.PI / 2;
+    for (let k = 0; k < 90; k++) { const a = K.hash(k, 31) * Math.PI * 2, y = H0 + 4 + K.hash(k, 32) * (RIM - H0 - 4), r = WALL - 1.5, m = add(scene, OCT, k % 4 ? T.ore : T.ore2, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); m.scale.set(1.2, 2.6 + 2 * K.hash(k, 33), 1.2); }
+    for (let k = 0; k < 40; k++) { const a = K.hash(k, 41) * Math.PI * 2, y = H0 + 6 + K.hash(k, 42) * (RIM - H0 - 10), r = WALL - 2, l = add(scene, new THREE.SphereGeometry(0.9, 8, 6), T.lamp, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); lamps.push(l); }
+    // daylight pouring through the opening: a soft shaft that grows as the climb rises
+    const shaftTex = K.canvasTex(8, 256, (ctx, w, h) => { const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#fff0c0'); g.addColorStop(1, '#000000'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); });
+    const shaftM = new THREE.MeshBasicMaterial({ map: shaftTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false, opacity: 0.1 });
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(70, 30, RIM - H0, 24, 1, true), shaftM); shaft.position.set(-8, (RIM + H0) / 2, 6); shaft.rotation.z = 0.1; scene.add(shaft);
+    // a hoist frame on top of the pillar
+    const hg = group(scene, 0, SUM, 0);
+    for (const [x, z] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) beam(hg, [x, 0, z], [x * 0.3, 9, z * 0.3], 0.25, T.plank2);
+    add(hg, new THREE.CylinderGeometry(1.2, 1.2, 0.5, 16), T.iron, 0, 9.2, 0).rotation.x = Math.PI / 2;
+    add(hg, X.turfGeo(10.4, 41, 18, 0.5), T.plank, 0, 0.25, 0, { cast: false });
+    anims.push((t) => {
+      level += (target - level) * 0.02; const L = ending() ? 1 : level;
+      amb.intensity = 0.12 + 0.9 * L; shaftM.opacity = 0.05 + 0.25 * L;
+      lamps.forEach((l, k) => { l.scale.setScalar(1 + 0.12 * Math.sin(t * 7 + k * 1.7) * Math.sin(t * 3.1 + k)); });
+    });
+  }
+
+  // beyond the rim, across the valley: two stone towers on neighbouring crags, a low one and a high one (Chapter 7)
+  function distant() {
+    const g = kit.tease(520), stone = facet('#8a7e90'), roof = facet('#3a4a8a'), win = glowMat('#ffd890', 1.6);
+    [[-40, 0, 70, 9], [40, 0, 130, 11]].forEach(([x, z, h, r]) => {
+      const t = group(g, x, 0, z); add(t, new THREE.CylinderGeometry(r * 3, r * 4, 70, 8), T.rock2, 0, 5, 0, { cast: false });
+      add(t, new THREE.CylinderGeometry(r * 0.9, r, h, 10), stone, 0, 40 + h / 2, 0, { cast: false }); add(t, new THREE.ConeGeometry(r * 1.3, r * 2.4, 10), roof, 0, 40 + h + r * 1.2, 0, { cast: false });
+      for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.35, r * 0.6), win); t.add(w); w.position.set(0, 46 + k * h / 4.5, 0); w.rotation.y = Math.atan2(-g.position.x - x, -g.position.z - z); w.translateZ(r * 0.98); }
+    });
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.mine = { look: MINE_LOOK, make: sceneMine };
+
+// ================================================================ Chapter 7 scenery: the Twin Towers
+// Two stone towers on neighbouring crags, a low one and a high one, stand for the octave between Chapter 4's F♯ and this unit's
+// high F♯. The islands climb between them, and arched bridges shaped like ties link each island to the next. Each tower has a
+// bell tuned to F♯, an octave apart; both ring whenever the player names an F♯. From the top, airships rise from a harbour in
+// the clouds (Chapter 8).
+const TOWERS_LOOK = {
+  env: { top: '#5a8ae0', horizon: '#f0d8b0', bottom: '#4a5a6a', intensity: 0.68, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#fff0d0', power: 4.6 }, { pos: [34, 10, 22], size: [14, 22], color: '#d0e0ff', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c0ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffd8a0', power: 2.0 }] },
+  hemi: ['#d0e0ff', '#5a5a48', 0.55], sun: '#fff0d8', sunPower: 2.8, fog: '#a8b8d0',
+  sky: [[0, '#2858b0'], [0.25, '#4a80d0'], [0.4, '#88b0e0'], [0.47, '#d0e0ee'], [0.5, '#f0e4d0'], [0.53, '#b0b8c0'], [1, '#5a6070']],
+  skyGlow: [[0.84, 0.55, 0.22], [0.66, 0.25, 0.16]], glowRGB: '255,240,210', stars: false,
+  sunDisc: { color: '#fff4dc', k: 1.6, pos: [-260, 360, -700], r: 42 }, moon2: false,
+  peak: '#7a8090', cloud: '#f4f2ee', shards: ['#4a5ab0', '#a0b8ff', '#b07a2a', '#ffd88a'],
+};
+
+function sceneTowers(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, CYL6, SUM, SIG, A0, DA, STEP, NS, RAD } = X;
+  const kit = sceneKit(X), { beam, column, bands, ICO, CONE, ending, glowMat } = kit;
+  const T = {
+    rock: facet('#7a7468'), rock2: facet('#5e5a52'), grass: facet('#6a9a4a'), grass2: facet('#4f7e3c'), stone: facet('#b8b0a4'), stone2: facet('#9a9286'),
+    roof: facet('#3a4a8a'), roof2: facet('#6a3a3a'), bronze: std('#b0803a', 0.9, 0.35, { flatShading: true }), wood: facet('#7a5a3a'), leaf: facet('#3f7a3c'), leaf2: facet('#5a9a44'),
+  };
+  const LOW = { x: -15, z: -6, top: SUM - 10 }, HIGH = { x: 14, z: 5, top: SUM + 14 };
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    add(g, CYL6, T.wood, 0, 0.15 * h, 0).scale.set(0.06 * h, 0.3 * h, 0.06 * h);
+    if (seed % 2) { for (let k = 0; k < 3; k++) add(g, CONE, k % 2 ? T.leaf : T.leaf2, 0, (0.4 + k * 0.2) * h, 0).scale.set((0.28 - 0.06 * k) * h, 0.36 * h, (0.28 - 0.06 * k) * h); }
+    else { const m = add(g, ICO, T.leaf2, 0, 0.6 * h, 0); m.scale.set(0.26 * h, 0.3 * h, 0.26 * h); }
+    return g;
+  };
+  const decor = (parent, r, seed) => { for (let k = 0; k < 2; k++) { const a = Math.PI * (0.7 + 0.5 * k), m = add(parent, new THREE.BoxGeometry(0.8, 1.2 + k * 0.5, 0.8), T.stone2, Math.sin(a) * r * 0.85, 0.5, Math.cos(a) * r * 0.85); m.rotation.y = a; } };
+  const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.rock, rock2: T.rock2, top: T.grass, under: T.grass2, decor });
+  const rocklet = kit.rocklet({ rock: T.rock, rock2: T.rock2, top: T.grass }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * 0.9, k + seed); });
+  const step = kit.stepOf(T.stone, T.stone2);
+
+  // a tower on its crag, with a bell under an open belfry on top; returns the bell's group
+  function tower({ x, z, top }, r, seed) {
+    const c = new THREE.Color(), band = bands(['#7a7468', '#6a645a', '#847c70'], 3, -40);
+    const crag = column({ y0: -40, y1: top - 26, r0: r * 2.2, r1: r * 1.3, seg: 16, rows: 10, jag: 0.12, wob: 1.2, colour: (y, f) => c.copy(band(y, f)) }); crag.position.set(x, 0, z);
+    const g = group(scene, x, top - 26, z);
+    add(g, X.turfGeo(r * 1.35, seed, 14, 0.5), T.grass, 0, 0.1, 0, { cast: false });
+    add(g, new THREE.CylinderGeometry(r * 0.9, r, 22, 12), T.stone, 0, 11, 0, { cast: false });
+    for (let k = 0; k < 3; k++) add(g, new THREE.CylinderGeometry(r * 0.93 + 0.12, r * 0.95 + 0.12, 0.5, 12), T.stone2, 0, 4 + k * 6.5, 0, { cast: false });
+    const winM = glowMat('#ffd890', 1.3);
+    for (let k = 0; k < 6; k++) { const a = k * 2.1 + seed, w = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 1.1), winM); g.add(w); w.position.set(Math.sin(a) * r * 0.93, 3 + k * 3, Math.cos(a) * r * 0.93); w.rotation.y = a; }
+    add(g, new THREE.CylinderGeometry(r * 1.05, r * 1.05, 0.6, 12), T.stone2, 0, 22.3, 0, { cast: false });
+    for (let k = 0; k < 4; k++) { const a = k / 4 * Math.PI * 2 + Math.PI / 4; add(g, new THREE.BoxGeometry(0.7, 4, 0.7), T.stone, Math.sin(a) * r * 0.75, 24.6, Math.cos(a) * r * 0.75, { cast: false }); }
+    add(g, new THREE.CylinderGeometry(r * 1.1, r * 1.1, 0.6, 12), T.stone2, 0, 26.8, 0, { cast: false });
+    add(g, new THREE.ConeGeometry(r * 1.2, r * 1.8, 12), seed % 2 ? T.roof : T.roof2, 0, 27.1 + r * 0.9, 0, { cast: false });
+    const bell = group(g, 0, 26.3, 0), body = group(bell, 0, -1.4, 0);
+    add(body, new THREE.CylinderGeometry(0.6, 1.25, 1.8, 16, 1, true), T.bronze, 0, 0, 0, { cast: false }); add(body, new THREE.SphereGeometry(0.6, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), T.bronze, 0, 0.88, 0, { cast: false });
+    add(body, new THREE.SphereGeometry(0.22, 8, 6), T.bronze, 0, -0.95, 0, { cast: false });
+    bell.userData = { at: -9, body };
+    return bell;
+  }
+
+  let tNow = 0;
+  function landmark() {
+    const bLow = tower(LOW, 4.2, 1), bHigh = tower(HIGH, 5, 2);
+    // the two bells ring F♯ in octaves when the player names an F♯
+    SIG.onRight = (stop, info) => {
+      if (!info.written || !/^F#/.test(info.written) || !SIG.snd) return;
+      const n = info.note, lo = n.replace(/(-?\d)$/, (d) => String(Math.max(3, Math.min(4, +d)))), hi = lo.replace(/(-?\d)$/, (d) => String(+d + 1)), t = SIG.now() + 0.3;
+      SIG.snd.chime(lo, 0.16, t); SIG.snd.chime(hi, 0.14, t + 0.02); SIG.snd.chime(lo, 0.08, t + 0.9); SIG.snd.chime(hi, 0.07, t + 0.92);
+      bLow.userData.at = tNow + 0.3; bHigh.userData.at = tNow + 0.32;
+    };
+    // arched bridges, shaped like ties, from each island to the next
+    const tieM = T.stone;
+    for (let i = 0; i < NS - 1; i++) {
+      const a = A0 + i * DA, b = A0 + (i + 1) * DA, p0 = new THREE.Vector3(Math.sin(a + 0.05) * (RAD - 3.5), i * STEP - 0.3, Math.cos(a + 0.05) * (RAD - 3.5)), p1 = new THREE.Vector3(Math.sin(b - 0.05) * (RAD - 3.5), (i + 1) * STEP - 0.3, Math.cos(b - 0.05) * (RAD - 3.5));
+      const mid = p0.clone().add(p1).multiplyScalar(0.5); mid.y += 1.8;
+      const m2 = new THREE.Vector3(mid.x * 0.94, mid.y, mid.z * 0.94);
+      const curve = new THREE.QuadraticBezierCurve3(p0, m2, p1), pts = curve.getPoints(20);
+      const tg = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.22, 6); add(scene, tg, tieM, 0, 0, 0, { cast: false });
+      for (const u of [0.25, 0.5, 0.75]) { const q = curve.getPoint(u); beam(scene, [q.x, q.y, q.z], [q.x * 0.97, q.y - 3, q.z * 0.97], 0.08, T.stone2); }
+    }
+    anims.push((t) => {
+      tNow = t;
+      for (const b of [bLow, bHigh]) { const u = (t - b.userData.at); const sw = u >= 0 && u < 3 ? Math.sin(u * 7) * Math.exp(-u * 1.2) * 0.5 : 0; b.rotation.z = sw + (ending() ? 0.3 * Math.sin(t * 3 + (b === bLow ? 0 : 1.5)) : 0); }
+    });
+    // ring both at the summit
+    let rang = false; anims.push(() => { if (ending() && !rang && SIG.snd) { rang = true; SIG.snd.chime('F#4', 0.15, SIG.now() + 0.2); SIG.snd.chime('F#5', 0.13, SIG.now() + 0.22); SIG.snd.chime('F#4', 0.1, SIG.now() + 1.4); SIG.snd.chime('F#5', 0.09, SIG.now() + 1.42); } if (!ending()) rang = false; });
+  }
+
+  // far off: airships rising from a harbour in the clouds (Chapter 8)
+  function distant() {
+    const g = kit.tease(480), hull = facet('#7a5a3a'), env = facet('#e8dcc4'), sail = facet('#c84a3a');
+    add(g, new THREE.CylinderGeometry(6, 9, 120, 8), T.stone2, 0, -10, 0, { cast: false });
+    for (let k = 0; k < 4; k++) {
+      const s = group(g, (k - 1.5) * 34, 30 + 18 * k, (k % 2) * 20 - 10), b = add(s, new THREE.SphereGeometry(1, 14, 10), env, 0, 6, 0, { cast: false }); b.scale.set(14, 5, 5);
+      add(s, new THREE.BoxGeometry(10, 2.4, 3.4), hull, 0, 0, 0, { cast: false }); add(s, new THREE.BoxGeometry(0.3, 5, 6), sail, -9, 6, 0, { cast: false });
+      s.rotation.y = Math.atan2(-g.position.x, -g.position.z) + Math.PI / 2 + (k - 1.5) * 0.3;
+      anims.push((t) => { s.position.y = 30 + 18 * k + 3 * Math.sin(t * 0.4 + k) + (ending() ? 6 : 0); });
+    }
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+SCENE_REG.towers = { look: TOWERS_LOOK, make: sceneTowers };
+
 // ================================================================ Chapter 2 scenery: the Great Tree
 // A colossal tree on a golden morning. The islands are mossy shelf fungi on branches spiralling up the trunk; the summit is a
 // treehouse under the canopy. sceneTree(X) gets the stage's helpers and returns what the chapter replaces in the castle world.
@@ -1431,7 +1755,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 12; // shown top left; add one for every release to the public site
+  const VERSION = 13; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -2268,7 +2592,7 @@ function createGame(E) {
     thunder: (t = now(), g = 1) => { if (!kit) return; kit.noise(t, { dur: 3.2, color: 'brown', filter: 'lowpass', f: [[0, 900], [3.2, 120]], gain: 0.16 * g, a: 0.02, verb: 0.5, pan: 0.6 - Math.random() * 1.2 }); kit.noise(t, { dur: 0.25, color: 'pink', filter: 'highpass', f: 1500, gain: 0.08 * g, a: 0.002 }); },
     wave: (t = now()) => { if (!kit) return; const d = 3.2 + Math.random() * 1.5; kit.noise(t, { dur: d, color: 'pink', filter: 'lowpass', f: [[0, 250], [d * 0.45, 900], [d, 220]], q: 0.6, gain: 0.05, a: d * 0.45, pan: 0.6 - Math.random() * 1.2, verb: 0.3 }); },
     gull: (t = now()) => { if (!kit) return; const f0 = 1500 + Math.random() * 500, n = 1 + Math.floor(Math.random() * 3), pan = 0.8 - Math.random() * 1.6; for (let k = 0; k < n; k++) kit.tone(t + k * 0.32, { f: [[0, f0], [0.06, f0 * 1.12], [0.26, f0 * 0.72]], type: 'triangle', dur: 0.3, gain: 0.014, a: 0.01, filter: 'bandpass', f2: 1700, q: 1.4, pan, verb: 0.5 }); },
-    right: () => { const u = st.sub; sig('onRight', st.stop, { note: u && u.n ? concert(u.n) : null, term: u && u.kind === 'terms' ? TERMS[u.ti] : null, kind: u && u.kind }); snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
+    right: () => { const u = st.sub; sig('onRight', st.stop, { note: u && u.n ? concert(u.n) : null, written: u && u.n ? u.n.name : null, term: u && u.kind === 'terms' ? TERMS[u.ti] : null, kind: u && u.kind }); snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
     wrong: () => { snd.play('thud', { gain: 0.4, f: 120 }); kit && kit.tone(now(), { f: 'D3', type: 'triangle', dur: 0.4, gain: 0.08, filter: 'lowpass', f2: 900 }); },
   };
   if (R1.sig) Object.assign(R1.sig, { snd, now, toAmb: (t) => toAmb(t) });   // the scenery may make sounds of its own

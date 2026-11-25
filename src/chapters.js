@@ -60,7 +60,42 @@ const CHAPTERS = [
              [['G5', 1], ['F5', 1], ['Eb5', 1], ['G5', 1]], [['C6', 2], ['Bb5', 1], ['G5', 1]], [['Ab5', 1.5], ['G5', 0.5], ['F5', 1], ['Ab5', 1]], [['G5', 3], [null, 1]]],
     },
   },
+  {
+    n: 5, unit: 5, title: 'The Falls of Echo', scene: 'falls',
+    rhythm: { rests: true, eighths: true, meter: 2, need: ['pair'] },  // course level 5: 2/4 with quarters and eighths
+    // F major (B-flat's dominant), a bright afternoon by the water: a pad under a harp tune, the falls' roar
+    music: {
+      bpm: 76, voice: 'harp', water: true, birds: true,
+      chords: [['F3', 'C4', 'F4', 'A4'], ['D3', 'A3', 'D4', 'F4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['C3', 'G3', 'C4', 'E4']],
+      tune: [[['C5', 1], ['F5', 1], ['A5', 2]], [['G5', 1], ['F5', 1], ['D5', 2]], [['Bb4', 1], ['D5', 1], ['F5', 1], ['D5', 1]], [['E5', 3], [null, 1]],
+             [['A5', 1.5], ['G5', 0.5], ['F5', 1], ['C5', 1]], [['D5', 1], ['F5', 1], ['A5', 2]], [['Bb5', 1], ['A5', 1], ['G5', 1], ['F5', 1]], [['G5', 2], ['C5', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 6, unit: 6, title: 'The Deep Mine', scene: 'mine',
+    rhythm: { rests: true, eighths: true, meter: 3, need: ['pair'] },  // course level 6: 3/4 with halves, quarters and eighths
+    // D minor, deep underground: a low pad under a marimba tune, dripping water and the mine's rumble
+    music: {
+      bpm: 69, voice: 'marimba', drips: true, rumble: true,
+      chords: [['D3', 'A3', 'D4', 'F4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['G2', 'D3', 'G3', 'Bb3'], ['A2', 'E3', 'A3', 'C#4']],
+      tune: [[['D5', 1], ['F5', 1], ['A5', 1], ['F5', 1]], [['Bb4', 1], ['D5', 1], ['F5', 2]], [['G5', 1], ['F5', 1], ['D5', 1], ['Bb4', 1]], [['A4', 1], ['C#5', 1], ['E5', 2]],
+             [['F5', 1], ['E5', 1], ['D5', 1], ['A4', 1]], [['Bb4', 1], ['F5', 1], ['D5', 2]], [['G4', 1], ['Bb4', 1], ['D5', 1], ['G5', 1]], [['E5', 2], ['A4', 1], [null, 1]]],
+    },
+  },
+  {
+    n: 7, unit: 7, title: 'The Twin Towers', scene: 'towers', keys: ['G', 'C'],
+    rhythm: { rests: true, eighths: true, ties: true, need: ['tie'] },   // course level 7: tied notes in 4/4
+    // G major, a bright march between the towers: a pad under a brass tune, with wind
+    music: {
+      bpm: 84, voice: 'brass', wind: true, birds: true,
+      chords: [['G3', 'D4', 'G4', 'B4'], ['E3', 'B3', 'E4', 'G4'], ['C3', 'G3', 'C4', 'E4'], ['D3', 'A3', 'D4', 'F#4']],
+      tune: [[['D5', 1], ['G5', 1], ['B5', 2]], [['A5', 1], ['G5', 1], ['E5', 2]], [['C5', 1], ['E5', 1], ['G5', 1], ['E5', 1]], [['F#5', 3], [null, 1]],
+             [['G5', 1.5], ['F#5', 0.5], ['E5', 1], ['D5', 1]], [['B4', 1], ['E5', 1], ['G5', 2]], [['E5', 1], ['G5', 1], ['C6', 1], ['B5', 1]], [['A5', 2], ['D5', 1], [null, 1]]],
+    },
+  },
 ];
+const RELEASED = 5;   // chapters up to this one are on the public site (a chapter in progress sits above it until it ships)
+CHAPTERS.splice(CHAPTERS.findIndex((c) => c.n > RELEASED) >>> 0);
 const CH = CHAPTERS.find((c) => c.n === +params.get('ch')) || CHAPTERS[0];
 
 // every instrument, set up for this chapter: the unit's new notes, and the earlier units' notes for review
