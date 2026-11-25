@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 10; // shown top left; add one for every release to the public site
+  const VERSION = 11; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -14,7 +14,7 @@
     { name: 'Terms & Symbols', line: 'Master musical vocabulary and symbols', rounds: 6 },
   ];
   const TERMS = ['Treble clef', 'Bass clef', 'Staff', 'Bar line', 'Double bar line', 'Measure', 'Repeat sign', 'Time signature', 'Whole note', 'Half note',
-    'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line'];
+    'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line', 'Key signature'];
   const END = [
     { x: 96, y: 90, w: 838, h: 122, c: '#F8B73C' }, { x: 96, y: 316, w: 182, h: 379, c: '#5C66DE' }, { x: 376, y: 310, w: 276, h: 75, c: '#EA5900' },
     { x: 382, y: 473, w: 265, h: 63, c: '#FFFFFF' }, { x: 382, y: 633, w: 264, h: 61, c: '#B0B804' }, { x: 750, y: 316, w: 183, h: 379, c: '#FFFFFF' },
@@ -161,7 +161,9 @@
       const TALL = S.H > S.W, FOV = TALL ? 40 : 30, tanV = Math.tan(FOV * Math.PI / 360), tanH = tanV * S.W / S.H, LOGO = LAYOUT(S.W, S.H);
       const anims = [];
       // the chapter's look: the castle world is the default; a chapter with its own scenery overrides parts of it
-      const TREE = CH.scene === 'tree', LOOK = TREE ? TREE_LOOK : null;
+      const SC = { tree: { look: TREE_LOOK, make: sceneTree }, light: { look: LIGHT_LOOK, make: sceneLight } }[CH.scene], LOOK = SC ? SC.look : null, LIGHT = CH.scene === 'light';
+      // Chapter 3: the lighthouse lamp and the scroll's lantern flash on the rhythm's notes (filled in by the game)
+      const SIG = LIGHT ? { flashAt: [], sweep: null } : null;
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -241,10 +243,10 @@
       const moon2 = new THREE.Mesh(new THREE.SphereGeometry(20, 24, 16), basic('#9fe6e0', 1.1, { fog: false })); moon2.position.set(330, 150, -640); if (!LOOK || LOOK.moon2 !== false) scene.add(moon2);
       if (LOOK) { M.peak.color.set(LOOK.peak); M.cloud.color.set(LOOK.cloud); }
       {
-        const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks);
+        const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks); peaks.visible = !LOOK || LOOK.peaks !== false;
         for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
-        const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
-        for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); }
+        if (!LOOK || LOOK.cloudSea !== false) { const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
+        for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); } }
       }
       const drift = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 48); drift.castShadow = false; drift.receiveShadow = false; scene.add(drift);
       const driftAt = (t) => {
@@ -287,7 +289,7 @@
 
       // ------------------------------------------------------------ the islands
       const SUM = (NS - 1) * STEP + 4;
-      const LAND = TREE ? sceneTree({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, CYL6, M, RAD, SUM }) : null;
+      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: A0 + (NS - 1) * DA + Math.PI - 0.35 }) : null;
       const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
       const gameOf = (i) => i % 5;
@@ -357,7 +359,9 @@
         for (const sx of [-1, 1]) add(g, new THREE.CylinderGeometry(0.1, 0.13, 3.3, 7), M.wood, sx * (PW / 2 + 0.34), DAIS + 1.65, -0.14);
         pickable(add(g, K.roundedBox(PW, PH + 0.24, 0.04, 0.015, 2), M.parch, 0, PY, 0), { kind: 'scroll' });
         for (const sy of [-1, 1]) { add(g, cylX(0.09, PW + 0.12, 10), M.parchDark, 0, PY + sy * (PH / 2 + 0.14), 0); for (const sx of [-1, 1]) add(g, cylX(0.13, 0.16, 8), M.woodDark, sx * (PW / 2 + 0.14), PY + sy * (PH / 2 + 0.14), 0); }
-        const face = group(g, 0, PY, 0.022), sf = staff(face, -2.15, 4.3, -0.45);
+        // with eighth notes the staff is drawn smaller, so two bars of beamed pairs fit the scroll
+        const RS = CH.rhythm.eighths ? 0.75 : 1, face = group(g, 0, PY, 0.022); face.scale.setScalar(RS);
+        const sf = staff(face, -2.15 / RS, 4.3 / RS, -0.05 / RS - 2 * U);
         sf.put('four', 3.8, 2); sf.put('four', 3.8, 0);
         const dyn = group(face);
         const drum = group(g, -1.8, DAIS + 0.36, 0.72); drum.rotation.x = 0.55;
@@ -374,19 +378,19 @@
           sticks.forEach((s, j) => { let hit = 0; R1.tapAt.forEach((tp, k) => { if (k % 2 === j) hit = Math.max(hit, bump(t, tp - 0.02, 0.22)); }); s.rotation.z = (j ? 1 : -1) * (0.1 + 0.36 * Math.min(1, hit * 1.7)); });
         });
         restLocal[0] = [2.6, PY + 1.25, 1.0];
-        // Chapter 2: a woodpecker clings to the right-hand post and taps the rhythm back after the player
-        R1.peckAt = [];
-        if (TREE) {
-          const px = PW / 2 + 0.34, BY = PY + 0.35, bird = group(g, px + 0.26, BY, -0.06); bird.rotation.y = Math.PI; bird.scale.setScalar(2.1);
-          const ink = std('#24242a', 0, 0.6), white = std('#f2efe6', 0, 0.7), red = std('#d0302a', 0, 0.6), grey = std('#8a8a80', 0.2, 0.5);
-          add(bird, new THREE.SphereGeometry(1, 10, 8), ink, 0, 0, 0).scale.set(0.085, 0.17, 0.08);
-          add(bird, new THREE.SphereGeometry(1, 8, 6), white, -0.04, 0.02, 0).scale.set(0.05, 0.12, 0.06);
-          const tail = add(bird, new THREE.BoxGeometry(0.03, 0.16, 0.07), ink, 0.04, -0.2, 0); tail.rotation.z = -0.35;
-          const head = group(bird, 0, 0.17, 0);
-          add(head, new THREE.SphereGeometry(0.068, 10, 8), ink, 0, 0, 0); add(head, new THREE.SphereGeometry(0.05, 8, 6), red, 0.01, 0.045, 0);
-          add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, 0.035); add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, -0.035);
-          const beak = add(head, new THREE.ConeGeometry(0.022, 0.12, 6), grey, 0.1, 0, 0); beak.rotation.z = -Math.PI / 2;
-          anims.push((t) => { let p = 0; for (const tp of R1.peckAt) p = Math.max(p, bump(t, tp - 0.06, 0.18)); head.rotation.z = -0.55 * Math.min(1, p * 1.8); head.position.x = 0.05 * Math.min(1, p * 1.8); bird.position.y = BY + 0.02 * Math.sin(t * 3); });
+        R1.sig = SIG;
+        // Chapter 3: a ship's lantern hangs from the right-hand post and flashes with the lighthouse
+        if (LIGHT) {
+          const px = PW / 2 + 0.34, top = PY + 0.75, iron = std('#2a2a36', 0.6, 0.45, { flatShading: true });
+          add(g, box(0.55, 0.05, 0.05), iron, px + 0.24, top, -0.14);
+          const lan = group(g, px + 0.44, top - 0.52, -0.14);
+          add(lan, new THREE.CylinderGeometry(0.01, 0.01, 0.3, 4), iron, 0, 0.36, 0, { cast: false });
+          add(lan, new THREE.ConeGeometry(0.17, 0.16, 6), iron, 0, 0.17, 0); add(lan, new THREE.CylinderGeometry(0.15, 0.15, 0.04, 6), iron, 0, -0.18, 0);
+          const lm = glowing('#7a5a2a', 4.5, { rest: 0.5, glow: '#ffd890', restGlow: '#ffb860', to: '#fff0c0', tint: 0.8 });
+          add(lan, new THREE.CylinderGeometry(0.12, 0.12, 0.3, 6), lm, 0, 0, 0, { cast: false });
+          for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; add(lan, box(0.02, 0.3, 0.02), iron, Math.sin(a) * 0.125, 0, Math.cos(a) * 0.125, { cast: false }); }
+          const ll = new THREE.PointLight('#ffcf80', 0, 5, 1.6); lan.add(ll);
+          anims.push((t) => { let f = 0; for (const tf of SIG.flashAt) { const u = (t - tf) / 0.3; if (u >= 0 && u < 1) f = Math.max(f, 1 - u); } set(lm, f); ll.intensity = 0.6 + 5 * f; lan.rotation.z = 0.04 * Math.sin(t * 1.4); });
         }
       }
 

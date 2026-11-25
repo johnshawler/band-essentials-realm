@@ -7,6 +7,7 @@ const UNITS = /*UNITS_DATA*/[];   // per instrument: { key, name, clef, family, 
 const UNIT_TERMS = [
   ['Bar line', 'Quarter note', 'Quarter rest', 'Double bar line', 'Repeat sign', 'Clef'],
   ['Time signature', 'Sharp', 'Flat', 'Natural'],
+  ['Key signature', 'Half note', 'Half rest'],
 ];
 
 const CHAPTERS = [
@@ -25,6 +26,17 @@ const CHAPTERS = [
       chords: [['Bb3', 'F4', 'C5', 'D5'], ['G3', 'D4', 'F4', 'Bb4'], ['Eb3', 'Bb3', 'D4', 'G4'], ['F3', 'C4', 'F4', 'A4']],
       tune: [[['F5', 2], ['D5', 1], ['Bb4', 1]], [['D5', 2], ['G5', 1], ['F5', 1]], [['Eb5', 1], ['F5', 1], ['G5', 2]], [['F5', 1], ['Eb5', 1], ['C5', 2]],
              [['D5', 1.5], ['C5', 0.5], ['Bb4', 2]], [['Bb4', 1], ['D5', 1], ['G5', 2]], [['G5', 1], ['F5', 1], ['Eb5', 1], ['D5', 1]], [['C5', 3], [null, 1]]],
+    },
+  },
+  {
+    n: 3, unit: 3, title: "The Lighthouse at Cloud's End", scene: 'light',
+    rhythm: { rests: true, eighths: true },                     // course level 3: the first eighth notes, in beamed pairs
+    // G minor (B-flat's relative), dusk by the sea: a pad under a squeezebox tune, with waves, gulls and a far bell buoy
+    music: {
+      bpm: 72, voice: 'reed', sea: true,
+      chords: [['G3', 'D4', 'G4', 'Bb4'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['F3', 'C4', 'F4', 'A4']],
+      tune: [[['D5', 2], ['Bb4', 1], ['G4', 1]], [['G4', 1], ['Bb4', 1], ['Eb5', 2]], [['D5', 1.5], ['C5', 0.5], ['Bb4', 1], ['F5', 1]], [['F5', 2], ['Eb5', 1], ['C5', 1]],
+             [['D5', 2], ['G5', 1], ['F5', 1]], [['Eb5', 1], ['D5', 1], ['Bb4', 2]], [['Bb4', 1], ['C5', 1], ['D5', 1], ['F5', 1]], [['C5', 2], ['A4', 1], [null, 1]]],
     },
   },
 ];

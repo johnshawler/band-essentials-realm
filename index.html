@@ -870,6 +870,7 @@ const UNITS = [{"key":"flute","name":"Flute","clef":"treble","family":"flute","u
 const UNIT_TERMS = [
   ['Bar line', 'Quarter note', 'Quarter rest', 'Double bar line', 'Repeat sign', 'Clef'],
   ['Time signature', 'Sharp', 'Flat', 'Natural'],
+  ['Key signature', 'Half note', 'Half rest'],
 ];
 
 const CHAPTERS = [
@@ -888,6 +889,17 @@ const CHAPTERS = [
       chords: [['Bb3', 'F4', 'C5', 'D5'], ['G3', 'D4', 'F4', 'Bb4'], ['Eb3', 'Bb3', 'D4', 'G4'], ['F3', 'C4', 'F4', 'A4']],
       tune: [[['F5', 2], ['D5', 1], ['Bb4', 1]], [['D5', 2], ['G5', 1], ['F5', 1]], [['Eb5', 1], ['F5', 1], ['G5', 2]], [['F5', 1], ['Eb5', 1], ['C5', 2]],
              [['D5', 1.5], ['C5', 0.5], ['Bb4', 2]], [['Bb4', 1], ['D5', 1], ['G5', 2]], [['G5', 1], ['F5', 1], ['Eb5', 1], ['D5', 1]], [['C5', 3], [null, 1]]],
+    },
+  },
+  {
+    n: 3, unit: 3, title: "The Lighthouse at Cloud's End", scene: 'light',
+    rhythm: { rests: true, eighths: true },                     // course level 3: the first eighth notes, in beamed pairs
+    // G minor (B-flat's relative), dusk by the sea: a pad under a squeezebox tune, with waves, gulls and a far bell buoy
+    music: {
+      bpm: 72, voice: 'reed', sea: true,
+      chords: [['G3', 'D4', 'G4', 'Bb4'], ['Eb3', 'Bb3', 'Eb4', 'G4'], ['Bb2', 'F3', 'Bb3', 'D4'], ['F3', 'C4', 'F4', 'A4']],
+      tune: [[['D5', 2], ['Bb4', 1], ['G4', 1]], [['G4', 1], ['Bb4', 1], ['Eb5', 2]], [['D5', 1.5], ['C5', 0.5], ['Bb4', 1], ['F5', 1]], [['F5', 2], ['Eb5', 1], ['C5', 1]],
+             [['D5', 2], ['G5', 1], ['F5', 1]], [['Eb5', 1], ['D5', 1], ['Bb4', 2]], [['Bb4', 1], ['C5', 1], ['D5', 1], ['F5', 1]], [['C5', 2], ['A4', 1], [null, 1]]],
     },
   },
 ];
@@ -1033,11 +1045,202 @@ function sceneTree(X) {
   return { islet, tree, rocklet, step, landmark, distant, crown, T };
 }
 
+// ================================================================ Chapter 3 scenery: the Lighthouse at Cloud's End
+// A white lighthouse on a tall sea stack at dusk, with waves breaking round its foot and gulls circling. The islands are rock
+// ledges with wooden landings, propped against the stack on timber struts. During Read Rhythms the lamp's two beams turn half a
+// circle per beat and the lamp flashes on the notes (SIG, shared with the game). At the summit the lamp blazes and its beam swings
+// across the water to Chapter 4's ice spire on the horizon.
+const LIGHT_LOOK = {
+  env: { top: '#2a2c6e', horizon: '#ff9c74', bottom: '#1a2648', intensity: 0.62, blur: 0.06, panels: [
+    { pos: [-22, 24, 40], size: [34, 18], color: '#ffc090', power: 4.4 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9ab8', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a9cff', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffa060', power: 2.6 }] },
+  hemi: ['#a4a8ff', '#3a3452', 0.45], sun: '#ffb486', sunPower: 2.4, fog: '#5e4f80',
+  sky: [[0, '#0a0e34'], [0.2, '#18205e'], [0.34, '#36388a'], [0.43, '#7c5698'], [0.475, '#e48270'], [0.495, '#ffbc72'], [0.505, '#e8906e'], [0.53, '#3c3c70'], [1, '#0e1430']],
+  skyGlow: [[0.84, 0.85, 0.22], [0.66, 0.3, 0.16]], glowRGB: '255,170,110', stars: true,
+  sunDisc: { color: '#ffb070', k: 1.6, pos: [-150, 26, -760], r: 58 }, moon2: false,
+  peak: '#2c2a46', cloud: '#c98aa6', shards: ['#1a6a7a', '#5ff0e0', '#a03a56', '#ff9ab8'], cloudSea: false, peaks: false,
+};
+
+function sceneLight(X) {
+  const { THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG, spireA } = X;
+  const T = {
+    rock: facet('#6e6474'), rockDark: facet('#4a4258'), sand: facet('#b9a47e'), dune: facet('#7d8f52'),
+    plank: facet('#8a6646', 0.85), plankDark: facet('#5a4030', 0.85), rope: facet('#c8a878', 0.9),
+    white: facet('#eee8de', 0.7), red: facet('#b3313c', 0.7), iron: std('#2a2a36', 0.6, 0.45, { flatShading: true }),
+    cypress: facet('#2f5848'), cypress2: facet('#3e6e52'), grass: facet('#a8a456'), sea: std('#1d2a54', 0.15, 0.3),
+  };
+  const ICO = new THREE.IcosahedronGeometry(1, 1), CONE = new THREE.ConeGeometry(1, 1, 7);
+  const SEA_Y = -20, H0 = -26;
+  const stackR = (y) => K.lerp(15, 10, K.clamp((y - H0) / (SUM - H0)));
+  // a timber between two points
+  const UPV = new THREE.Vector3(0, 1, 0);
+  const beam = (parent, a, b, r, mat) => {
+    const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), m = add(parent, new THREE.CylinderGeometry(r, r, d.length(), 6), mat, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+    m.quaternion.setFromUnitVectors(UPV, d.normalize()); return m;
+  };
+
+  // a windswept cypress for the islands (every third one is a tuft of dune grass)
+  const tree = (parent, x, y, z, h, seed = 0) => {
+    const g = group(parent, x, y, z); g.rotation.y = seed;
+    if (seed % 3 === 2) { for (let k = 0; k < 6; k++) { const b = add(g, CONE, T.grass, (K.hash(seed, k) - 0.5) * 0.5, 0.25 * h * 0.4, (K.hash(seed, k + 6) - 0.5) * 0.5); b.scale.set(0.06 * h, 0.5 * h * 0.4, 0.06 * h); b.rotation.z = (K.hash(seed, k + 2) - 0.5) * 0.7; } return g; }
+    h *= 0.8;
+    add(g, CYL6, T.plankDark, 0, 0.12 * h, 0).scale.set(0.05 * h, 0.24 * h, 0.05 * h);
+    for (let k = 0; k < 2; k++) { const c = add(g, CONE, k ? T.cypress2 : T.cypress, 0.04 * h * k, (0.5 + 0.18 * k) * h, 0); c.scale.set((0.2 - 0.05 * k) * h, (0.75 - 0.2 * k) * h, (0.2 - 0.05 * k) * h); c.rotation.z = -0.18 - 0.08 * k; }
+    return g;
+  };
+  // an island: a rock ledge capped with dune grass, mooring posts round its back edge, and timber struts back to the stack
+  const islet = (parent, r, depth, seed, struts = true) => {
+    add(parent, rockGeo(r, depth, seed), seed % 2 ? T.rock : T.rockDark, 0, -0.2, 0);
+    add(parent, turfGeo(r, seed), T.dune);
+    add(parent, turfGeo(r * 1.08, seed + 3, 11, 0.2), T.sand, 0, -0.3, 0);
+    for (let k = 0; k < 5; k++) { const a = Math.PI * (0.62 + 0.19 * k), px = Math.sin(a) * r * 1.02, pz = Math.cos(a) * r * 1.02; add(parent, new THREE.CylinderGeometry(0.13, 0.15, 1.9, 6), T.plankDark, px, -0.55, pz); add(parent, new THREE.CylinderGeometry(0.17, 0.17, 0.07, 6), T.iron, px, 0.42, pz, { cast: false }); }
+    if (!struts) return;
+    parent.updateMatrixWorld(true);
+    const wy = parent.position.y, reach = RAD - stackR(wy - 5) + 0.8;
+    for (const sx of [-1, 1]) {
+      beam(parent, [sx * 1.6, -0.6, -r * 0.55], [sx * 1.0, -1.4, -reach], 0.26, T.plank);
+      beam(parent, [sx * 1.4, -depth * 0.55, -r * 0.35], [sx * 1.0, -1.4, -reach + 0.6], 0.2, T.plankDark);
+    }
+    beam(parent, [-1.0, -1.25, -reach + 1.2], [1.0, -1.25, -reach + 1.2], 0.16, T.plankDark);
+  };
+  const rocklet = (a, r, y, size, seed, trees = 2) => {
+    const g = group(scene, r * Math.sin(a), y, r * Math.cos(a)); g.rotation.y = seed; islet(g, size, size * 1.7, seed, false);
+    for (let k = 0; k < trees; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size * (0.7 + 0.4 * K.hash(seed, k + 8)), k * 3 + seed);
+    anims.push((t) => { g.position.y = y + 0.25 * Math.sin(t * 0.5 + seed); }); return g;
+  };
+  const step = (x, y, z, seed) => { const s = add(scene, new THREE.BoxGeometry(1.15, 0.14, 0.55), seed % 2 ? T.plank : T.plankDark, x, y, z); s.rotation.y = seed * 1.3; return s; };
+
+  function landmark() {
+    // the sea, a sun path on it toward the setting sun, whitecaps, and foam round the stack's foot
+    const sea = add(scene, new THREE.CircleGeometry(1050, 72), T.sea, 0, SEA_Y, 0, { cast: false }); sea.rotation.x = -Math.PI / 2;
+    const pathTex = K.canvasTex(256, 1024, (ctx, w, h) => {
+      const r = K.rng(5); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 1400; i++) { const y = Math.pow(r(), 0.7) * h, spread = 0.15 + 0.85 * (y / h), x = w / 2 + (r() - 0.5) * w * spread, a = 0.25 + 0.75 * r(); ctx.fillStyle = `rgba(255,${180 + Math.floor(r() * 60)},${110 + Math.floor(r() * 50)},${a})`; ctx.fillRect(x, y, 2 + r() * 10 * (1 - y / h * 0.6), 1 + r() * 2); }
+      const fade = ctx.createLinearGradient(0, 0, 0, h); fade.addColorStop(0, 'rgba(0,0,0,0.6)'); fade.addColorStop(0.15, 'rgba(0,0,0,0)'); fade.addColorStop(0.9, 'rgba(0,0,0,0)'); fade.addColorStop(1, 'rgba(0,0,0,1)'); ctx.fillStyle = fade; ctx.fillRect(0, 0, w, h);
+    });
+    const pathM = new THREE.MeshBasicMaterial({ map: pathTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8, fog: false });
+    const sunA = Math.atan2(-150, -760), path = new THREE.Mesh(new THREE.PlaneGeometry(150, 760), pathM);
+    path.rotation.set(-Math.PI / 2, 0, -sunA + Math.PI); path.position.set(Math.sin(sunA) * 400, SEA_Y + 0.05, Math.cos(sunA) * 400); scene.add(path);
+    anims.push((t) => { pathTex.offset.x = 0.01 * Math.sin(t * 0.7); pathM.opacity = 0.7 + 0.1 * Math.sin(t * 1.3); });
+    const CAPS = 220, caps = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), std('#e8eef8', 0, 0.6), CAPS); caps.castShadow = false; scene.add(caps);
+    const capAt = Array.from({ length: CAPS }, (_, i) => { const a = K.hash(i, 1) * Math.PI * 2, r = 24 + 340 * Math.pow(K.hash(i, 2), 0.8); return [Math.sin(a) * r, Math.cos(a) * r, a + Math.PI / 2, 2 + 4 * K.hash(i, 3), K.hash(i, 4) * 6]; });
+    const FOAM = 46, foam = new THREE.InstancedMesh(ICO, std('#f1f4fa', 0, 0.7, { flatShading: true }), FOAM); foam.castShadow = false; scene.add(foam);
+    anims.push((t) => {
+      capAt.forEach(([x, z, a, l, ph], i) => { const k = Math.max(0, Math.sin(t * 0.8 + ph)); K.place(caps, i, [x, SEA_Y + 0.1, z], [0, a, 0], k < 0.05 ? 0.0001 : [l * (0.4 + 0.6 * k), 0.15, 0.35]); });
+      caps.instanceMatrix.needsUpdate = true;
+      for (let i = 0; i < FOAM; i++) { const a = i / FOAM * Math.PI * 2 + 0.05 * Math.sin(t * 0.3 + i), r = stackR(SEA_Y) + 1.5 + 2.2 * K.hash(i, 9) + 0.8 * Math.sin(t * 0.9 + i * 1.7), s = 1.2 + 1.2 * K.hash(i, 8) + 0.5 * Math.sin(t * 1.4 + i); K.place(foam, i, [Math.sin(a) * r, SEA_Y + 0.2, Math.cos(a) * r], [0, a, 0], [s * 1.6, 0.25 + 0.1 * Math.sin(t * 2 + i), s]); }
+      foam.instanceMatrix.needsUpdate = true;
+    });
+
+    // the sea stack: banded rock, ledged where the strata break, grass on its crown
+    const MH = SUM - H0, ROWS = 16, sg = new THREE.CylinderGeometry(10, 15, MH, 28, ROWS, false); sg.translate(0, H0 + MH / 2, 0);
+    const p = sg.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), rr = Math.hypot(x, z); if (rr < 1e-4) continue;
+      const ang = Math.atan2(z, x), col = Math.round(ang / (Math.PI * 2) * 28), row = Math.round((y - H0) / MH * ROWS);
+      const k = 1 + 0.07 * (K.hash(col, row, 3) - 0.5) + 0.05 * Math.sin(col * 1.7 + row) + (row % 3 === 0 ? 0.05 : 0);
+      p.setXYZ(i, x * k, y + (row > 0 && row < ROWS ? (K.hash(row, col, 5) - 0.5) * 1.1 : 0), z * k);
+    }
+    const mesh = sg.toNonIndexed(), pp = mesh.attributes.position, cols = new Float32Array(pp.count * 3), c = new THREE.Color();
+    const BANDS = ['#7a6c76', '#5c5266', '#8a7a72', '#4e4658', '#6e6070'].map((h) => new THREE.Color(h)), WET = new THREE.Color('#2c2a3a'), TOPC = new THREE.Color('#6f8550');
+    for (let f = 0; f < pp.count; f += 3) {
+      const y = (pp.getY(f) + pp.getY(f + 1) + pp.getY(f + 2)) / 3;
+      c.copy(BANDS[Math.floor((y - H0) / 3.3) % BANDS.length]).lerp(BANDS[0], 0.3 * K.hash(f, 4));
+      if (y < SEA_Y + 3) c.lerp(WET, 0.7); if (y > SUM - 1.2) c.lerp(TOPC, 0.8);
+      for (let v = 0; v < 3; v++) { cols[(f + v) * 3] = c.r; cols[(f + v) * 3 + 1] = c.g; cols[(f + v) * 3 + 2] = c.b; }
+    }
+    mesh.setAttribute('color', new THREE.BufferAttribute(cols, 3)); mesh.computeVertexNormals();
+    const sm = add(scene, mesh, std('#ffffff', 0, 0.95, { vertexColors: true, flatShading: true }), 0, 0, 0, { cast: false }); sm.receiveShadow = false;
+    add(scene, turfGeo(10.6, 93, 20, 0.5), T.dune, 0, SUM, 0, { cast: false });
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2 + 0.2, b = add(scene, ICO, k % 2 ? T.rock : T.rockDark, Math.sin(a) * 16.5, SEA_Y + 0.5, Math.cos(a) * 16.5, { cast: false }); b.scale.set(2.5 + 2 * K.hash(k, 1), 1.5 + 2 * K.hash(k, 2), 2.5 + 2 * K.hash(k, 3)); b.rotation.y = k; }
+
+    // the lighthouse: plinth, a white tower with two red bands, the gallery, the lamp room and its roof, and the keeper's cottage
+    const lh = group(scene, 0, SUM, 0), TH = 20, tr = (y) => K.lerp(4.2, 3.0, y / TH);
+    add(lh, new THREE.CylinderGeometry(5.4, 5.8, 1.2, 16), T.rock, 0, 0.6, 0, { cast: false });
+    add(lh, new THREE.CylinderGeometry(3.0, 4.2, TH, 24), T.white, 0, 1.2 + TH / 2, 0, { cast: false });
+    for (const [y0, h] of [[5.5, 2.6], [12.5, 2.6]]) add(lh, new THREE.CylinderGeometry(tr(y0 + h) + 0.03, tr(y0) + 0.03, h, 24), T.red, 0, 1.2 + y0 + h / 2, 0, { cast: false });
+    const winM = lum('#5a3a18', '#ffcf7a', 1.8);
+    for (let k = 0; k < 5; k++) { const a = k * 2.2 + 0.4, y = 3 + k * 3.4, w = add(lh, new THREE.BoxGeometry(0.6, 0.95, 0.2), winM, Math.sin(a) * tr(y) * 0.98, 1.2 + y, Math.cos(a) * tr(y) * 0.98, { cast: false }); w.rotation.y = a; }
+    const GY = 1.2 + TH;
+    add(lh, new THREE.CylinderGeometry(4.5, 3.6, 0.45, 20), T.iron, 0, GY + 0.2, 0, { cast: false });
+    const rail = add(lh, new THREE.TorusGeometry(4.3, 0.06, 4, 32), T.iron, 0, GY + 1.25, 0, { cast: false }); rail.rotation.x = Math.PI / 2;
+    for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; add(lh, new THREE.CylinderGeometry(0.05, 0.05, 1.0, 4), T.iron, Math.sin(a) * 4.3, GY + 0.8, Math.cos(a) * 4.3, { cast: false }); }
+    const glassM = lum('#7a5a2a', '#ffe0a0', 1.6);
+    add(lh, new THREE.CylinderGeometry(2.5, 2.5, 3.0, 16, 1, true), glassM, 0, GY + 1.95, 0, { cast: false });
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; add(lh, new THREE.BoxGeometry(0.14, 3.0, 0.14), T.iron, Math.sin(a) * 2.53, GY + 1.95, Math.cos(a) * 2.53, { cast: false }); }
+    add(lh, new THREE.CylinderGeometry(2.8, 2.8, 0.3, 16), T.iron, 0, GY + 3.55, 0, { cast: false });
+    add(lh, new THREE.ConeGeometry(3.0, 2.4, 16), T.red, 0, GY + 4.9, 0, { cast: false });
+    add(lh, new THREE.SphereGeometry(0.35, 10, 8), T.iron, 0, GY + 6.3, 0, { cast: false });
+    const vane = add(lh, new THREE.BoxGeometry(1.2, 0.35, 0.04), T.iron, 0.4, GY + 7.0, 0, { cast: false });
+    const cot = group(lh, 6.2, 0, 3.4); cot.rotation.y = 0.8;
+    add(cot, new THREE.BoxGeometry(4.4, 2.6, 3.0), T.white, 0, 1.3, 0, { cast: false });
+    const roof = add(cot, new THREE.CylinderGeometry(0.01, 2.6, 4.8, 4, 1), T.red, 0, 3.4, 0, { cast: false }); roof.rotation.set(0, Math.PI / 4, Math.PI / 2); roof.scale.set(1, 1, 0.75);
+    for (const sx of [-1, 1]) add(cot, new THREE.BoxGeometry(0.6, 0.8, 0.12), winM, sx * 1.2, 1.4, 1.52, { cast: false });
+    add(cot, new THREE.BoxGeometry(0.5, 1.6, 0.5), T.rockDark, -1.6, 4.0, -0.6, { cast: false });
+
+    // the lamp and its two beams
+    const LY = SUM + GY + 1.95, lampM = new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff0c8'), fog: false });
+    const lamp = add(scene, new THREE.SphereGeometry(0.9, 16, 12), lampM, 0, LY, 0, { cast: false }); lamp.receiveShadow = false;
+    const lampL = new THREE.PointLight('#ffd89a', 40, 40, 1.6); lampL.position.set(0, LY, 0); scene.add(lampL);
+    const beamTex = K.canvasTex(8, 256, (ctx, w, h) => { const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffffff'); g.addColorStop(0.25, '#8a8070'); g.addColorStop(1, '#000000'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); });
+    const beamM = new THREE.MeshBasicMaterial({ map: beamTex, color: new THREE.Color('#ffe2a8'), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+    const beams = group(scene, 0, LY, 0);
+    for (const sx of [1, -1]) { const bg = new THREE.ConeGeometry(9, 170, 24, 1, true); bg.translate(0, -85, 0); bg.rotateZ(sx * Math.PI / 2); const b = new THREE.Mesh(bg, beamM); b.castShadow = false; b.rotation.z = sx * -0.035; beams.add(b); }
+    // the beams turn slowly; while a rhythm plays they turn half a circle per beat, and the lamp flashes on its notes
+    let ang = 0, lastT = 0, sw = null;
+    const glass0 = glassM.userData.rest, aimTo = ((spireA - Math.PI / 2) % Math.PI + Math.PI) % Math.PI;
+    anims.push((t) => {
+      const dt = Math.max(0, Math.min(0.1, t - lastT)); lastT = t;
+      const G = getG(), lit = G.mode === 'finale' || G.mode === 'summary', s = SIG.sweep;
+      if (lit) { let d = (aimTo - ang) % Math.PI; if (d > Math.PI / 2) d -= Math.PI; if (d < -Math.PI / 2) d += Math.PI; ang += d * Math.min(1, dt * 1.6); }
+      else if (s && t >= s.t0 && t <= s.t1) { if (sw !== s) { sw = s; s.a0 = ang - Math.PI * (t - s.t0) / s.beat; } ang = s.a0 + Math.PI * (t - s.t0) / s.beat; }
+      else ang += 0.55 * dt;
+      beams.rotation.y = ang;
+      let f = 0; for (const tf of SIG.flashAt) { const u = (t - tf) / 0.3; if (u >= 0 && u < 1) f = Math.max(f, 1 - u); }
+      const k = lit ? 2.2 : 1 + 1.6 * f;
+      beamM.opacity = 0.2 * k; lampM.color.setRGB(1, 0.94, 0.78).multiplyScalar(1.2 + 1.2 * k); lampL.intensity = 30 * k;
+      glassM.userData.rest = glass0 * (0.7 + 0.6 * k); vane.rotation.y = 0.3 * Math.sin(t * 0.4);
+    });
+
+    // gulls wheeling round the stack
+    const gullM = std('#f2f0ea', 0, 0.7), tipM = std('#3a3a44', 0, 0.7);
+    for (let k = 0; k < 10; k++) {
+      const gg = group(scene), body = add(gg, new THREE.SphereGeometry(1, 8, 6), gullM, 0, 0, 0, { cast: false }); body.scale.set(0.16, 0.13, 0.42);
+      const wings = [-1, 1].map((sx) => { const w = group(gg, sx * 0.08, 0.05, 0); add(w, new THREE.BoxGeometry(0.75, 0.03, 0.26), gullM, sx * 0.38, 0, 0, { cast: false }); add(w, new THREE.BoxGeometry(0.22, 0.031, 0.2), tipM, sx * 0.82, 0, -0.03, { cast: false }); return w; });
+      const r = 22 + 30 * K.hash(k, 1), y0 = -6 + (SUM + 22) * K.hash(k, 2), sp = (0.1 + 0.08 * K.hash(k, 3)) * (k % 2 ? 1 : -1), ph = K.hash(k, 4) * 6.3, s = 1.3 + 0.6 * K.hash(k, 5);
+      gg.scale.setScalar(s);
+      anims.push((t) => {
+        const a = ph + t * sp; gg.position.set(Math.sin(a) * r, y0 + 2.5 * Math.sin(t * 0.3 + ph), Math.cos(a) * r);
+        gg.rotation.set(0, a + (sp > 0 ? Math.PI / 2 : -Math.PI / 2), 0); gg.rotateZ(sp > 0 ? -0.3 : 0.3);
+        const fl = Math.sin(t * 5 + ph) * (Math.sin(t * 0.5 + k) > 0 ? 0.55 : 0.08); wings[0].rotation.z = fl; wings[1].rotation.z = -fl;
+      });
+    }
+  }
+
+  // far off: other sea stacks, and Chapter 4's ice spire glittering on the horizon where the summit's beam will point
+  function distant() {
+    for (let k = 0; k < 11; k++) {
+      const a = k / 11 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 190 + K.hash(k, 82) * 330, h = 30 + K.hash(k, 83) * 70, w = 7 + 9 * K.hash(k, 84);
+      if (Math.abs(((a - spireA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.25) continue;
+      const m = add(scene, new THREE.CylinderGeometry(w * 0.7, w, h, 7), k % 2 ? T.rockDark : T.rock, Math.sin(a) * r, SEA_Y + h / 2 - 2, Math.cos(a) * r, { cast: false }); m.rotation.y = k;
+      add(scene, new THREE.CylinderGeometry(w * 0.72, w * 0.7, 1.2, 7), T.dune, Math.sin(a) * r, SEA_Y + h - 1.4, Math.cos(a) * r, { cast: false }).rotation.y = k;
+    }
+    const sx = Math.sin(spireA) * 600, sz = Math.cos(spireA) * 600;
+    const ice = new THREE.MeshStandardMaterial({ color: '#9fd8ff', emissive: new THREE.Color('#5fb8ff'), emissiveIntensity: 0.55, roughness: 0.2, metalness: 0.1, flatShading: true, fog: false });
+    const OCT = new THREE.OctahedronGeometry(1, 0), spire = group(scene, sx, SEA_Y, sz);
+    add(spire, OCT, ice, 0, 40, 0, { cast: false }).scale.set(9, 62, 9);
+    for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, d = 9 + 6 * K.hash(k, 7), m = add(spire, OCT, ice, Math.sin(a) * d, 12 + 10 * K.hash(k, 8), Math.cos(a) * d, { cast: false }); m.scale.set(3, 14 + 14 * K.hash(k, 9), 3); m.rotation.set((K.hash(k, 10) - 0.5) * 0.6, k, (K.hash(k, 11) - 0.5) * 0.6); }
+    add(spire, new THREE.CylinderGeometry(40, 46, 1.2, 16), new THREE.MeshStandardMaterial({ color: '#dceefa', roughness: 0.4, fog: false }), 0, 0.3, 0, { cast: false });
+    anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (getG().mode === 'finale' || getG().mode === 'summary' ? 0.6 : 0); });
+  }
+
+  return { islet, tree, rocklet, step, landmark, distant, T };
+}
+
 // ================================================================ Band Adventures: the High Fantasy movie made playable, one chapter per course unit
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 10; // shown top left; add one for every release to the public site
+  const VERSION = 11; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -1049,7 +1252,7 @@ function sceneTree(X) {
     { name: 'Terms & Symbols', line: 'Master musical vocabulary and symbols', rounds: 6 },
   ];
   const TERMS = ['Treble clef', 'Bass clef', 'Staff', 'Bar line', 'Double bar line', 'Measure', 'Repeat sign', 'Time signature', 'Whole note', 'Half note',
-    'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line'];
+    'Quarter note', 'Whole rest', 'Half rest', 'Quarter rest', 'Sharp', 'Flat', 'Natural', 'Ledger line', 'Key signature'];
   const END = [
     { x: 96, y: 90, w: 838, h: 122, c: '#F8B73C' }, { x: 96, y: 316, w: 182, h: 379, c: '#5C66DE' }, { x: 376, y: 310, w: 276, h: 75, c: '#EA5900' },
     { x: 382, y: 473, w: 265, h: 63, c: '#FFFFFF' }, { x: 382, y: 633, w: 264, h: 61, c: '#B0B804' }, { x: 750, y: 316, w: 183, h: 379, c: '#FFFFFF' },
@@ -1196,7 +1399,9 @@ function sceneTree(X) {
       const TALL = S.H > S.W, FOV = TALL ? 40 : 30, tanV = Math.tan(FOV * Math.PI / 360), tanH = tanV * S.W / S.H, LOGO = LAYOUT(S.W, S.H);
       const anims = [];
       // the chapter's look: the castle world is the default; a chapter with its own scenery overrides parts of it
-      const TREE = CH.scene === 'tree', LOOK = TREE ? TREE_LOOK : null;
+      const SC = { tree: { look: TREE_LOOK, make: sceneTree }, light: { look: LIGHT_LOOK, make: sceneLight } }[CH.scene], LOOK = SC ? SC.look : null, LIGHT = CH.scene === 'light';
+      // Chapter 3: the lighthouse lamp and the scroll's lantern flash on the rhythm's notes (filled in by the game)
+      const SIG = LIGHT ? { flashAt: [], sweep: null } : null;
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -1276,10 +1481,10 @@ function sceneTree(X) {
       const moon2 = new THREE.Mesh(new THREE.SphereGeometry(20, 24, 16), basic('#9fe6e0', 1.1, { fog: false })); moon2.position.set(330, 150, -640); if (!LOOK || LOOK.moon2 !== false) scene.add(moon2);
       if (LOOK) { M.peak.color.set(LOOK.peak); M.cloud.color.set(LOOK.cloud); }
       {
-        const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks);
+        const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks); peaks.visible = !LOOK || LOOK.peaks !== false;
         for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
-        const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
-        for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); }
+        if (!LOOK || LOOK.cloudSea !== false) { const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
+        for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); } }
       }
       const drift = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 48); drift.castShadow = false; drift.receiveShadow = false; scene.add(drift);
       const driftAt = (t) => {
@@ -1322,7 +1527,7 @@ function sceneTree(X) {
 
       // ------------------------------------------------------------ the islands
       const SUM = (NS - 1) * STEP + 4;
-      const LAND = TREE ? sceneTree({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, CYL6, M, RAD, SUM }) : null;
+      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: A0 + (NS - 1) * DA + Math.PI - 0.35 }) : null;
       const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
       const gameOf = (i) => i % 5;
@@ -1392,7 +1597,9 @@ function sceneTree(X) {
         for (const sx of [-1, 1]) add(g, new THREE.CylinderGeometry(0.1, 0.13, 3.3, 7), M.wood, sx * (PW / 2 + 0.34), DAIS + 1.65, -0.14);
         pickable(add(g, K.roundedBox(PW, PH + 0.24, 0.04, 0.015, 2), M.parch, 0, PY, 0), { kind: 'scroll' });
         for (const sy of [-1, 1]) { add(g, cylX(0.09, PW + 0.12, 10), M.parchDark, 0, PY + sy * (PH / 2 + 0.14), 0); for (const sx of [-1, 1]) add(g, cylX(0.13, 0.16, 8), M.woodDark, sx * (PW / 2 + 0.14), PY + sy * (PH / 2 + 0.14), 0); }
-        const face = group(g, 0, PY, 0.022), sf = staff(face, -2.15, 4.3, -0.45);
+        // with eighth notes the staff is drawn smaller, so two bars of beamed pairs fit the scroll
+        const RS = CH.rhythm.eighths ? 0.75 : 1, face = group(g, 0, PY, 0.022); face.scale.setScalar(RS);
+        const sf = staff(face, -2.15 / RS, 4.3 / RS, -0.05 / RS - 2 * U);
         sf.put('four', 3.8, 2); sf.put('four', 3.8, 0);
         const dyn = group(face);
         const drum = group(g, -1.8, DAIS + 0.36, 0.72); drum.rotation.x = 0.55;
@@ -1409,19 +1616,19 @@ function sceneTree(X) {
           sticks.forEach((s, j) => { let hit = 0; R1.tapAt.forEach((tp, k) => { if (k % 2 === j) hit = Math.max(hit, bump(t, tp - 0.02, 0.22)); }); s.rotation.z = (j ? 1 : -1) * (0.1 + 0.36 * Math.min(1, hit * 1.7)); });
         });
         restLocal[0] = [2.6, PY + 1.25, 1.0];
-        // Chapter 2: a woodpecker clings to the right-hand post and taps the rhythm back after the player
-        R1.peckAt = [];
-        if (TREE) {
-          const px = PW / 2 + 0.34, BY = PY + 0.35, bird = group(g, px + 0.26, BY, -0.06); bird.rotation.y = Math.PI; bird.scale.setScalar(2.1);
-          const ink = std('#24242a', 0, 0.6), white = std('#f2efe6', 0, 0.7), red = std('#d0302a', 0, 0.6), grey = std('#8a8a80', 0.2, 0.5);
-          add(bird, new THREE.SphereGeometry(1, 10, 8), ink, 0, 0, 0).scale.set(0.085, 0.17, 0.08);
-          add(bird, new THREE.SphereGeometry(1, 8, 6), white, -0.04, 0.02, 0).scale.set(0.05, 0.12, 0.06);
-          const tail = add(bird, new THREE.BoxGeometry(0.03, 0.16, 0.07), ink, 0.04, -0.2, 0); tail.rotation.z = -0.35;
-          const head = group(bird, 0, 0.17, 0);
-          add(head, new THREE.SphereGeometry(0.068, 10, 8), ink, 0, 0, 0); add(head, new THREE.SphereGeometry(0.05, 8, 6), red, 0.01, 0.045, 0);
-          add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, 0.035); add(head, new THREE.SphereGeometry(0.03, 6, 4), white, -0.035, -0.012, -0.035);
-          const beak = add(head, new THREE.ConeGeometry(0.022, 0.12, 6), grey, 0.1, 0, 0); beak.rotation.z = -Math.PI / 2;
-          anims.push((t) => { let p = 0; for (const tp of R1.peckAt) p = Math.max(p, bump(t, tp - 0.06, 0.18)); head.rotation.z = -0.55 * Math.min(1, p * 1.8); head.position.x = 0.05 * Math.min(1, p * 1.8); bird.position.y = BY + 0.02 * Math.sin(t * 3); });
+        R1.sig = SIG;
+        // Chapter 3: a ship's lantern hangs from the right-hand post and flashes with the lighthouse
+        if (LIGHT) {
+          const px = PW / 2 + 0.34, top = PY + 0.75, iron = std('#2a2a36', 0.6, 0.45, { flatShading: true });
+          add(g, box(0.55, 0.05, 0.05), iron, px + 0.24, top, -0.14);
+          const lan = group(g, px + 0.44, top - 0.52, -0.14);
+          add(lan, new THREE.CylinderGeometry(0.01, 0.01, 0.3, 4), iron, 0, 0.36, 0, { cast: false });
+          add(lan, new THREE.ConeGeometry(0.17, 0.16, 6), iron, 0, 0.17, 0); add(lan, new THREE.CylinderGeometry(0.15, 0.15, 0.04, 6), iron, 0, -0.18, 0);
+          const lm = glowing('#7a5a2a', 4.5, { rest: 0.5, glow: '#ffd890', restGlow: '#ffb860', to: '#fff0c0', tint: 0.8 });
+          add(lan, new THREE.CylinderGeometry(0.12, 0.12, 0.3, 6), lm, 0, 0, 0, { cast: false });
+          for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; add(lan, box(0.02, 0.3, 0.02), iron, Math.sin(a) * 0.125, 0, Math.cos(a) * 0.125, { cast: false }); }
+          const ll = new THREE.PointLight('#ffcf80', 0, 5, 1.6); lan.add(ll);
+          anims.push((t) => { let f = 0; for (const tf of SIG.flashAt) { const u = (t - tf) / 0.3; if (u >= 0 && u < 1) f = Math.max(f, 1 - u); } set(lm, f); ll.intensity = 0.6 + 5 * f; lan.rotation.z = 0.04 * Math.sin(t * 1.4); });
         }
       }
 
@@ -1802,6 +2009,9 @@ function createGame(E) {
     // a soft wooden flute for the chapter tunes, and a songbird's call (two or three quick chirps)
     flute: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: dur + 0.25, gain: 0.05, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.45 }); kit.tone(t, { f: f * 2, type: 'sine', dur: dur * 0.8, gain: 0.008, a: 0.08, bus: 'music', verb: 0.4 }); kit.noise(t, { dur: 0.05, filter: 'bandpass', f: f * 2, q: 3, gain: 0.006, bus: 'music' }); },
     bird: (t = now()) => { if (!kit) return; const f0 = 2600 + Math.random() * 1400, n = 2 + Math.floor(Math.random() * 2); for (let k = 0; k < n; k++) kit.tone(t + k * 0.13, { f: [[0, f0], [0.05, f0 * 1.35], [0.1, f0 * 1.1]], type: 'sine', dur: 0.12, gain: 0.018, a: 0.005, pan: 0.5 - Math.random(), verb: 0.35 }); },
+    reed: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); for (const dt of [1, 1.004]) kit.tone(t, { f: f * dt, type: 'sawtooth', dur: dur + 0.15, gain: 0.018, a: 0.05, hold: Math.max(0.05, dur - 0.08), filter: 'lowpass', f2: 1500, bus: 'music', verb: 0.4 }); kit.tone(t, { f: f / 2, type: 'triangle', dur: dur + 0.1, gain: 0.012, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.35 }); },
+    wave: (t = now()) => { if (!kit) return; const d = 3.2 + Math.random() * 1.5; kit.noise(t, { dur: d, color: 'pink', filter: 'lowpass', f: [[0, 250], [d * 0.45, 900], [d, 220]], q: 0.6, gain: 0.05, a: d * 0.45, pan: 0.6 - Math.random() * 1.2, verb: 0.3 }); },
+    gull: (t = now()) => { if (!kit) return; const f0 = 1500 + Math.random() * 500, n = 1 + Math.floor(Math.random() * 3), pan = 0.8 - Math.random() * 1.6; for (let k = 0; k < n; k++) kit.tone(t + k * 0.32, { f: [[0, f0], [0.06, f0 * 1.12], [0.26, f0 * 0.72]], type: 'triangle', dur: 0.3, gain: 0.014, a: 0.01, filter: 'bandpass', f2: 1700, q: 1.4, pan, verb: 0.5 }); },
     right: () => { snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
     wrong: () => { snd.play('thud', { gain: 0.4, f: 120 }); kit && kit.tone(now(), { f: 'D3', type: 'triangle', dur: 0.4, gain: 0.08, filter: 'lowpass', f2: 900 }); },
   };
@@ -1815,7 +2025,8 @@ function createGame(E) {
       const t0 = Math.max(n + 0.05, ambUntil), len = 4 * BAR, w = ambWin++;
       kit.music('pad', t0, t0 + len, { bpm: MUS.bpm, gain: quiet ? 0.25 : 0.5, chords: MUS.chords }); kit.bed('room', t0, t0 + len, { gain: 0.5 });
       snd.gust(2.4, 0.035, t0 + 3); snd.gust(2.4, 0.03, t0 + len * 0.62);
-      if (MUS.tune && w % 2 === 1 && !quiet) { let tb = t0; MUS.tune.slice(4 * ((w >> 1) % 2), 4 * ((w >> 1) % 2) + 4).forEach((bar) => bar.forEach(([nt, beats]) => { if (nt) snd.flute(nt, beats * BAR / 4, tb); tb += beats * BAR / 4; })); }
+      if (MUS.tune && w % 2 === 1 && !quiet) { const voice = snd[MUS.voice || 'flute']; let tb = t0; MUS.tune.slice(4 * ((w >> 1) % 2), 4 * ((w >> 1) % 2) + 4).forEach((bar) => bar.forEach(([nt, beats]) => { if (nt) voice(nt, beats * BAR / 4, tb); tb += beats * BAR / 4; })); }
+      if (MUS.sea) { for (let k = 0; k < 3; k++) snd.wave(t0 + len * k / 3 + Math.random()); if (!quiet) for (let k = 0; k < 2; k++) if (Math.random() < 0.7) snd.gull(t0 + len * (0.2 + 0.45 * k) + Math.random() * 1.5); if (w % 2 === 0 && !quiet) snd.chime('D5', 0.035, t0 + len * 0.55); }
       if (MUS.birds) for (let k = 0; k < 3; k++) snd.bird(t0 + len * (0.15 + 0.3 * k) + Math.random() * 1.2);
       ambUntil = t0 + len - 0.4;
     }
@@ -1911,9 +2122,12 @@ function createGame(E) {
     for (;;) {
       const out = []; let b = 0;
       while (b < 4) {
+        // a whole, a half, a quarter, or (from Chapter 3) a beamed pair of eighths: at most two pairs a bar, so they fit the scroll
         const opts = []; if (b === 0) opts.push([4, 1]); if (b % 2 === 0) opts.push([2, 4]); opts.push([1, 5]);
+        if (CH.rhythm.eighths && out.filter((n) => n.pair).length < 2) opts.push(['pair', 5]);
         let r = Math.random() * opts.reduce((s, o) => s + o[1], 0), d = 1;
         for (const [dd, w] of opts) { if ((r -= w) < 0) { d = dd; break; } }
+        if (d === 'pair') { out.push({ beat: b, d: 1, pair: true, rest: false }); b += 1; continue; }
         out.push({ beat: b, d, rest: CH.rhythm.rests && Math.random() < (d === 4 ? 0.3 : d === 2 ? 0.3 : 0.22) }); b += d;
       }
       if (out.length > 1 || Math.random() < 0.3) return out;
@@ -1922,21 +2136,48 @@ function createGame(E) {
   function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: st.rhythmPrev }; newRhythm(); }
   function newRhythm() {
     const s = st.sub, clef = st.inst.clef; let r;
-    const sounded = (rr) => rr[0].concat(rr[1]).filter((n) => !n.rest).length;
-    do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1) || sounded(r) < 3 || r[0][0].rest);
+    const sounded = (rr) => rr[0].concat(rr[1]).filter((n) => !n.rest).length, pairs = (rr) => rr[0].concat(rr[1]).filter((n) => n.pair).length;
+    do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1) || sounded(r) < 3 || r[0][0].rest || (CH.rhythm.eighths && pairs(r) < 1));
     s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = [];
     clear(R1.dyn); R1.notes = []; R1.tapAt = []; R1.stoneAt = [-9, -9, -9, -9];
     putClef(R1.sf, clef, R1.dyn);
-    R1.sf.put('barline', 13.0, 0, M.ink, R1.dyn); R1.sf.put('barline', 20.75, 0, M.ink, R1.dyn); R1.sf.put('thick', 21.25, 0, M.ink, R1.dyn);
     const mid = fromStep(BOTTOM[clef] + 4);
     s.mid = mid; s.onsets = [];
+    if (CH.rhythm.eighths) { eighthBars(r, clef, mid, s); } else {
+    R1.sf.put('barline', 13.0, 0, M.ink, R1.dyn); R1.sf.put('barline', 20.75, 0, M.ink, R1.dyn); R1.sf.put('thick', 21.25, 0, M.ink, R1.dyn);
     r.forEach((bar, bi) => bar.forEach((n) => {
       const x0 = bi ? 13.0 : 5.0, su = n.d === 4 ? x0 + 1.6 : x0 + 0.95 + n.beat * 1.72;
       if (n.rest) { R1.sf.put(n.d === 4 ? 'wholeRest' : n.d === 2 ? 'halfRest' : 'rest', (n.d === 4 ? x0 + 3.95 : su + 0.15), 0, M.ink, R1.dyn); return; }
       const nn = writeNote(R1.dyn, R1.sf, clef, mid, su, n.d === 4 ? 'w' : n.d === 2 ? 'h' : 'q', inkLit(), -1);
       R1.notes.push({ g: nn, su, d: n.d }); s.onsets.push(bi * 4 + n.beat);
-    }));
-    say(`${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.`);
+    })); }
+    say(`${CH.rhythm.eighths ? 'Two beamed eighth notes share one beat: tap both. ' : ''}${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.`);
+  }
+  // two bars spaced by what is in them (a pair of eighths needs room for two heads), on the smaller eighth-note staff
+  function eighthBars(r, clef, mid, s) {
+    const sf = R1.sf, total = sf.len / U, end = total - 0.75, bw = (end - 5.0) / 2;
+    sf.put('barline', 5.0 + bw, 0, M.ink, R1.dyn); sf.put('barline', end, 0, M.ink, R1.dyn); sf.put('thick', total - 0.25, 0, M.ink, R1.dyn);
+    const BASE = (n) => (n.pair ? 3.3 : n.d === 1 ? 1.85 : 2.6), usable = bw - 1.3;
+    r.forEach((bar, bi) => {
+      const x0 = 5.0 + bi * bw;
+      if (bar.length === 1) {                                         // a whole note or whole rest fills the bar
+        const n = bar[0];
+        if (n.rest) sf.put('wholeRest', x0 + bw / 2, 0, M.ink, R1.dyn);
+        else { const su = x0 + 1.6; R1.notes.push({ g: writeNote(R1.dyn, sf, clef, mid, su, 'w', inkLit(), -1), su, d: 4 }); s.onsets.push(bi * 4); }
+        return;
+      }
+      const sum = bar.reduce((a, n) => a + BASE(n), 0), extra = usable - sum, k = extra < 0 ? usable / sum : 1;
+      let x = x0 + 0.9;
+      bar.forEach((n) => {
+        const w = extra > 0 ? BASE(n) + extra * n.d / 4 : BASE(n) * k, su = x; x += w;
+        if (n.rest) { sf.put(n.d === 2 ? 'halfRest' : 'rest', n.d === 2 ? su + 0.3 : su + 0.15, 0, M.ink, R1.dyn); return; }
+        if (!n.pair) { R1.notes.push({ g: writeNote(R1.dyn, sf, clef, mid, su, n.d === 2 ? 'h' : 'q', inkLit(), -1), su, d: n.d }); s.onsets.push(bi * 4 + n.beat); return; }
+        const su2 = su + Math.max(1.5, w * 0.44), m1 = inkLit(), m2 = inkLit();
+        const a = writeNote(R1.dyn, sf, clef, mid, su, 'q', m1, -1), b = writeNote(R1.dyn, sf, clef, mid, su2, 'q', m2, -1);
+        const len = su2 - su + 0.13; add(a, box(len, 0.5, 0.12), m1, -0.57 - 0.065 + len / 2, -3.15, 0, { cast: false });   // the beam joins the stem ends
+        R1.notes.push({ g: a, su, d: 0.5 }, { g: b, su: su2, d: 0.5 }); s.onsets.push(bi * 4 + n.beat, bi * 4 + n.beat + 0.5);
+      });
+    });
   }
   function runRhythm(tapping) {
     const s = st.sub; if (!s || s.phase !== 'ready' && s.phase !== 'result') return;
@@ -1946,6 +2187,7 @@ function createGame(E) {
     s.phase = tapping ? 'count' : 'listen'; s.t0 = t0; s.ts = ts; s.beat = beat; s.taps = []; s.tapping = tapping; s.hit = s.onsets.map(() => false); s.extra = 0;
     R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); });
     say(tapping ? 'Count in: 1, 2, 3, 4…' : 'Listen…');
+    if (R1.sig) { R1.sig.flashAt = []; R1.sig.sweep = { t0: toAmb(t0), t1: toAmb(ts + 8 * beat), beat }; if (!tapping) s.onsets.forEach((o) => R1.sig.flashAt.push(toAmb(ts + o * beat))); }
     for (let b = 0; b < 4; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
     for (let b = 0; b < 8; b++) snd.play('tock', { gain: 0.14, f: 700 }, ts + b * beat);
     atAudio(ts - beat * 0.5, () => { if (tapping) { s.phase = 'tap'; say('Tap the drum (or Space) on every note!'); } });
@@ -1970,7 +2212,7 @@ function createGame(E) {
     let bj = -1, be = 1e9;
     s.onsets.forEach((o, j) => { const e = tt - (s.ts + o * s.beat); if (!s.hit[j] && Math.abs(e) <= win + 1e-6 && Math.abs(e) < Math.abs(be)) { be = e; bj = j; } });
     s.taps.push(tt);
-    if (bj >= 0) { s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(TONIC(), 0.3, 0.12); }
+    if (bj >= 0) { if (R1.sig) R1.sig.flashAt.push(G.t); s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(TONIC(), 0.3, 0.12); }
     else { s.extra++; say(`Extra tap (${s.extra}). Tap only where a note starts.`, 'bad'); }
     return true;
   }
@@ -1980,15 +2222,9 @@ function createGame(E) {
     const ok = hits === N && extra === 0;
     mark(hits, N + extra); st.stopRes[st.stop] = ok; ok ? snd.right() : snd.wrong();
     s.phase = 'result';
-    let wait = 1.8;
-    if (CH.scene === 'tree') {
-      const t0 = now() + 0.9;
-      s.onsets.forEach((o) => { const tp = t0 + o * s.beat; snd.play('tock', { gain: 0.5, f: 1450 }, tp); snd.play('tock', { gain: 0.28, f: 980 }, tp + 0.045); atAudio(tp, () => R1.peckAt.push(G.t)); });
-      atAudio(t0 - 0.3, () => { if (st.sub === s) wispTo(world(R1.dyn, 2.9, 0.6, 0.35), 0.3, 0.1); });
-      wait = 0.9 + 8 * s.beat + 0.6;
-    }
+    const wait = 1.8;
     at(wait, () => { if (st.sub === s && s.phase === 'result') finishStop(); });
-    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}${CH.scene === 'tree' ? ' Now listen: the woodpecker taps it back.' : ''}`, ok ? 'good' : 'bad');
+    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}`, ok ? 'good' : 'bad');
     wispTo(restOf(st.stop), 0.5);
   }
   function nextRhythm() { const s = st.sub; if (!s || s.kind !== 'rhythm' || s.phase !== 'result') return; finishStop(); }
@@ -2004,7 +2240,7 @@ function createGame(E) {
       { bit: 13, x: -0.46, y: 0.56, label: 'Thumb', small: true, lx: -0.46, ly: 0.34 }, { bit: 1, x: 0.5, y: 0.0, label: 'G♯', small: true, lx: 0.74, ly: 0.0 }, { bit: 6, x: 0.5, y: -0.8, label: 'E♭', small: true, lx: 0.74, ly: -0.8 }] }),
     valves: () => ({ multi: true, plate: [1.5, 1.2], gems: [...(st.inst.key === 'dhorn' ? [{ bit: 4, x: -0.55, y: 0.38, label: 'Trigger', lx: -0.12, ly: 0.38 }] : []),
       ...[1, 2, 3].map((b, k) => ({ bit: b, x: (k - 1) * 0.45, y: -0.12, big: true, label: String(k + 1), lx: (k - 1) * 0.45, ly: -0.46 }))], note: 'No gems lit means open.' }),
-    slide: () => ({ multi: false, plate: [0.46, 1.84], gems: [1, 2, 3, 4, 5, 6, 7].map((p) => ({ val: 1 << p, x: 0, y: 0.78 - (p - 1) * 0.26, label: ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][p - 1], small: true })) }),
+    slide: () => ({ multi: false, plate: [0.46, 1.84], gems: [1, 2, 3, 4, 5, 6, 7].map((p) => ({ val: 1 << p, x: 0, y: 0.78 - (p - 1) * 0.26, label: ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][p - 1], small: true, lx: 0.44, ly: 0.78 - (p - 1) * 0.26 })) }),
     bass: () => ({ multi: false, plate: [1.5, 1.84], heads: [['E', -0.5], ['A', -0.17], ['D', 0.16], ['G', 0.49]], gems: [].concat(...[1, 2, 3, 4].map((s) => [0, 1, 2, 3, 4].map((f) => ({ val: s + 4 * f, x: -0.5 + (s - 1) * 0.33, y: 0.56 - f * 0.32, small: true, label: s === 1 ? (f ? String(f) : 'Open') : '', lx: -0.86, ly: 0.56 - f * 0.32 })))) }),
     bells: () => {
       const ms = pool().map((n) => n.midi), lo = Math.min(...ms) - 2, hi = Math.max(...ms) + 3, names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'], gems = []; let x = 0;
@@ -2199,6 +2435,7 @@ function createGame(E) {
       case 'Sharp': writeNote(dyn, sf, 'treble', N('F4'), 12.5, 'w', ink); sf.put('sharp', 11.05, pOf(N('F4'), 'treble'), hl, dyn); break;
       case 'Flat': writeNote(dyn, sf, 'treble', N('B4'), 12.5, 'w', ink); sf.put('flat', 11.05, pOf(N('B4'), 'treble'), hl, dyn); break;
       case 'Natural': writeNote(dyn, sf, 'treble', N('A4'), 12.5, 'w', ink); sf.put('natural', 11.05, pOf(N('A4'), 'treble'), hl, dyn); break;
+      case 'Key signature': sf.put('flat', 4.7, 2, hl, dyn); sf.put('flat', 5.8, 3.5, hl, dyn); sf.put('four', 7.9, 2, ink, dyn); sf.put('four', 7.9, 0, ink, dyn); ctxNotes([['G4', 10.5, 'h'], ['D5', 14, 'h']]); sf.put('barline', 17.5, 0, ink, dyn); break;
       case 'Ledger line': note(dyn, 'w', 0, sf.X(11.5), sf.Y(-1), ink); sf.put('ledger', 11.5, -1, hl, dyn); break;
     }
   }

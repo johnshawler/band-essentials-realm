@@ -57,6 +57,9 @@ function createGame(E) {
     // a soft wooden flute for the chapter tunes, and a songbird's call (two or three quick chirps)
     flute: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); kit.tone(t, { f, type: 'sine', dur: dur + 0.25, gain: 0.05, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.45 }); kit.tone(t, { f: f * 2, type: 'sine', dur: dur * 0.8, gain: 0.008, a: 0.08, bus: 'music', verb: 0.4 }); kit.noise(t, { dur: 0.05, filter: 'bandpass', f: f * 2, q: 3, gain: 0.006, bus: 'music' }); },
     bird: (t = now()) => { if (!kit) return; const f0 = 2600 + Math.random() * 1400, n = 2 + Math.floor(Math.random() * 2); for (let k = 0; k < n; k++) kit.tone(t + k * 0.13, { f: [[0, f0], [0.05, f0 * 1.35], [0.1, f0 * 1.1]], type: 'sine', dur: 0.12, gain: 0.018, a: 0.005, pan: 0.5 - Math.random(), verb: 0.35 }); },
+    reed: (n, dur, t = now()) => { if (!kit) return; const f = kit.hz(n); for (const dt of [1, 1.004]) kit.tone(t, { f: f * dt, type: 'sawtooth', dur: dur + 0.15, gain: 0.018, a: 0.05, hold: Math.max(0.05, dur - 0.08), filter: 'lowpass', f2: 1500, bus: 'music', verb: 0.4 }); kit.tone(t, { f: f / 2, type: 'triangle', dur: dur + 0.1, gain: 0.012, a: 0.06, hold: Math.max(0.05, dur - 0.1), bus: 'music', verb: 0.35 }); },
+    wave: (t = now()) => { if (!kit) return; const d = 3.2 + Math.random() * 1.5; kit.noise(t, { dur: d, color: 'pink', filter: 'lowpass', f: [[0, 250], [d * 0.45, 900], [d, 220]], q: 0.6, gain: 0.05, a: d * 0.45, pan: 0.6 - Math.random() * 1.2, verb: 0.3 }); },
+    gull: (t = now()) => { if (!kit) return; const f0 = 1500 + Math.random() * 500, n = 1 + Math.floor(Math.random() * 3), pan = 0.8 - Math.random() * 1.6; for (let k = 0; k < n; k++) kit.tone(t + k * 0.32, { f: [[0, f0], [0.06, f0 * 1.12], [0.26, f0 * 0.72]], type: 'triangle', dur: 0.3, gain: 0.014, a: 0.01, filter: 'bandpass', f2: 1700, q: 1.4, pan, verb: 0.5 }); },
     right: () => { snd.play('ding', { gain: 0.32, f: 'Bb5' }); snd.play('ding', { gain: 0.22, f: 'F6' }, now() + 0.08); },
     wrong: () => { snd.play('thud', { gain: 0.4, f: 120 }); kit && kit.tone(now(), { f: 'D3', type: 'triangle', dur: 0.4, gain: 0.08, filter: 'lowpass', f2: 900 }); },
   };
@@ -70,7 +73,8 @@ function createGame(E) {
       const t0 = Math.max(n + 0.05, ambUntil), len = 4 * BAR, w = ambWin++;
       kit.music('pad', t0, t0 + len, { bpm: MUS.bpm, gain: quiet ? 0.25 : 0.5, chords: MUS.chords }); kit.bed('room', t0, t0 + len, { gain: 0.5 });
       snd.gust(2.4, 0.035, t0 + 3); snd.gust(2.4, 0.03, t0 + len * 0.62);
-      if (MUS.tune && w % 2 === 1 && !quiet) { let tb = t0; MUS.tune.slice(4 * ((w >> 1) % 2), 4 * ((w >> 1) % 2) + 4).forEach((bar) => bar.forEach(([nt, beats]) => { if (nt) snd.flute(nt, beats * BAR / 4, tb); tb += beats * BAR / 4; })); }
+      if (MUS.tune && w % 2 === 1 && !quiet) { const voice = snd[MUS.voice || 'flute']; let tb = t0; MUS.tune.slice(4 * ((w >> 1) % 2), 4 * ((w >> 1) % 2) + 4).forEach((bar) => bar.forEach(([nt, beats]) => { if (nt) voice(nt, beats * BAR / 4, tb); tb += beats * BAR / 4; })); }
+      if (MUS.sea) { for (let k = 0; k < 3; k++) snd.wave(t0 + len * k / 3 + Math.random()); if (!quiet) for (let k = 0; k < 2; k++) if (Math.random() < 0.7) snd.gull(t0 + len * (0.2 + 0.45 * k) + Math.random() * 1.5); if (w % 2 === 0 && !quiet) snd.chime('D5', 0.035, t0 + len * 0.55); }
       if (MUS.birds) for (let k = 0; k < 3; k++) snd.bird(t0 + len * (0.15 + 0.3 * k) + Math.random() * 1.2);
       ambUntil = t0 + len - 0.4;
     }
@@ -166,9 +170,12 @@ function createGame(E) {
     for (;;) {
       const out = []; let b = 0;
       while (b < 4) {
+        // a whole, a half, a quarter, or (from Chapter 3) a beamed pair of eighths: at most two pairs a bar, so they fit the scroll
         const opts = []; if (b === 0) opts.push([4, 1]); if (b % 2 === 0) opts.push([2, 4]); opts.push([1, 5]);
+        if (CH.rhythm.eighths && out.filter((n) => n.pair).length < 2) opts.push(['pair', 5]);
         let r = Math.random() * opts.reduce((s, o) => s + o[1], 0), d = 1;
         for (const [dd, w] of opts) { if ((r -= w) < 0) { d = dd; break; } }
+        if (d === 'pair') { out.push({ beat: b, d: 1, pair: true, rest: false }); b += 1; continue; }
         out.push({ beat: b, d, rest: CH.rhythm.rests && Math.random() < (d === 4 ? 0.3 : d === 2 ? 0.3 : 0.22) }); b += d;
       }
       if (out.length > 1 || Math.random() < 0.3) return out;
@@ -177,21 +184,48 @@ function createGame(E) {
   function setupRhythm() { st.sub = { kind: 'rhythm', phase: 'ready', prev: st.rhythmPrev }; newRhythm(); }
   function newRhythm() {
     const s = st.sub, clef = st.inst.clef; let r;
-    const sounded = (rr) => rr[0].concat(rr[1]).filter((n) => !n.rest).length;
-    do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1) || sounded(r) < 3 || r[0][0].rest);
+    const sounded = (rr) => rr[0].concat(rr[1]).filter((n) => !n.rest).length, pairs = (rr) => rr[0].concat(rr[1]).filter((n) => n.pair).length;
+    do { r = [genBar(), genBar()]; } while (JSON.stringify(r) === s.prev || (r[0].length === 1 && r[1].length === 1) || sounded(r) < 3 || r[0][0].rest || (CH.rhythm.eighths && pairs(r) < 1));
     s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = [];
     clear(R1.dyn); R1.notes = []; R1.tapAt = []; R1.stoneAt = [-9, -9, -9, -9];
     putClef(R1.sf, clef, R1.dyn);
-    R1.sf.put('barline', 13.0, 0, M.ink, R1.dyn); R1.sf.put('barline', 20.75, 0, M.ink, R1.dyn); R1.sf.put('thick', 21.25, 0, M.ink, R1.dyn);
     const mid = fromStep(BOTTOM[clef] + 4);
     s.mid = mid; s.onsets = [];
+    if (CH.rhythm.eighths) { eighthBars(r, clef, mid, s); } else {
+    R1.sf.put('barline', 13.0, 0, M.ink, R1.dyn); R1.sf.put('barline', 20.75, 0, M.ink, R1.dyn); R1.sf.put('thick', 21.25, 0, M.ink, R1.dyn);
     r.forEach((bar, bi) => bar.forEach((n) => {
       const x0 = bi ? 13.0 : 5.0, su = n.d === 4 ? x0 + 1.6 : x0 + 0.95 + n.beat * 1.72;
       if (n.rest) { R1.sf.put(n.d === 4 ? 'wholeRest' : n.d === 2 ? 'halfRest' : 'rest', (n.d === 4 ? x0 + 3.95 : su + 0.15), 0, M.ink, R1.dyn); return; }
       const nn = writeNote(R1.dyn, R1.sf, clef, mid, su, n.d === 4 ? 'w' : n.d === 2 ? 'h' : 'q', inkLit(), -1);
       R1.notes.push({ g: nn, su, d: n.d }); s.onsets.push(bi * 4 + n.beat);
-    }));
-    say(`${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.`);
+    })); }
+    say(`${CH.rhythm.eighths ? 'Two beamed eighth notes share one beat: tap both. ' : ''}${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for four count-in beats, then tap the drum or press Space on every note.`);
+  }
+  // two bars spaced by what is in them (a pair of eighths needs room for two heads), on the smaller eighth-note staff
+  function eighthBars(r, clef, mid, s) {
+    const sf = R1.sf, total = sf.len / U, end = total - 0.75, bw = (end - 5.0) / 2;
+    sf.put('barline', 5.0 + bw, 0, M.ink, R1.dyn); sf.put('barline', end, 0, M.ink, R1.dyn); sf.put('thick', total - 0.25, 0, M.ink, R1.dyn);
+    const BASE = (n) => (n.pair ? 3.3 : n.d === 1 ? 1.85 : 2.6), usable = bw - 1.3;
+    r.forEach((bar, bi) => {
+      const x0 = 5.0 + bi * bw;
+      if (bar.length === 1) {                                         // a whole note or whole rest fills the bar
+        const n = bar[0];
+        if (n.rest) sf.put('wholeRest', x0 + bw / 2, 0, M.ink, R1.dyn);
+        else { const su = x0 + 1.6; R1.notes.push({ g: writeNote(R1.dyn, sf, clef, mid, su, 'w', inkLit(), -1), su, d: 4 }); s.onsets.push(bi * 4); }
+        return;
+      }
+      const sum = bar.reduce((a, n) => a + BASE(n), 0), extra = usable - sum, k = extra < 0 ? usable / sum : 1;
+      let x = x0 + 0.9;
+      bar.forEach((n) => {
+        const w = extra > 0 ? BASE(n) + extra * n.d / 4 : BASE(n) * k, su = x; x += w;
+        if (n.rest) { sf.put(n.d === 2 ? 'halfRest' : 'rest', n.d === 2 ? su + 0.3 : su + 0.15, 0, M.ink, R1.dyn); return; }
+        if (!n.pair) { R1.notes.push({ g: writeNote(R1.dyn, sf, clef, mid, su, n.d === 2 ? 'h' : 'q', inkLit(), -1), su, d: n.d }); s.onsets.push(bi * 4 + n.beat); return; }
+        const su2 = su + Math.max(1.5, w * 0.44), m1 = inkLit(), m2 = inkLit();
+        const a = writeNote(R1.dyn, sf, clef, mid, su, 'q', m1, -1), b = writeNote(R1.dyn, sf, clef, mid, su2, 'q', m2, -1);
+        const len = su2 - su + 0.13; add(a, box(len, 0.5, 0.12), m1, -0.57 - 0.065 + len / 2, -3.15, 0, { cast: false });   // the beam joins the stem ends
+        R1.notes.push({ g: a, su, d: 0.5 }, { g: b, su: su2, d: 0.5 }); s.onsets.push(bi * 4 + n.beat, bi * 4 + n.beat + 0.5);
+      });
+    });
   }
   function runRhythm(tapping) {
     const s = st.sub; if (!s || s.phase !== 'ready' && s.phase !== 'result') return;
@@ -201,6 +235,7 @@ function createGame(E) {
     s.phase = tapping ? 'count' : 'listen'; s.t0 = t0; s.ts = ts; s.beat = beat; s.taps = []; s.tapping = tapping; s.hit = s.onsets.map(() => false); s.extra = 0;
     R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); });
     say(tapping ? 'Count in: 1, 2, 3, 4…' : 'Listen…');
+    if (R1.sig) { R1.sig.flashAt = []; R1.sig.sweep = { t0: toAmb(t0), t1: toAmb(ts + 8 * beat), beat }; if (!tapping) s.onsets.forEach((o) => R1.sig.flashAt.push(toAmb(ts + o * beat))); }
     for (let b = 0; b < 4; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
     for (let b = 0; b < 8; b++) snd.play('tock', { gain: 0.14, f: 700 }, ts + b * beat);
     atAudio(ts - beat * 0.5, () => { if (tapping) { s.phase = 'tap'; say('Tap the drum (or Space) on every note!'); } });
@@ -225,7 +260,7 @@ function createGame(E) {
     let bj = -1, be = 1e9;
     s.onsets.forEach((o, j) => { const e = tt - (s.ts + o * s.beat); if (!s.hit[j] && Math.abs(e) <= win + 1e-6 && Math.abs(e) < Math.abs(be)) { be = e; bj = j; } });
     s.taps.push(tt);
-    if (bj >= 0) { s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(TONIC(), 0.3, 0.12); }
+    if (bj >= 0) { if (R1.sig) R1.sig.flashAt.push(G.t); s.hit[bj] = true; const m = R1.notes[bj].g.userData.mat; tintTo(m, C.good); set(m, 1); snd.pluck(TONIC(), 0.3, 0.12); }
     else { s.extra++; say(`Extra tap (${s.extra}). Tap only where a note starts.`, 'bad'); }
     return true;
   }
@@ -235,15 +270,9 @@ function createGame(E) {
     const ok = hits === N && extra === 0;
     mark(hits, N + extra); st.stopRes[st.stop] = ok; ok ? snd.right() : snd.wrong();
     s.phase = 'result';
-    let wait = 1.8;
-    if (CH.scene === 'tree') {
-      const t0 = now() + 0.9;
-      s.onsets.forEach((o) => { const tp = t0 + o * s.beat; snd.play('tock', { gain: 0.5, f: 1450 }, tp); snd.play('tock', { gain: 0.28, f: 980 }, tp + 0.045); atAudio(tp, () => R1.peckAt.push(G.t)); });
-      atAudio(t0 - 0.3, () => { if (st.sub === s) wispTo(world(R1.dyn, 2.9, 0.6, 0.35), 0.3, 0.1); });
-      wait = 0.9 + 8 * s.beat + 0.6;
-    }
+    const wait = 1.8;
     at(wait, () => { if (st.sub === s && s.phase === 'result') finishStop(); });
-    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}${CH.scene === 'tree' ? ' Now listen: the woodpecker taps it back.' : ''}`, ok ? 'good' : 'bad');
+    say(ok ? `In time! All ${N} notes.` : `${hits} of ${N} notes in time${extra ? `, ${extra} extra tap${extra > 1 ? 's' : ''}` : ''}.${hits < N ? ' Red notes were missed.' : ''}`, ok ? 'good' : 'bad');
     wispTo(restOf(st.stop), 0.5);
   }
   function nextRhythm() { const s = st.sub; if (!s || s.kind !== 'rhythm' || s.phase !== 'result') return; finishStop(); }
@@ -259,7 +288,7 @@ function createGame(E) {
       { bit: 13, x: -0.46, y: 0.56, label: 'Thumb', small: true, lx: -0.46, ly: 0.34 }, { bit: 1, x: 0.5, y: 0.0, label: 'G♯', small: true, lx: 0.74, ly: 0.0 }, { bit: 6, x: 0.5, y: -0.8, label: 'E♭', small: true, lx: 0.74, ly: -0.8 }] }),
     valves: () => ({ multi: true, plate: [1.5, 1.2], gems: [...(st.inst.key === 'dhorn' ? [{ bit: 4, x: -0.55, y: 0.38, label: 'Trigger', lx: -0.12, ly: 0.38 }] : []),
       ...[1, 2, 3].map((b, k) => ({ bit: b, x: (k - 1) * 0.45, y: -0.12, big: true, label: String(k + 1), lx: (k - 1) * 0.45, ly: -0.46 }))], note: 'No gems lit means open.' }),
-    slide: () => ({ multi: false, plate: [0.46, 1.84], gems: [1, 2, 3, 4, 5, 6, 7].map((p) => ({ val: 1 << p, x: 0, y: 0.78 - (p - 1) * 0.26, label: ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][p - 1], small: true })) }),
+    slide: () => ({ multi: false, plate: [0.46, 1.84], gems: [1, 2, 3, 4, 5, 6, 7].map((p) => ({ val: 1 << p, x: 0, y: 0.78 - (p - 1) * 0.26, label: ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][p - 1], small: true, lx: 0.44, ly: 0.78 - (p - 1) * 0.26 })) }),
     bass: () => ({ multi: false, plate: [1.5, 1.84], heads: [['E', -0.5], ['A', -0.17], ['D', 0.16], ['G', 0.49]], gems: [].concat(...[1, 2, 3, 4].map((s) => [0, 1, 2, 3, 4].map((f) => ({ val: s + 4 * f, x: -0.5 + (s - 1) * 0.33, y: 0.56 - f * 0.32, small: true, label: s === 1 ? (f ? String(f) : 'Open') : '', lx: -0.86, ly: 0.56 - f * 0.32 })))) }),
     bells: () => {
       const ms = pool().map((n) => n.midi), lo = Math.min(...ms) - 2, hi = Math.max(...ms) + 3, names = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'], gems = []; let x = 0;
@@ -454,6 +483,7 @@ function createGame(E) {
       case 'Sharp': writeNote(dyn, sf, 'treble', N('F4'), 12.5, 'w', ink); sf.put('sharp', 11.05, pOf(N('F4'), 'treble'), hl, dyn); break;
       case 'Flat': writeNote(dyn, sf, 'treble', N('B4'), 12.5, 'w', ink); sf.put('flat', 11.05, pOf(N('B4'), 'treble'), hl, dyn); break;
       case 'Natural': writeNote(dyn, sf, 'treble', N('A4'), 12.5, 'w', ink); sf.put('natural', 11.05, pOf(N('A4'), 'treble'), hl, dyn); break;
+      case 'Key signature': sf.put('flat', 4.7, 2, hl, dyn); sf.put('flat', 5.8, 3.5, hl, dyn); sf.put('four', 7.9, 2, ink, dyn); sf.put('four', 7.9, 0, ink, dyn); ctxNotes([['G4', 10.5, 'h'], ['D5', 14, 'h']]); sf.put('barline', 17.5, 0, ink, dyn); break;
       case 'Ledger line': note(dyn, 'w', 0, sf.X(11.5), sf.Y(-1), ink); sf.put('ledger', 11.5, -1, hl, dyn); break;
     }
   }
