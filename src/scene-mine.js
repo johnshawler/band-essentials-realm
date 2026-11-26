@@ -4,6 +4,8 @@
 // islands rise out of it into sunrise. Forte answers boom through the cave and piano answers whisper. From the top, two towers
 // stand across the valley (Chapter 7).
 const MINE_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#5a4e48', 'stoneDark':  '#3a322e', 'stoneLight':  '#8a7a6e', 'wood':  '#6a4a30', 'woodDark':  '#3e2a1c', 'gold':  '#a0603a', 'banner':  '#7a2a1a', 'bannerDark':  '#521a10', 'pale':  '#d8ccbc', 'frost':  '#c8bcac', 'slab':  '#4a4a52', 'rune':  ['#a0400a', '#ffa040'], 'flame':  ['#7a3a10', '#ff9040'], 'glass':  '#ffd0a0', 'leather':  '#5a3a22'},
   env: { top: '#ffb070', horizon: '#6a4a3a', bottom: '#1a120e', intensity: 0.38, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffb070', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9040', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#ffd8a0', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#60d0c0', power: 1.4 }] },
   hemi: ['#ffcf9a', '#2a1c14', 0.34], sun: '#ffc890', sunPower: 1.8, fog: '#2a1e18',
@@ -91,6 +93,8 @@ function sceneMine(X) {
     });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['ore', 'lantern', 'ore', 'pebbles', 'crate'], 'top':  'lanternTop', 'hang':  'chain', 'accent':  'ore'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.mine = { look: MINE_LOOK, make: sceneMine };

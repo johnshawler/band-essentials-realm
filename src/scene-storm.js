@@ -3,6 +3,8 @@
 // rock shelves climbing through the cloud layer. During Read Rhythms lightning strikes on every accented note. The storm thins
 // near the top, and at the summit the player breaks through into calm sky; to the south a volcano smokes (Chapter 11).
 const STORM_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#4a4a54', 'stoneDark':  '#2e2e38', 'stoneLight':  '#7a7a86', 'wood':  '#4a4038', 'woodDark':  '#2e2622', 'gold':  '#8a8a98', 'banner':  '#1e2a5a', 'bannerDark':  '#141c40', 'pale':  '#d8dce8', 'frost':  '#c8ccd8', 'slab':  '#2e3038', 'rune':  ['#3a4ab0', '#c8d8ff'], 'flame':  ['#2a3a8a', '#a8c8ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a3a'},
   env: { top: '#3a4466', horizon: '#6a7088', bottom: '#1a1c26', intensity: 0.5, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.0 }, { pos: [34, 10, 22], size: [14, 22], color: '#a0a8c8', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a90c0', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#b8c0e0', power: 1.6 }] },
   hemi: ['#a8b0d8', '#24242e', 0.48], sun: '#d8e0ff', sunPower: 1.7, fog: '#3a3e52',
@@ -100,6 +102,8 @@ function sceneStorm(X) {
     anims.push((t) => smoke.forEach((m, k) => { const u = ((t * 0.05 + k / 10) % 1); m.position.set(u * 60, 75 + u * 150, u * 10); m.scale.setScalar(10 + u * 40); }));
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['jag', 'fulgurite', 'jag', 'pebbles', 'fulgurite'], 'top':  'rod', 'accent':  'jag'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.storm = { look: STORM_LOOK, make: sceneStorm };

@@ -56,5 +56,69 @@ function sceneKit(X) {
   const add2 = (geo, mat, x, y, z) => add(scene, geo, mat, x, y, z, { cast: false });
   // a camera path through keys [u, pos, aim], easing between each pair
   const path = (list) => (u) => { let i = 0; while (i < list.length - 2 && u > list[i + 1][0]) i++; const [u0, p0, a0] = list[i], [u1, p1, a1] = list[i + 1], e = K.ease.inOut(K.clamp((u - u0) / (u1 - u0))); return { pos: p0.map((x, j) => K.lerp(x, p1[j], e)), aim: a0.map((x, j) => K.lerp(x, a1[j], e)) }; };
-  return { path, beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
+  // ---------------------------------------------------------------- themed pieces for islands and props
+  // Each piece is (parent, x, y, z, s, seed) with y the ground (or the anchor) and s about half a unit at 1.
+  const mats = {}, glows = {};
+  const mat = (c, metal = 0, rough = 0.75) => mats[c + metal + rough] || (mats[c + metal + rough] = std(c, metal, rough, { flatShading: true }));
+  const glow = (c, g, k = 2) => glows[c + g + k] || (glows[c + g + k] = X.lum(c, g, k, { facet: true, rough: 0.4 }));
+  const SPH = new THREE.SphereGeometry(1, 10, 7), CYL = new THREE.CylinderGeometry(1, 1, 1, 8), BOX = new THREE.BoxGeometry(1, 1, 1), TOR = new THREE.TorusGeometry(1, 0.28, 6, 14), HALF = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), DOD = new THREE.DodecahedronGeometry(1, 0);
+  const put = (parent, geo, m, x, y, z, sx, sy = sx, sz = sx) => { const o = add(parent, geo, m, x, y, z, { cast: false }); o.scale.set(sx, sy, sz); return o; };
+  const spinners = []; anims.push((t) => spinners.forEach(([o, sp]) => { o.rotation.z = t * sp; }));
+  const PIECE = {
+    mushroom: (p, x, y, z, s, k) => { put(p, CYL, mat('#efe6d6'), x, y + 0.25 * s, z, 0.09 * s, 0.5 * s); put(p, HALF, mat(k % 2 ? '#c84a3a' : '#e0a050'), x, y + 0.48 * s, z, 0.38 * s, 0.26 * s); },
+    fern: (p, x, y, z, s, k) => { for (let j = 0; j < 5; j++) { const a = j * 1.26 + k, f = put(p, CONE, mat(j % 2 ? '#3e7a3a' : '#5a9a44'), x + Math.cos(a) * 0.12 * s, y + 0.3 * s, z + Math.sin(a) * 0.12 * s, 0.07 * s, 0.7 * s, 0.18 * s); f.rotation.set(Math.sin(a) * 0.8, a, Math.cos(a) * 0.8); } },
+    shell: (p, x, y, z, s, k) => { const o = put(p, HALF, mat(k % 2 ? '#f4c8b8' : '#f0e0c8'), x, y, z, 0.3 * s, 0.16 * s, 0.24 * s); o.rotation.y = k; },
+    rope: (p, x, y, z, s) => { for (let j = 0; j < 3; j++) { const o = put(p, TOR, mat('#c8b088', 0, 0.9), x, y + 0.06 * s + j * 0.09 * s, z, 0.3 * s * (1 - 0.15 * j)); o.rotation.x = Math.PI / 2; } },
+    buoy: (p, x, y, z, s) => { put(p, HALF, mat('#d83a3a'), x, y + 0.3 * s, z, 0.3 * s); const b = put(p, HALF, mat('#f4f0e8'), x, y + 0.3 * s, z, 0.3 * s); b.rotation.x = Math.PI; put(p, CYL, mat('#3a3a40', 0.6, 0.4), x, y + 0.7 * s, z, 0.03 * s, 0.5 * s); },
+    crystal: (p, x, y, z, s, k, c = ['#6fb8ff', '#2a7ae0']) => cluster(p, x, y, z, 0.9 * s, glow(c[1], c[0], 0.9), k, 4),
+    snow: (p, x, y, z, s, k) => { const o = put(p, ICO, mat('#eef4fb', 0, 0.85), x, y, z, 0.5 * s, 0.22 * s, 0.4 * s); o.rotation.y = k; },
+    pebbles: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) put(p, DOD, mat(j % 2 ? '#8a8a84' : '#6a6a66'), x + (K.hash(k, j) - 0.5) * 0.5 * s, y + 0.08 * s, z + (K.hash(k, j + 3) - 0.5) * 0.4 * s, 0.12 * s * (1 + K.hash(k, j + 6))); },
+    ore: (p, x, y, z, s, k) => cluster(p, x, y, z, 0.8 * s, glow('#a0400a', '#ffa040', 1.8), k, 4),
+    lantern: (p, x, y, z, s) => { put(p, CYL, mat('#3a3a40', 0.6, 0.4), x, y + 0.45 * s, z, 0.04 * s, 0.9 * s); put(p, SPH, glow('#7a4a10', '#ffc060', 2.6), x, y + 0.98 * s, z, 0.13 * s); put(p, CONE, mat('#3a3a40', 0.6, 0.4), x, y + 1.14 * s, z, 0.15 * s, 0.12 * s); },
+    flowers: (p, x, y, z, s, k) => { for (let j = 0; j < 4; j++) { const dx = (K.hash(k, j) - 0.5) * 0.5 * s, dz = (K.hash(k, j + 4) - 0.5) * 0.4 * s; put(p, CYL, mat('#4a8a3a'), x + dx, y + 0.15 * s, z + dz, 0.02 * s, 0.3 * s); put(p, SPH, mat(['#e84a6a', '#f4d040', '#8a6ad8', '#f4f0f0'][(j + k) % 4]), x + dx, y + 0.32 * s, z + dz, 0.08 * s); } },
+    block: (p, x, y, z, s, k) => { const o = put(p, BOX, mat('#b8b0a4'), x, y + 0.22 * s, z, 0.5 * s, 0.44 * s, 0.4 * s); o.rotation.y = k; },
+    barrel: (p, x, y, z, s) => { put(p, CYL, mat('#8a5a32'), x, y + 0.35 * s, z, 0.26 * s, 0.7 * s); for (const dy of [0.12, 0.58]) { const r = put(p, TOR, mat('#3a3a40', 0.6, 0.5), x, y + dy * s, z, 0.265 * s, 0.265 * s, 0.1 * s); r.rotation.x = Math.PI / 2; } },
+    crate: (p, x, y, z, s, k) => { const o = put(p, BOX, mat('#a07a4a'), x, y + 0.25 * s, z, 0.5 * s); o.rotation.y = k * 0.7; put(p, BOX, mat('#6a4a2a'), x, y + 0.25 * s, z, 0.52 * s, 0.08 * s, 0.52 * s).rotation.y = k * 0.7; },
+    gear: (p, x, y, z, s, k) => { const g = group(p, x, y + 0.4 * s, z); g.rotation.y = k; const w = group(g); put(w, CYL, mat('#c8963a', 0.9, 0.35), 0, 0, 0, 0.36 * s, 0.08 * s, 0.36 * s).rotation.x = Math.PI / 2; for (let j = 0; j < 10; j++) { const a = j / 10 * Math.PI * 2; put(w, BOX, mat('#c8963a', 0.9, 0.35), Math.cos(a) * 0.4 * s, Math.sin(a) * 0.4 * s, 0, 0.1 * s, 0.1 * s, 0.08 * s).rotation.z = a; } spinners.push([w, k % 2 ? 0.5 : -0.5]); },
+    lamp: (p, x, y, z, s) => { put(p, CYL, mat('#9a6a2a', 0.9, 0.4), x, y + 0.5 * s, z, 0.05 * s, s); put(p, SPH, glow('#7a5a20', '#ffd890', 2.4), x, y + 1.05 * s, z, 0.14 * s); },
+    jag: (p, x, y, z, s, k) => { const o = put(p, CONE, mat('#2e2e38'), x, y + 0.45 * s, z, 0.22 * s, 0.9 * s, 0.18 * s); o.rotation.set(0.2 * (K.hash(k, 1) - 0.5), k, 0.25); },
+    fulgurite: (p, x, y, z, s, k) => { const o = put(p, OCT, glow('#3a4ab0', '#c8d8ff', 1.8), x, y + 0.35 * s, z, 0.08 * s, 0.4 * s, 0.08 * s); o.rotation.z = 0.2 * (K.hash(k, 2) - 0.5); },
+    ember: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) put(p, OCT, glow('#8a2a0a', '#ff7a2a', 2.6), x + (K.hash(k, j) - 0.5) * 0.4 * s, y + 0.1 * s, z + (K.hash(k, j + 3) - 0.5) * 0.3 * s, 0.1 * s); put(p, DOD, mat('#2a2426'), x, y + 0.08 * s, z, 0.25 * s, 0.1 * s, 0.22 * s); },
+    egg: (p, x, y, z, s, k) => { put(p, SPH, mat(k % 2 ? '#c8a060' : '#a0b070', 0.2, 0.4), x, y + 0.3 * s, z, 0.22 * s, 0.32 * s, 0.22 * s); put(p, TOR, mat('#5a3a22', 0, 0.9), x, y + 0.04 * s, z, 0.24 * s, 0.24 * s, 0.1 * s).rotation.x = Math.PI / 2; },
+    star: (p, x, y, z, s, k) => { const o = put(p, OCT, glow('#8a7a3a', '#fff0b0', 2.4), x, y + 0.45 * s, z, 0.2 * s, 0.3 * s, 0.06 * s); o.rotation.y = k; spinners.push([o, 0.3]); put(p, CYL, mat('#c8c8d8', 0.8, 0.3), x, y + 0.12 * s, z, 0.03 * s, 0.24 * s); },
+    orb: (p, x, y, z, s) => { put(p, CYL, mat('#c8a050', 0.9, 0.3), x, y + 0.1 * s, z, 0.15 * s, 0.2 * s); put(p, SPH, glow('#3a3a8a', '#9ab0ff', 1.6), x, y + 0.35 * s, z, 0.2 * s); },
+    // on top of posts and pillars
+    leafTuft: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) put(p, ICO, mat(j % 2 ? '#5a9a3c' : '#7fae46'), x + (j - 1) * 0.12 * s, y + 0.12 * s, z, 0.2 * s, 0.14 * s, 0.2 * s); put(p, SPH, mat(k % 2 ? '#f4b0cc' : '#fff0f6'), x, y + 0.26 * s, z + 0.08 * s, 0.07 * s); },
+    snowcap: (p, x, y, z, s) => { put(p, HALF, mat('#f4f8ff', 0, 0.85), x, y - 0.02, z, 0.22 * s, 0.14 * s, 0.22 * s); },
+    mossTop: (p, x, y, z, s) => { put(p, HALF, mat('#5a8a3a'), x, y - 0.02, z, 0.2 * s, 0.1 * s, 0.2 * s); PIECE.fern(p, x, y, z, 0.35 * s, 1); },
+    lanternTop: (p, x, y, z, s) => { put(p, SPH, glow('#7a4a10', '#ffc060', 2.6), x, y + 0.14 * s, z, 0.12 * s); put(p, CONE, mat('#2a2a30', 0.6, 0.4), x, y + 0.3 * s, z, 0.15 * s, 0.12 * s); },
+    bell: (p, x, y, z, s) => { const b = put(p, new THREE.CylinderGeometry(0.4, 1, 1.1, 12, 1, true), mat('#b0803a', 0.9, 0.35), x, y + 0.14 * s, z, 0.14 * s); void b; put(p, SPH, mat('#b0803a', 0.9, 0.35), x, y + 0.24 * s, z, 0.06 * s); },
+    pennant: (p, x, y, z, s, k) => { put(p, CYL, mat('#5a3a22'), x, y + 0.4 * s, z, 0.025 * s, 0.8 * s); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0.5, -0.12, 0, 0, -0.24, 0], 3)); g.computeVertexNormals(); const f = add(p, g, std(k % 2 ? '#c83a3a' : '#f4f0e8', 0, 0.8, { side: THREE.DoubleSide }), x, y + 0.78 * s, z, { cast: false }); f.scale.setScalar(s); anims.push((t) => { f.rotation.y = 0.3 * Math.sin(t * 2.5 + k); }); },
+    gearTop: (p, x, y, z, s, k) => PIECE.gear(p, x, y - 0.25 * s, z, 0.6 * s, k),
+    rod: (p, x, y, z, s) => { put(p, CYL, mat('#8a8a94', 0.9, 0.3), x, y + 0.3 * s, z, 0.02 * s, 0.6 * s); put(p, SPH, glow('#3a4ab0', '#c8d8ff', 2.2), x, y + 0.62 * s, z, 0.05 * s); },
+    horn: (p, x, y, z, s, k) => { const h = put(p, CONE, mat('#e8dcc0', 0, 0.5), x, y + 0.22 * s, z, 0.07 * s, 0.45 * s); h.rotation.z = (k % 2 ? 1 : -1) * 0.35; },
+    starTop: (p, x, y, z, s, k) => PIECE.star(p, x, y - 0.08 * s, z, 0.6 * s, k),
+    buoyTop: (p, x, y, z, s) => { put(p, SPH, mat('#d83a3a'), x, y + 0.1 * s, z, 0.11 * s); },
+    // hanging below rods and lintels
+    vine: (p, x, y, z, s, k) => { const L = 0.25 + 0.25 * K.hash(k, 3); put(p, CYL, mat('#3e7a3a'), x, y - L * s / 2, z, 0.012 * s, L * s); for (let j = 0; j < 3; j++) put(p, SPH, mat('#5a9a44'), x + (j % 2 ? 0.03 : -0.03) * s, y - (0.06 + 0.1 * j) * s, z + 0.01, 0.035 * s, 0.02 * s, 0.035 * s); },
+    icicle: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) { const L = (0.12 + 0.14 * K.hash(k, j)) * s; const o = put(p, CONE, glow('#9ad0f0', '#d8f0ff', 0.5), x + (j - 1) * 0.07 * s, y - L / 2, z, 0.025 * s, L); o.rotation.x = Math.PI; } },
+    drip: (p, x, y, z, s, k) => { const o = put(p, SPH, glow('#2a7aa0', '#8ad8ff', 1.2), x, y - 0.08 * s, z, 0.025 * s, 0.05 * s, 0.025 * s); anims.push((t) => { const u = (t * 0.6 + K.hash(k, 1)) % 1; o.position.y = y - 0.08 * s - u * 0.6; o.visible = u < 0.85; }); },
+    chain: (p, x, y, z, s) => { for (let j = 0; j < 4; j++) { const l = put(p, TOR, mat('#4a4a52', 0.8, 0.4), x, y - (0.04 + j * 0.06) * s, z, 0.03 * s); l.rotation.y = j * Math.PI / 2; } },
+    ropeLoop: (p, x, y, z, s) => { const o = add(p, new THREE.TorusGeometry(0.12, 0.012, 4, 12, Math.PI), mat('#c8b088', 0, 0.9), x, y, z, { cast: false }); o.rotation.z = Math.PI; o.scale.setScalar(s); },
+    flag: (p, x, y, z, s, k) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.07, 0, 0, 0.07, 0, 0, 0, -0.2, 0], 3)); g.computeVertexNormals(); add(p, g, std(['#c83a3a', '#2d5fa8', '#e8c060'][k % 3], 0, 0.8, { side: THREE.DoubleSide }), x, y, z, { cast: false }).scale.setScalar(s); },
+    weight: (p, x, y, z, s, k) => { const g = group(p, x, y, z); put(g, CYL, mat('#9a6a2a', 0.9, 0.4), 0, -0.15 * s, 0, 0.008 * s, 0.3 * s); put(g, CYL, mat('#c8963a', 0.9, 0.35), 0, -0.32 * s, 0, 0.06 * s, 0.02 * s).rotation.x = Math.PI / 2; anims.push((t) => { g.rotation.z = 0.3 * Math.sin(t * 2 + k); }); },
+    emberLamp: (p, x, y, z, s) => { put(p, CYL, mat('#2a2426'), x, y - 0.1 * s, z, 0.008 * s, 0.2 * s); put(p, OCT, glow('#8a2a0a', '#ff7a2a', 2.6), x, y - 0.24 * s, z, 0.05 * s); },
+    charm: (p, x, y, z, s, k) => { put(p, CYL, mat('#c8c8d8', 0.8, 0.3), x, y - 0.08 * s, z, 0.006 * s, 0.16 * s); const o = put(p, OCT, glow('#8a7a3a', '#fff0b0', 2.2), x, y - 0.2 * s, z, 0.045 * s, 0.07 * s, 0.02 * s); o.rotation.y = k; },
+  };
+  // a chapter's dressing: ground pieces round each island, a piece on every top anchor and below every hang anchor, and an accent
+  // that stands in for the crystal shards beside some props
+  function theme({ ground = [], top, hang, accent, size = 1 }) {
+    const SPOTS = [[3.75, 1.3, 0.85], [-3.9, 0.2, 0.7], [-3.55, 1.75, 0.6], [-3.85, 1.1, 0.5], [3.3, 2.15, 0.5]];
+    return {
+      decor: (g, i) => SPOTS.forEach(([x, z, s], k) => { const f = PIECE[ground[(i + k) % ground.length]]; if (f) f(g, (i % 2 ? -1 : 1) * x, 0, z, s * 1.6 * size, i * 7 + k); }),
+      dress: (A) => { A.top.forEach(([p, x, y, z], k) => top && PIECE[top](p, x, y, z, 1, k)); A.hang.forEach(([p, x, y, z], k) => hang && PIECE[hang](p, x, y, z, 1, k)); },
+      accent: accent ? (g, x, y, z, s, seed) => PIECE[accent](g, x, y, z, s * 1.4, seed) : undefined,
+    };
+  }
+  return { theme, PIECE, path, beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
 }

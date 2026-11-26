@@ -1040,6 +1040,8 @@ const chapterTerms = (clef) => {
 // time with the tempo, clicking once per beat. At the summit the clock strikes, and beyond it storm clouds gather round a
 // jagged peak (Chapter 10).
 const CLOCK_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#b8a894', 'stoneDark':  '#8a7a68', 'stoneLight':  '#e0d4c0', 'wood':  '#5a3a28', 'woodDark':  '#3a2418', 'gold':  '#c8963a', 'banner':  '#4a2a6a', 'bannerDark':  '#321a4a', 'pale':  '#f4ead4', 'frost':  '#e8dcc4', 'slab':  '#9a6a2a', 'rune':  ['#7a5a20', '#ffd27a'], 'glass':  '#ffe8c0', 'leather':  '#4a2a1a'},
   env: { top: '#3a4a8a', horizon: '#ffa070', bottom: '#3a2a3a', intensity: 0.62, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffb080', power: 4.4 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff90a0', power: 1.8 }, { pos: [0, 44, -12], size: [44, 12], color: '#9a90ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffc070', power: 2.4 }] },
   hemi: ['#ffc8a8', '#3a3040', 0.48], sun: '#ffb880', sunPower: 2.5, fog: '#8a6a7a',
@@ -1155,7 +1157,9 @@ function sceneClock(X) {
     anims.push((t) => { const p = Math.max(0, Math.sin(t * 0.9) * Math.sin(t * 7.3) - 0.85) * 6.6; flash.intensity = p * 4000; fm.color.setRGB(0.8, 0.85, 1).multiplyScalar(p * 3); bolt.visible = p > 0.05; });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['gear', 'lamp', 'gear', 'crate', 'gear'], 'top':  'gearTop', 'hang':  'weight', 'accent':  'gear'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.clock = { look: CLOCK_LOOK, make: sceneClock };
 
@@ -1164,6 +1168,8 @@ SCENE_REG.clock = { look: CLOCK_LOOK, make: sceneClock };
 // The dragon circles the peak between islands in a chain of rising and falling arcs, like slurs. At the summit it settles on
 // its nest, and far above the clouds a domed observatory floats among the stars (Chapter 12).
 const DRAGON_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#3a3436', 'stoneDark':  '#241e20', 'stoneLight':  '#6a5a58', 'wood':  '#2e2422', 'woodDark':  '#1a1414', 'gold':  '#d8a840', 'banner':  '#8a1a1a', 'bannerDark':  '#5a1010', 'pale':  '#d8c8b8', 'frost':  '#c8b0a0', 'slab':  '#1e1a1c', 'rune':  ['#8a2a0a', '#ff6a1a'], 'flame':  ['#8a2a0a', '#ff7a2a'], 'glass':  '#ffb090', 'leather':  '#5a1a1a'},
   env: { top: '#4a2a3a', horizon: '#ff7a3a', bottom: '#2a1410', intensity: 0.55, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffa070', power: 3.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff6a3a', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#c88aa0', power: 1.8 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb060', power: 2.4 }] },
   hemi: ['#ffb090', '#4a1a10', 0.5], sun: '#ffb080', sunPower: 2.3, fog: '#6a3a34',
@@ -1269,7 +1275,9 @@ function sceneDragon(X) {
     for (let k = 0; k < 30; k++) { const s = add(g, OCT, glowMat('#fff4d0', 2), (K.hash(k, 1) - 0.5) * 160, 10 + K.hash(k, 2) * 90, (K.hash(k, 3) - 0.5) * 60, { cast: false }); s.scale.setScalar(0.8 + K.hash(k, 4) * 1.4); }
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['ember', 'egg', 'ember', 'jag', 'egg'], 'top':  'horn', 'hang':  'emberLamp', 'accent':  'ember'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.dragon = { look: DRAGON_LOOK, make: sceneDragon };
 
@@ -1278,6 +1286,8 @@ SCENE_REG.dragon = { look: DRAGON_LOOK, make: sceneDragon };
 // The islands are grassy ledges tied back to the cliff with rope bridges. On the Fermata question every waterfall stops in
 // mid-air until the player answers. From the top, far off and low, a mine entrance glows (Chapter 6).
 const FALLS_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#7a8478', 'stoneDark':  '#4e5850', 'stoneLight':  '#b8c4b8', 'wood':  '#6a5a3e', 'woodDark':  '#4a3e2a', 'gold':  '#8a7a4a', 'banner':  '#1e6a6a', 'bannerDark':  '#124a4a', 'pale':  '#e4ece4', 'frost':  '#d8e4e0', 'slab':  '#3e4a4e', 'rune':  ['#2a6a7a', '#7ff0e8'], 'glass':  '#a8f0f0', 'leather':  '#2a5a4a'},
   env: { top: '#6a9ae0', horizon: '#ffe0b0', bottom: '#4a6a5a', intensity: 0.7, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#fff0c8', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#c8f0ff', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffd090', power: 2.0 }] },
   hemi: ['#d0e4ff', '#4a6a40', 0.55], sun: '#fff0d0', sunPower: 2.9, fog: '#b8d0d8',
@@ -1367,7 +1377,9 @@ function sceneFalls(X) {
     anims.push((t) => { glow.color.setRGB(1, 0.63, 0.25).multiplyScalar(1.6 + 0.3 * Math.sin(t * 2.3) + (ending() ? 0.8 : 0)); });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['fern', 'pebbles', 'fern', 'flowers', 'pebbles'], 'top':  'mossTop', 'hang':  'drip', 'accent':  'fern'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.falls = { look: FALLS_LOOK, make: sceneFalls };
 
@@ -1376,6 +1388,8 @@ SCENE_REG.falls = { look: FALLS_LOOK, make: sceneFalls };
 // are docks and crow's nests on timber arms. The wind follows the hairpins: on the Crescendo question every sail swells, on the
 // Diminuendo question they fall slack. From the top, a giant clock face stands in the distance (Chapter 9).
 const HARBOUR_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#9a948a', 'stoneDark':  '#6e685e', 'stoneLight':  '#d8d2c8', 'wood':  '#9a7046', 'woodDark':  '#6e4c30', 'gold':  '#c8983a', 'banner':  '#c8463a', 'bannerDark':  '#8a2a22', 'pale':  '#f4ecdc', 'frost':  '#f4ecdc', 'slab':  '#f0e6d2', 'rune':  ['#2a5a9a', '#8ac8ff'], 'glass':  '#d8ecff', 'leather':  '#7a4a2a'},
   env: { top: '#4a88e8', horizon: '#e8f0ff', bottom: '#8aa0c0', intensity: 0.72, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#fffaf0', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#d8e8ff', power: 2.2 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffe8c0', power: 2.0 }] },
   hemi: ['#e0ecff', '#8a90a0', 0.6], sun: '#fffaf0', sunPower: 3.0, fog: '#c8d8ee',
@@ -1472,7 +1486,9 @@ function sceneHarbour(X) {
     anims.push((t) => { mins.rotation.z = -t * 0.2; hrs.rotation.z = -t * 0.2 / 12 - 1; });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['barrel', 'crate', 'rope', 'barrel', 'crate'], 'top':  'pennant', 'hang':  'ropeLoop', 'accent':  'barrel'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.harbour = { look: HARBOUR_LOOK, make: sceneHarbour };
 
@@ -1481,6 +1497,8 @@ SCENE_REG.harbour = { look: HARBOUR_LOOK, make: sceneHarbour };
 // the spire by ice bridges. Every right answer grows a new crystal on the spire beside the island, ringing the answer's note.
 // At the summit the aurora brightens into a curtain, and through it a waterfall pours off a far cliff (Chapter 5).
 const ICE_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#8aa0c0', 'stoneDark':  '#5a6a8a', 'stoneLight':  '#dce8f4', 'wood':  '#a8b8c8', 'woodDark':  '#6a7a90', 'gold':  '#c8d4e0', 'banner':  '#2a4a8a', 'bannerDark':  '#1a3068', 'pale':  '#eef4fb', 'frost':  '#eef4fb', 'rune':  ['#3a6a9a', '#8ae0ff'], 'flame':  ['#2a4a8a', '#8ad8ff'], 'glass':  '#d0e8ff', 'leather':  '#2a3a6a'},
   env: { top: '#14204a', horizon: '#4a6a9a', bottom: '#20304a', intensity: 0.55, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#a8c8ff', power: 3.6 }, { pos: [34, 10, 22], size: [14, 22], color: '#8affc8', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#9a8aff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#c8e0ff', power: 2.0 }] },
   hemi: ['#a8c0ff', '#2a3450', 0.5], sun: '#cfe0ff', sunPower: 1.9, fog: '#2c3a62',
@@ -1584,7 +1602,9 @@ function sceneIce(X) {
     anims.push((t) => { fallTex.offset.y = -t * 0.6; });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['crystal', 'snow', 'crystal', 'snow', 'pebbles'], 'top':  'snowcap', 'hang':  'icicle', 'accent':  'crystal'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.ice = { look: ICE_LOOK, make: sceneIce };
 
@@ -1646,7 +1666,71 @@ function sceneKit(X) {
   const add2 = (geo, mat, x, y, z) => add(scene, geo, mat, x, y, z, { cast: false });
   // a camera path through keys [u, pos, aim], easing between each pair
   const path = (list) => (u) => { let i = 0; while (i < list.length - 2 && u > list[i + 1][0]) i++; const [u0, p0, a0] = list[i], [u1, p1, a1] = list[i + 1], e = K.ease.inOut(K.clamp((u - u0) / (u1 - u0))); return { pos: p0.map((x, j) => K.lerp(x, p1[j], e)), aim: a0.map((x, j) => K.lerp(x, a1[j], e)) }; };
-  return { path, beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
+  // ---------------------------------------------------------------- themed pieces for islands and props
+  // Each piece is (parent, x, y, z, s, seed) with y the ground (or the anchor) and s about half a unit at 1.
+  const mats = {}, glows = {};
+  const mat = (c, metal = 0, rough = 0.75) => mats[c + metal + rough] || (mats[c + metal + rough] = std(c, metal, rough, { flatShading: true }));
+  const glow = (c, g, k = 2) => glows[c + g + k] || (glows[c + g + k] = X.lum(c, g, k, { facet: true, rough: 0.4 }));
+  const SPH = new THREE.SphereGeometry(1, 10, 7), CYL = new THREE.CylinderGeometry(1, 1, 1, 8), BOX = new THREE.BoxGeometry(1, 1, 1), TOR = new THREE.TorusGeometry(1, 0.28, 6, 14), HALF = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), DOD = new THREE.DodecahedronGeometry(1, 0);
+  const put = (parent, geo, m, x, y, z, sx, sy = sx, sz = sx) => { const o = add(parent, geo, m, x, y, z, { cast: false }); o.scale.set(sx, sy, sz); return o; };
+  const spinners = []; anims.push((t) => spinners.forEach(([o, sp]) => { o.rotation.z = t * sp; }));
+  const PIECE = {
+    mushroom: (p, x, y, z, s, k) => { put(p, CYL, mat('#efe6d6'), x, y + 0.25 * s, z, 0.09 * s, 0.5 * s); put(p, HALF, mat(k % 2 ? '#c84a3a' : '#e0a050'), x, y + 0.48 * s, z, 0.38 * s, 0.26 * s); },
+    fern: (p, x, y, z, s, k) => { for (let j = 0; j < 5; j++) { const a = j * 1.26 + k, f = put(p, CONE, mat(j % 2 ? '#3e7a3a' : '#5a9a44'), x + Math.cos(a) * 0.12 * s, y + 0.3 * s, z + Math.sin(a) * 0.12 * s, 0.07 * s, 0.7 * s, 0.18 * s); f.rotation.set(Math.sin(a) * 0.8, a, Math.cos(a) * 0.8); } },
+    shell: (p, x, y, z, s, k) => { const o = put(p, HALF, mat(k % 2 ? '#f4c8b8' : '#f0e0c8'), x, y, z, 0.3 * s, 0.16 * s, 0.24 * s); o.rotation.y = k; },
+    rope: (p, x, y, z, s) => { for (let j = 0; j < 3; j++) { const o = put(p, TOR, mat('#c8b088', 0, 0.9), x, y + 0.06 * s + j * 0.09 * s, z, 0.3 * s * (1 - 0.15 * j)); o.rotation.x = Math.PI / 2; } },
+    buoy: (p, x, y, z, s) => { put(p, HALF, mat('#d83a3a'), x, y + 0.3 * s, z, 0.3 * s); const b = put(p, HALF, mat('#f4f0e8'), x, y + 0.3 * s, z, 0.3 * s); b.rotation.x = Math.PI; put(p, CYL, mat('#3a3a40', 0.6, 0.4), x, y + 0.7 * s, z, 0.03 * s, 0.5 * s); },
+    crystal: (p, x, y, z, s, k, c = ['#6fb8ff', '#2a7ae0']) => cluster(p, x, y, z, 0.9 * s, glow(c[1], c[0], 0.9), k, 4),
+    snow: (p, x, y, z, s, k) => { const o = put(p, ICO, mat('#eef4fb', 0, 0.85), x, y, z, 0.5 * s, 0.22 * s, 0.4 * s); o.rotation.y = k; },
+    pebbles: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) put(p, DOD, mat(j % 2 ? '#8a8a84' : '#6a6a66'), x + (K.hash(k, j) - 0.5) * 0.5 * s, y + 0.08 * s, z + (K.hash(k, j + 3) - 0.5) * 0.4 * s, 0.12 * s * (1 + K.hash(k, j + 6))); },
+    ore: (p, x, y, z, s, k) => cluster(p, x, y, z, 0.8 * s, glow('#a0400a', '#ffa040', 1.8), k, 4),
+    lantern: (p, x, y, z, s) => { put(p, CYL, mat('#3a3a40', 0.6, 0.4), x, y + 0.45 * s, z, 0.04 * s, 0.9 * s); put(p, SPH, glow('#7a4a10', '#ffc060', 2.6), x, y + 0.98 * s, z, 0.13 * s); put(p, CONE, mat('#3a3a40', 0.6, 0.4), x, y + 1.14 * s, z, 0.15 * s, 0.12 * s); },
+    flowers: (p, x, y, z, s, k) => { for (let j = 0; j < 4; j++) { const dx = (K.hash(k, j) - 0.5) * 0.5 * s, dz = (K.hash(k, j + 4) - 0.5) * 0.4 * s; put(p, CYL, mat('#4a8a3a'), x + dx, y + 0.15 * s, z + dz, 0.02 * s, 0.3 * s); put(p, SPH, mat(['#e84a6a', '#f4d040', '#8a6ad8', '#f4f0f0'][(j + k) % 4]), x + dx, y + 0.32 * s, z + dz, 0.08 * s); } },
+    block: (p, x, y, z, s, k) => { const o = put(p, BOX, mat('#b8b0a4'), x, y + 0.22 * s, z, 0.5 * s, 0.44 * s, 0.4 * s); o.rotation.y = k; },
+    barrel: (p, x, y, z, s) => { put(p, CYL, mat('#8a5a32'), x, y + 0.35 * s, z, 0.26 * s, 0.7 * s); for (const dy of [0.12, 0.58]) { const r = put(p, TOR, mat('#3a3a40', 0.6, 0.5), x, y + dy * s, z, 0.265 * s, 0.265 * s, 0.1 * s); r.rotation.x = Math.PI / 2; } },
+    crate: (p, x, y, z, s, k) => { const o = put(p, BOX, mat('#a07a4a'), x, y + 0.25 * s, z, 0.5 * s); o.rotation.y = k * 0.7; put(p, BOX, mat('#6a4a2a'), x, y + 0.25 * s, z, 0.52 * s, 0.08 * s, 0.52 * s).rotation.y = k * 0.7; },
+    gear: (p, x, y, z, s, k) => { const g = group(p, x, y + 0.4 * s, z); g.rotation.y = k; const w = group(g); put(w, CYL, mat('#c8963a', 0.9, 0.35), 0, 0, 0, 0.36 * s, 0.08 * s, 0.36 * s).rotation.x = Math.PI / 2; for (let j = 0; j < 10; j++) { const a = j / 10 * Math.PI * 2; put(w, BOX, mat('#c8963a', 0.9, 0.35), Math.cos(a) * 0.4 * s, Math.sin(a) * 0.4 * s, 0, 0.1 * s, 0.1 * s, 0.08 * s).rotation.z = a; } spinners.push([w, k % 2 ? 0.5 : -0.5]); },
+    lamp: (p, x, y, z, s) => { put(p, CYL, mat('#9a6a2a', 0.9, 0.4), x, y + 0.5 * s, z, 0.05 * s, s); put(p, SPH, glow('#7a5a20', '#ffd890', 2.4), x, y + 1.05 * s, z, 0.14 * s); },
+    jag: (p, x, y, z, s, k) => { const o = put(p, CONE, mat('#2e2e38'), x, y + 0.45 * s, z, 0.22 * s, 0.9 * s, 0.18 * s); o.rotation.set(0.2 * (K.hash(k, 1) - 0.5), k, 0.25); },
+    fulgurite: (p, x, y, z, s, k) => { const o = put(p, OCT, glow('#3a4ab0', '#c8d8ff', 1.8), x, y + 0.35 * s, z, 0.08 * s, 0.4 * s, 0.08 * s); o.rotation.z = 0.2 * (K.hash(k, 2) - 0.5); },
+    ember: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) put(p, OCT, glow('#8a2a0a', '#ff7a2a', 2.6), x + (K.hash(k, j) - 0.5) * 0.4 * s, y + 0.1 * s, z + (K.hash(k, j + 3) - 0.5) * 0.3 * s, 0.1 * s); put(p, DOD, mat('#2a2426'), x, y + 0.08 * s, z, 0.25 * s, 0.1 * s, 0.22 * s); },
+    egg: (p, x, y, z, s, k) => { put(p, SPH, mat(k % 2 ? '#c8a060' : '#a0b070', 0.2, 0.4), x, y + 0.3 * s, z, 0.22 * s, 0.32 * s, 0.22 * s); put(p, TOR, mat('#5a3a22', 0, 0.9), x, y + 0.04 * s, z, 0.24 * s, 0.24 * s, 0.1 * s).rotation.x = Math.PI / 2; },
+    star: (p, x, y, z, s, k) => { const o = put(p, OCT, glow('#8a7a3a', '#fff0b0', 2.4), x, y + 0.45 * s, z, 0.2 * s, 0.3 * s, 0.06 * s); o.rotation.y = k; spinners.push([o, 0.3]); put(p, CYL, mat('#c8c8d8', 0.8, 0.3), x, y + 0.12 * s, z, 0.03 * s, 0.24 * s); },
+    orb: (p, x, y, z, s) => { put(p, CYL, mat('#c8a050', 0.9, 0.3), x, y + 0.1 * s, z, 0.15 * s, 0.2 * s); put(p, SPH, glow('#3a3a8a', '#9ab0ff', 1.6), x, y + 0.35 * s, z, 0.2 * s); },
+    // on top of posts and pillars
+    leafTuft: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) put(p, ICO, mat(j % 2 ? '#5a9a3c' : '#7fae46'), x + (j - 1) * 0.12 * s, y + 0.12 * s, z, 0.2 * s, 0.14 * s, 0.2 * s); put(p, SPH, mat(k % 2 ? '#f4b0cc' : '#fff0f6'), x, y + 0.26 * s, z + 0.08 * s, 0.07 * s); },
+    snowcap: (p, x, y, z, s) => { put(p, HALF, mat('#f4f8ff', 0, 0.85), x, y - 0.02, z, 0.22 * s, 0.14 * s, 0.22 * s); },
+    mossTop: (p, x, y, z, s) => { put(p, HALF, mat('#5a8a3a'), x, y - 0.02, z, 0.2 * s, 0.1 * s, 0.2 * s); PIECE.fern(p, x, y, z, 0.35 * s, 1); },
+    lanternTop: (p, x, y, z, s) => { put(p, SPH, glow('#7a4a10', '#ffc060', 2.6), x, y + 0.14 * s, z, 0.12 * s); put(p, CONE, mat('#2a2a30', 0.6, 0.4), x, y + 0.3 * s, z, 0.15 * s, 0.12 * s); },
+    bell: (p, x, y, z, s) => { const b = put(p, new THREE.CylinderGeometry(0.4, 1, 1.1, 12, 1, true), mat('#b0803a', 0.9, 0.35), x, y + 0.14 * s, z, 0.14 * s); void b; put(p, SPH, mat('#b0803a', 0.9, 0.35), x, y + 0.24 * s, z, 0.06 * s); },
+    pennant: (p, x, y, z, s, k) => { put(p, CYL, mat('#5a3a22'), x, y + 0.4 * s, z, 0.025 * s, 0.8 * s); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0.5, -0.12, 0, 0, -0.24, 0], 3)); g.computeVertexNormals(); const f = add(p, g, std(k % 2 ? '#c83a3a' : '#f4f0e8', 0, 0.8, { side: THREE.DoubleSide }), x, y + 0.78 * s, z, { cast: false }); f.scale.setScalar(s); anims.push((t) => { f.rotation.y = 0.3 * Math.sin(t * 2.5 + k); }); },
+    gearTop: (p, x, y, z, s, k) => PIECE.gear(p, x, y - 0.25 * s, z, 0.6 * s, k),
+    rod: (p, x, y, z, s) => { put(p, CYL, mat('#8a8a94', 0.9, 0.3), x, y + 0.3 * s, z, 0.02 * s, 0.6 * s); put(p, SPH, glow('#3a4ab0', '#c8d8ff', 2.2), x, y + 0.62 * s, z, 0.05 * s); },
+    horn: (p, x, y, z, s, k) => { const h = put(p, CONE, mat('#e8dcc0', 0, 0.5), x, y + 0.22 * s, z, 0.07 * s, 0.45 * s); h.rotation.z = (k % 2 ? 1 : -1) * 0.35; },
+    starTop: (p, x, y, z, s, k) => PIECE.star(p, x, y - 0.08 * s, z, 0.6 * s, k),
+    buoyTop: (p, x, y, z, s) => { put(p, SPH, mat('#d83a3a'), x, y + 0.1 * s, z, 0.11 * s); },
+    // hanging below rods and lintels
+    vine: (p, x, y, z, s, k) => { const L = 0.25 + 0.25 * K.hash(k, 3); put(p, CYL, mat('#3e7a3a'), x, y - L * s / 2, z, 0.012 * s, L * s); for (let j = 0; j < 3; j++) put(p, SPH, mat('#5a9a44'), x + (j % 2 ? 0.03 : -0.03) * s, y - (0.06 + 0.1 * j) * s, z + 0.01, 0.035 * s, 0.02 * s, 0.035 * s); },
+    icicle: (p, x, y, z, s, k) => { for (let j = 0; j < 3; j++) { const L = (0.12 + 0.14 * K.hash(k, j)) * s; const o = put(p, CONE, glow('#9ad0f0', '#d8f0ff', 0.5), x + (j - 1) * 0.07 * s, y - L / 2, z, 0.025 * s, L); o.rotation.x = Math.PI; } },
+    drip: (p, x, y, z, s, k) => { const o = put(p, SPH, glow('#2a7aa0', '#8ad8ff', 1.2), x, y - 0.08 * s, z, 0.025 * s, 0.05 * s, 0.025 * s); anims.push((t) => { const u = (t * 0.6 + K.hash(k, 1)) % 1; o.position.y = y - 0.08 * s - u * 0.6; o.visible = u < 0.85; }); },
+    chain: (p, x, y, z, s) => { for (let j = 0; j < 4; j++) { const l = put(p, TOR, mat('#4a4a52', 0.8, 0.4), x, y - (0.04 + j * 0.06) * s, z, 0.03 * s); l.rotation.y = j * Math.PI / 2; } },
+    ropeLoop: (p, x, y, z, s) => { const o = add(p, new THREE.TorusGeometry(0.12, 0.012, 4, 12, Math.PI), mat('#c8b088', 0, 0.9), x, y, z, { cast: false }); o.rotation.z = Math.PI; o.scale.setScalar(s); },
+    flag: (p, x, y, z, s, k) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.07, 0, 0, 0.07, 0, 0, 0, -0.2, 0], 3)); g.computeVertexNormals(); add(p, g, std(['#c83a3a', '#2d5fa8', '#e8c060'][k % 3], 0, 0.8, { side: THREE.DoubleSide }), x, y, z, { cast: false }).scale.setScalar(s); },
+    weight: (p, x, y, z, s, k) => { const g = group(p, x, y, z); put(g, CYL, mat('#9a6a2a', 0.9, 0.4), 0, -0.15 * s, 0, 0.008 * s, 0.3 * s); put(g, CYL, mat('#c8963a', 0.9, 0.35), 0, -0.32 * s, 0, 0.06 * s, 0.02 * s).rotation.x = Math.PI / 2; anims.push((t) => { g.rotation.z = 0.3 * Math.sin(t * 2 + k); }); },
+    emberLamp: (p, x, y, z, s) => { put(p, CYL, mat('#2a2426'), x, y - 0.1 * s, z, 0.008 * s, 0.2 * s); put(p, OCT, glow('#8a2a0a', '#ff7a2a', 2.6), x, y - 0.24 * s, z, 0.05 * s); },
+    charm: (p, x, y, z, s, k) => { put(p, CYL, mat('#c8c8d8', 0.8, 0.3), x, y - 0.08 * s, z, 0.006 * s, 0.16 * s); const o = put(p, OCT, glow('#8a7a3a', '#fff0b0', 2.2), x, y - 0.2 * s, z, 0.045 * s, 0.07 * s, 0.02 * s); o.rotation.y = k; },
+  };
+  // a chapter's dressing: ground pieces round each island, a piece on every top anchor and below every hang anchor, and an accent
+  // that stands in for the crystal shards beside some props
+  function theme({ ground = [], top, hang, accent, size = 1 }) {
+    const SPOTS = [[3.75, 1.3, 0.85], [-3.9, 0.2, 0.7], [-3.55, 1.75, 0.6], [-3.85, 1.1, 0.5], [3.3, 2.15, 0.5]];
+    return {
+      decor: (g, i) => SPOTS.forEach(([x, z, s], k) => { const f = PIECE[ground[(i + k) % ground.length]]; if (f) f(g, (i % 2 ? -1 : 1) * x, 0, z, s * 1.6 * size, i * 7 + k); }),
+      dress: (A) => { A.top.forEach(([p, x, y, z], k) => top && PIECE[top](p, x, y, z, 1, k)); A.hang.forEach(([p, x, y, z], k) => hang && PIECE[hang](p, x, y, z, 1, k)); },
+      accent: accent ? (g, x, y, z, s, seed) => PIECE[accent](g, x, y, z, s * 1.4, seed) : undefined,
+    };
+  }
+  return { theme, PIECE, path, beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
 }
 
 // ================================================================ Chapter 3 scenery: the Lighthouse at Cloud's End
@@ -1655,6 +1739,8 @@ function sceneKit(X) {
 // circle per beat and the lamp flashes on the notes (SIG, shared with the game). At the summit the lamp blazes and its beam swings
 // across the water to Chapter 4's ice spire on the horizon.
 const LIGHT_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#b8b4ac', 'stoneDark':  '#6e6874', 'stoneLight':  '#e8e4dc', 'wood':  '#7a6a5a', 'woodDark':  '#4a4038', 'gold':  '#b89a5a', 'banner':  '#1e3a6a', 'bannerDark':  '#142a4e', 'pale':  '#f0ece4', 'frost':  '#f4f0e8', 'slab':  '#e8e0d0', 'rune':  ['#2a6a7a', '#6ff0e0'], 'glass':  '#b8e0ff', 'leather':  '#2a4a6a'},
   env: { top: '#2a2c6e', horizon: '#ff9c74', bottom: '#1a2648', intensity: 0.62, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffc090', power: 4.4 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9ab8', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a9cff', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffa060', power: 2.6 }] },
   hemi: ['#a4a8ff', '#3a3452', 0.45], sun: '#ffb486', sunPower: 2.4, fog: '#5e4f80',
@@ -1838,7 +1924,10 @@ function sceneLight(X) {
     anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (['summit', 'finale', 'summary'].includes(getG().mode) ? 0.6 : 0); });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  const kit = sceneKit(X);
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['shell', 'rope', 'buoy', 'shell', 'pebbles'], 'top':  'buoyTop', 'hang':  'ropeLoop', 'accent':  'rope'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 
 // ================================================================ Chapter 6 scenery: the Deep Mine
@@ -1847,6 +1936,8 @@ function sceneLight(X) {
 // islands rise out of it into sunrise. Forte answers boom through the cave and piano answers whisper. From the top, two towers
 // stand across the valley (Chapter 7).
 const MINE_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#5a4e48', 'stoneDark':  '#3a322e', 'stoneLight':  '#8a7a6e', 'wood':  '#6a4a30', 'woodDark':  '#3e2a1c', 'gold':  '#a0603a', 'banner':  '#7a2a1a', 'bannerDark':  '#521a10', 'pale':  '#d8ccbc', 'frost':  '#c8bcac', 'slab':  '#4a4a52', 'rune':  ['#a0400a', '#ffa040'], 'flame':  ['#7a3a10', '#ff9040'], 'glass':  '#ffd0a0', 'leather':  '#5a3a22'},
   env: { top: '#ffb070', horizon: '#6a4a3a', bottom: '#1a120e', intensity: 0.38, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffb070', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9040', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#ffd8a0', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#60d0c0', power: 1.4 }] },
   hemi: ['#ffcf9a', '#2a1c14', 0.34], sun: '#ffc890', sunPower: 1.8, fog: '#2a1e18',
@@ -1934,7 +2025,9 @@ function sceneMine(X) {
     });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['ore', 'lantern', 'ore', 'pebbles', 'crate'], 'top':  'lanternTop', 'hang':  'chain', 'accent':  'ore'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.mine = { look: MINE_LOOK, make: sceneMine };
 
@@ -1944,6 +2037,8 @@ SCENE_REG.mine = { look: MINE_LOOK, make: sceneMine };
 // the summit they form a five-line staff. At the summit the telescope turns over the realm and the earlier chapters' landmarks
 // light up round the horizon one by one.
 const STARS_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#d8d8e8', 'stoneDark':  '#8a8aa8', 'stoneLight':  '#f4f4fc', 'wood':  '#2a2a4a', 'woodDark':  '#1a1a30', 'gold':  '#d0c090', 'banner':  '#1a1a4a', 'bannerDark':  '#101034', 'pale':  '#eef0ff', 'frost':  '#e8ecff', 'slab':  '#1a1e48', 'rune':  ['#5a5aa0', '#c8d0ff'], 'flame':  ['#5a5aa0', '#c8d0ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a5a'},
   env: { top: '#10163a', horizon: '#3a3a7a', bottom: '#141a36', intensity: 0.5, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffd8a0', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#a090ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#a8c8ff', power: 1.8 }] },
   hemi: ['#b0b8ff', '#1e2240', 0.5], sun: '#d0d8ff', sunPower: 1.8, fog: '#1e2448',
@@ -2036,7 +2131,9 @@ function sceneStars(X) {
   function distant() {}
   SIG.summit = { dur: 11, caption: 'The telescope sweeps the realm, and every summit you climbed lights up. You have finished Band Essentials 1!', cam: X.summitView({ pan: 1.9, aimY: 35, r: 560, h: SUM + 20, back: 24, swing: 0.2 }) };
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['star', 'orb', 'star', 'pebbles', 'orb'], 'top':  'starTop', 'hang':  'charm', 'accent':  'star'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.stars = { look: STARS_LOOK, make: sceneStars };
 
@@ -2045,6 +2142,8 @@ SCENE_REG.stars = { look: STARS_LOOK, make: sceneStars };
 // rock shelves climbing through the cloud layer. During Read Rhythms lightning strikes on every accented note. The storm thins
 // near the top, and at the summit the player breaks through into calm sky; to the south a volcano smokes (Chapter 11).
 const STORM_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#4a4a54', 'stoneDark':  '#2e2e38', 'stoneLight':  '#7a7a86', 'wood':  '#4a4038', 'woodDark':  '#2e2622', 'gold':  '#8a8a98', 'banner':  '#1e2a5a', 'bannerDark':  '#141c40', 'pale':  '#d8dce8', 'frost':  '#c8ccd8', 'slab':  '#2e3038', 'rune':  ['#3a4ab0', '#c8d8ff'], 'flame':  ['#2a3a8a', '#a8c8ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a3a'},
   env: { top: '#3a4466', horizon: '#6a7088', bottom: '#1a1c26', intensity: 0.5, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.0 }, { pos: [34, 10, 22], size: [14, 22], color: '#a0a8c8', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a90c0', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#b8c0e0', power: 1.6 }] },
   hemi: ['#a8b0d8', '#24242e', 0.48], sun: '#d8e0ff', sunPower: 1.7, fog: '#3a3e52',
@@ -2142,7 +2241,9 @@ function sceneStorm(X) {
     anims.push((t) => smoke.forEach((m, k) => { const u = ((t * 0.05 + k / 10) % 1); m.position.set(u * 60, 75 + u * 150, u * 10); m.scale.setScalar(10 + u * 40); }));
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['jag', 'fulgurite', 'jag', 'pebbles', 'fulgurite'], 'top':  'rod', 'accent':  'jag'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.storm = { look: STORM_LOOK, make: sceneStorm };
 
@@ -2152,6 +2253,8 @@ SCENE_REG.storm = { look: STORM_LOOK, make: sceneStorm };
 // bell tuned to F♯, an octave apart; both ring whenever the player names an F♯. From the top, airships rise from a harbour in
 // the clouds (Chapter 8).
 const TOWERS_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#c8c0b4', 'stoneDark':  '#8a8278', 'stoneLight':  '#ece6dc', 'wood':  '#8a6a42', 'woodDark':  '#5a4428', 'gold':  '#c8983a', 'banner':  '#a02a2a', 'bannerDark':  '#7a1a1a', 'pale':  '#f4f0e8', 'frost':  '#ece8e0', 'slab':  '#b8b0a4', 'rune':  ['#7a5a2a', '#ffd890'], 'glass':  '#fff0d0', 'leather':  '#7a2a2a'},
   env: { top: '#5a8ae0', horizon: '#f0d8b0', bottom: '#4a5a6a', intensity: 0.68, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#fff0d0', power: 4.6 }, { pos: [34, 10, 22], size: [14, 22], color: '#d0e0ff', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c0ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffd8a0', power: 2.0 }] },
   hemi: ['#d0e0ff', '#5a5a48', 0.55], sun: '#fff0d8', sunPower: 2.8, fog: '#a8b8d0',
@@ -2243,7 +2346,9 @@ function sceneTowers(X) {
     }
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['flowers', 'block', 'flowers', 'pebbles', 'block'], 'top':  'bell', 'hang':  'flag', 'accent':  'block'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.towers = { look: TOWERS_LOOK, make: sceneTowers };
 
@@ -2251,6 +2356,8 @@ SCENE_REG.towers = { look: TOWERS_LOOK, make: sceneTowers };
 // A colossal tree on a golden morning. The islands are mossy shelf fungi on branches spiralling up the trunk; the summit is a
 // treehouse under the canopy. sceneTree(X) gets the stage's helpers and returns what the chapter replaces in the castle world.
 const TREE_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#8a9a78', 'stoneDark':  '#5e6a4e', 'stoneLight':  '#c8d0b0', 'wood':  '#8a6038', 'woodDark':  '#5a3c22', 'gold':  '#a8963a', 'banner':  '#2f6a3a', 'bannerDark':  '#1e4a28', 'pale':  '#e8e4cc', 'frost':  '#efe6c8', 'slab':  '#7a5a36', 'rune':  ['#3a6a2a', '#a0f070'], 'flame':  ['#6a4a20', '#ffd070'], 'glass':  '#c8f0c8', 'leather':  '#4a6a2a'},
   env: { top: '#7fa6f0', horizon: '#ffd79a', bottom: '#6a5a3a', intensity: 0.7, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffd9a0', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffe6b8', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffc070', power: 2.2 }] },
   hemi: ['#cfe2ff', '#7a5a30', 0.55], sun: '#ffe2b0', sunPower: 2.8, fog: '#d8c8a8',
@@ -2391,14 +2498,17 @@ function sceneTree(X) {
     }
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, crown, T };
+  const kit = sceneKit(X);
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['mushroom', 'fern', 'flowers', 'mushroom', 'fern'], 'top':  'leafTuft', 'hang':  'vine', 'accent':  'mushroom'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, crown, T };
 }
 
 // ================================================================ Band Adventures: the High Fantasy movie made playable, one chapter per course unit
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 21; // shown top left; add one for every release to the public site
+  const VERSION = 22; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -2600,6 +2710,10 @@ function sceneTree(X) {
         leather: std(C.leather, 0, 0.6), frost: std(C.frost, 0, 0.5), pale: std('#e9dfcf', 0, 0.6), cloud: facet('#cfa9d2', 1), peak: facet('#3b2f70', 1),
         hit: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }),
       };
+      // a chapter's prop palette (LOOK.props): the game props and banners take its stone, wood, metal and cloth colours
+      const PP = (LOOK && LOOK.props) || {};
+      for (const k of ['stone', 'stoneDark', 'stoneLight', 'wood', 'woodDark', 'gold', 'goldSmooth', 'banner', 'bannerDark', 'pale', 'frost', 'leather', 'parchDark', 'skin']) if (PP[k]) M[k].color.set(PP[k]);
+      if (PP.gold && !PP.goldSmooth) M.goldSmooth.color.set(PP.gold);
       const glows = [];
       const glowing = (color, base, o = {}) => {
         const m = std(color, o.metal || 0, o.rough == null ? 0.45 : o.rough, { emissive: new THREE.Color(o.restGlow || o.glow || C.lit), emissiveIntensity: 0, flatShading: !!o.facet });
@@ -2700,8 +2814,10 @@ function sceneTree(X) {
       };
       const shards = (parent, x, y, z, s, mat, seed = 0, n = 4) => { for (let k = 0; k < n; k++) { const m = add(parent, OCTA, mat, x + (K.hash(seed, k) - 0.5) * s * 0.9, y + s * 0.3, z + (K.hash(seed, k + 5) - 0.5) * s * 0.6); const hh = s * (0.45 + 0.6 * K.hash(seed, k + 9)); m.scale.set(hh * 0.3, hh, hh * 0.3); m.rotation.set((K.hash(seed, k + 2) - 0.5) * 0.7, k, (K.hash(seed, k + 3) - 0.5) * 0.7); } };
       const SH = LOOK ? LOOK.shards : ['#5a3ad0', '#7a54ff', '#2a8aa0', '#5fe8ff'];
-      const M_VIOLET = lum(SH[0], SH[1], 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum(SH[2], SH[3], 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum('#6a4a20', '#ffc070', 2.2);
+      const M_VIOLET = lum(SH[0], SH[1], 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum(SH[2], SH[3], 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum(...(PP.flame || ['#6a4a20', '#ffc070']), 2.2);
       const CAP = new THREE.SphereGeometry(1, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2);
+      // crystal shards beside some props, or the chapter's own accent piece in their place
+      const accent = (g, x, y, z, s, mat, seed, n) => (LAND && LAND.accent ? LAND.accent(g, x, y, z, s, seed) : shards(g, x, y, z, s, mat, seed, n));
       const shroom = (parent, x, y, z, s) => { add(parent, CYL6, M.pale, x, y + s * 0.3, z).scale.set(s * 0.12, s * 0.6, s * 0.12); add(parent, CAP, M_CAP, x, y + s * 0.55, z, { cast: false }).scale.set(s * 0.42, s * 0.3, s * 0.42); };
 
       // ------------------------------------------------------------ the islands
@@ -2722,8 +2838,10 @@ function sceneTree(X) {
         ISLET(g, 4.7, 7 + (i % 2), i + 1);
         if (gameOf(i) < 4) { const d = add(g, new THREE.CylinderGeometry(1, 1.06, DAIS, 9), M.stone, 0, DAIS / 2, 0.55); d.scale.set(3.25, 1, 1.15); }
         [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) PINE(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
+        // the island's small decorations: the chapter's own (LAND.decor), or the castle world's crystals and glowing mushrooms
+        if (LAND && LAND.decor) LAND.decor(g, i); else {
         shards(g, (i % 2 ? -1 : 1) * 3.75, 0, 1.3, 0.75, i % 2 ? M_CYAN : M_VIOLET, i * 3 + 1); shards(g, (i % 2 ? 1 : -1) * 3.9, 0, 0.2, 0.5, i % 2 ? M_VIOLET : M_CYAN, i * 3 + 2, 3);
-        shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3);
+        shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3); }
         return { i, g, a, game: gameOf(i) };
       });
       // five sets of game props; each sits on the island where its game is played next, and moves up the stair as the player climbs
@@ -2838,7 +2956,7 @@ function sceneTree(X) {
         add(g, slabG, M.stone, 0, PY, -0.02);
         add(g, K.roundedBox(PW, PH, 0.06, 0.04, 2), M.pale, 0, PY, 0.0);
         const face = group(g, 0, PY, 0.032), sf = staff(face, -2.15, 2.85, -0.45);
-        const runeM = lum('#3a6a8a', '#6fe6ff', 1.2);
+        const runeM = lum(...(PP.rune || ['#3a6a8a', '#6fe6ff']), 1.2);
         for (const sx of [-1, 1]) for (let k = 0; k < 5; k++) { const r = group(g, sx * 2.62, PY + 0.75 - k * 0.42, 0.0); add(r, box(0.035, 0.22, 0.02), runeM, 0, 0, 0, { cast: false }); const d = add(r, box(0.035, 0.13, 0.02), runeM, 0.05 * ((k % 2) * 2 - 1), 0.03 * (k % 3 - 1), 0, { cast: false }); d.rotation.z = (k % 2 ? 1 : -1) * (0.7 + 0.2 * k); }
         const pl = group(g, -1.25, DAIS + 0.3, 0.75); pl.rotation.x = -0.45; add(pl, K.roundedBox(2.05, 0.5, 0.12, 0.03, 2), M.stoneLight);
         const plText = group(pl);
@@ -2879,7 +2997,7 @@ function sceneTree(X) {
         });
         const well = new THREE.Vector3(2.0, DAIS + 0.24, 0.8);
         add(g, new THREE.CylinderGeometry(0.15, 0.2, 0.24, 8), std('#1a1436', 0.2, 0.25, { flatShading: true }), well.x, DAIS + 0.12, well.z); add(g, new THREE.CylinderGeometry(0.16, 0.16, 0.04, 8), M.gold, well.x, DAIS + 0.25, well.z);
-        shards(g, -2.3, DAIS, 0.8, 0.5, M_CYAN, 31, 3);
+        accent(g, -2.3, DAIS, 0.8, 0.5, M_CYAN, 31, 3);
         g.updateMatrixWorld(true);
         const rest = face.worldToLocal(g.localToWorld(well.clone()));
         const quill = group(face); quill.rotation.z = -0.5;
@@ -2906,7 +3024,7 @@ function sceneTree(X) {
           for (let i = 0; i < 140; i++) { ctx.fillStyle = `rgba(200,210,255,${0.1 + rnd() * 0.35})`; ctx.beginPath(); ctx.arc(rnd() * w, rnd() * h, 0.6 + rnd() * 1.3, 0, 7); ctx.fill(); }
         });
         const gg = new THREE.ShapeGeometry(arch(PW + 0.12, PH + 0.2, 0.3), 10); { const p = gg.attributes.position, uv = gg.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / (PW + 0.12) + 0.5, p.getY(i) / (PH + 0.8) + 0.5); }
-        add(g, gg, std('#ffffff', 0.5, 0.16, { map: glassTex }), 0, PY, -0.02, { cast: false });
+        add(g, gg, std(PP.glass || '#ffffff', 0.5, 0.16, { map: glassTex }), 0, PY, -0.02, { cast: false });
         for (const sx of [-1, 1]) { add(g, new THREE.CylinderGeometry(0.12, 0.2, 1.0, 6), M.gold, sx * 2.2, DAIS + 0.5, -0.1); const jm = add(g, OCTA, M_CYAN, sx * (PW / 2 + 0.28), PY + 1.02, 0.1, { cast: false }); jm.scale.set(0.1, 0.16, 0.1); }
         const face = group(g, 0, PY, -0.012);
         const gilt = lum('#8a6a2a', '#ffd88a', 1.25, { rough: 0.4 }), sf = staff(face, -2.15, 4.3, -0.6, gilt);
@@ -2932,9 +3050,9 @@ function sceneTree(X) {
       {
         const g = props[4];
         const slabG = extrude([[-2.8, -1.6], [2.76, -1.6], [2.96, 0.2], [2.52, 1.1], [0.9, 1.3], [-1.3, 1.2], [-2.62, 1.08], [-2.96, 0.1]], [], 0.6); slabG.translate(0, 0, -0.6);
-        add(g, slabG, facet(C.ice, 0.3, { emissive: '#2a6a8a', emissiveIntensity: 0.0 }), 0, PY, -0.02);
+        add(g, slabG, facet(PP.slab || C.ice, PP.slab ? 0.75 : 0.3, { emissive: '#2a6a8a', emissiveIntensity: 0.0 }), 0, PY, -0.02);
         add(g, K.roundedBox(PW, PH, 0.05, 0.04, 2), M.frost, 0, PY, 0.0);
-        shards(g, -2.9, 1.0, -0.3, 1.1, M_CYAN, 51, 4); shards(g, 2.95, 1.0, -0.3, 0.9, M_VIOLET, 52, 4);
+        accent(g, -2.9, 1.0, -0.3, 1.1, M_CYAN, 51, 4); accent(g, 2.95, 1.0, -0.3, 0.9, M_VIOLET, 52, 4);
         const face = group(g, 0, PY, 0.027), sf = staff(face, -2.15, 4.3, -0.55);
         add(g, K.roundedBox(5.3, 0.5, 1.5, 0.05, 2), M.stone, 0, 0.25, 0.3); add(g, box(5.5, 0.12, 1.7), M.stoneDark, 0, 0.06, 0.3); add(g, box(5.0, 0.9, 0.5), M.stone, 0, 0.75, -0.05);
         const deck = group(g, 0, 1.02, 0.55); deck.rotation.x = -0.5;
@@ -2977,6 +3095,14 @@ function sceneTree(X) {
         anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = u.turnAt < 0 ? 0 : K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
         restLocal[5] = [2.9, PY + 1.5, 1.1];
       }
+
+      // the chapter dresses the props with its own small details: on top of posts and pillars, and hanging from rods and lintels
+      if (LAND && LAND.dress) LAND.dress({
+        top: [[props[0], -(PW / 2 + 0.34), DAIS + 3.3, -0.14], [props[0], PW / 2 + 0.34, DAIS + 3.3, -0.14], [props[1], -1.6, PY + 1.36, -0.4], [props[1], 1.5, PY + 1.4, -0.4],
+          [props[3], 0, PY + PH / 2 + 0.62, -0.08], [props[4], -2.55, PY + 1.12, -0.32], [props[4], 2.5, PY + 1.12, -0.32], ...(CH.keys ? [[props[5], -(PW / 2 + 0.42), 4.55, -0.2], [props[5], PW / 2 + 0.42, 4.55, -0.2]] : [])],
+        hang: [[props[0], -1.7, PY + PH / 2 + 0.06, 0.06], [props[0], -0.55, PY + PH / 2 + 0.06, 0.06], [props[0], 0.6, PY + PH / 2 + 0.06, 0.06], [props[0], 1.75, PY + PH / 2 + 0.06, 0.06],
+          ...(CH.keys ? [[props[5], -1.9, 3.88, 0.22], [props[5], 1.9, 3.88, 0.22]] : [])],
+      });
 
       // ------------------------------------------------------------ between and around the islands
       for (let i = 0; i < NS - 1; i++) for (let k = 1; k <= 3; k++) {

@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 21; // shown top left; add one for every release to the public site
+  const VERSION = 22; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -204,6 +204,10 @@
         leather: std(C.leather, 0, 0.6), frost: std(C.frost, 0, 0.5), pale: std('#e9dfcf', 0, 0.6), cloud: facet('#cfa9d2', 1), peak: facet('#3b2f70', 1),
         hit: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }),
       };
+      // a chapter's prop palette (LOOK.props): the game props and banners take its stone, wood, metal and cloth colours
+      const PP = (LOOK && LOOK.props) || {};
+      for (const k of ['stone', 'stoneDark', 'stoneLight', 'wood', 'woodDark', 'gold', 'goldSmooth', 'banner', 'bannerDark', 'pale', 'frost', 'leather', 'parchDark', 'skin']) if (PP[k]) M[k].color.set(PP[k]);
+      if (PP.gold && !PP.goldSmooth) M.goldSmooth.color.set(PP.gold);
       const glows = [];
       const glowing = (color, base, o = {}) => {
         const m = std(color, o.metal || 0, o.rough == null ? 0.45 : o.rough, { emissive: new THREE.Color(o.restGlow || o.glow || C.lit), emissiveIntensity: 0, flatShading: !!o.facet });
@@ -304,8 +308,10 @@
       };
       const shards = (parent, x, y, z, s, mat, seed = 0, n = 4) => { for (let k = 0; k < n; k++) { const m = add(parent, OCTA, mat, x + (K.hash(seed, k) - 0.5) * s * 0.9, y + s * 0.3, z + (K.hash(seed, k + 5) - 0.5) * s * 0.6); const hh = s * (0.45 + 0.6 * K.hash(seed, k + 9)); m.scale.set(hh * 0.3, hh, hh * 0.3); m.rotation.set((K.hash(seed, k + 2) - 0.5) * 0.7, k, (K.hash(seed, k + 3) - 0.5) * 0.7); } };
       const SH = LOOK ? LOOK.shards : ['#5a3ad0', '#7a54ff', '#2a8aa0', '#5fe8ff'];
-      const M_VIOLET = lum(SH[0], SH[1], 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum(SH[2], SH[3], 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum('#6a4a20', '#ffc070', 2.2);
+      const M_VIOLET = lum(SH[0], SH[1], 0.9, { facet: true, rough: 0.25 }), M_CYAN = lum(SH[2], SH[3], 1.1, { facet: true, rough: 0.25 }), M_CAP = lum('#2a7a90', '#6ff0ff', 1.5, { facet: true }), M_WARM = lum(...(PP.flame || ['#6a4a20', '#ffc070']), 2.2);
       const CAP = new THREE.SphereGeometry(1, 7, 3, 0, Math.PI * 2, 0, Math.PI / 2);
+      // crystal shards beside some props, or the chapter's own accent piece in their place
+      const accent = (g, x, y, z, s, mat, seed, n) => (LAND && LAND.accent ? LAND.accent(g, x, y, z, s, seed) : shards(g, x, y, z, s, mat, seed, n));
       const shroom = (parent, x, y, z, s) => { add(parent, CYL6, M.pale, x, y + s * 0.3, z).scale.set(s * 0.12, s * 0.6, s * 0.12); add(parent, CAP, M_CAP, x, y + s * 0.55, z, { cast: false }).scale.set(s * 0.42, s * 0.3, s * 0.42); };
 
       // ------------------------------------------------------------ the islands
@@ -326,8 +332,10 @@
         ISLET(g, 4.7, 7 + (i % 2), i + 1);
         if (gameOf(i) < 4) { const d = add(g, new THREE.CylinderGeometry(1, 1.06, DAIS, 9), M.stone, 0, DAIS / 2, 0.55); d.scale.set(3.25, 1, 1.15); }
         [[-3.5, -1.5, 3.4], [3.3, -2.0, 3.9], [-2.1, -3.1, 4.6], [1.5, -3.3, 4.2], [-0.2, -2.6, 3.2], [3.9, -0.4, 2.3]].forEach(([x, z, h], k) => { if ((k + i) % 6 !== 5) PINE(g, x + (K.hash(i, k) - 0.5) * 0.5, 0, z, h * (0.85 + 0.3 * K.hash(i, k + 7)), k + i); });
+        // the island's small decorations: the chapter's own (LAND.decor), or the castle world's crystals and glowing mushrooms
+        if (LAND && LAND.decor) LAND.decor(g, i); else {
         shards(g, (i % 2 ? -1 : 1) * 3.75, 0, 1.3, 0.75, i % 2 ? M_CYAN : M_VIOLET, i * 3 + 1); shards(g, (i % 2 ? 1 : -1) * 3.9, 0, 0.2, 0.5, i % 2 ? M_VIOLET : M_CYAN, i * 3 + 2, 3);
-        shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3);
+        shroom(g, (i % 2 ? 1 : -1) * 3.55, 0, 1.75, 0.5); shroom(g, (i % 2 ? 1 : -1) * 3.85, 0, 1.45, 0.34); shroom(g, (i % 2 ? -1 : 1) * 3.2, 0, 2.1, 0.3); }
         return { i, g, a, game: gameOf(i) };
       });
       // five sets of game props; each sits on the island where its game is played next, and moves up the stair as the player climbs
@@ -442,7 +450,7 @@
         add(g, slabG, M.stone, 0, PY, -0.02);
         add(g, K.roundedBox(PW, PH, 0.06, 0.04, 2), M.pale, 0, PY, 0.0);
         const face = group(g, 0, PY, 0.032), sf = staff(face, -2.15, 2.85, -0.45);
-        const runeM = lum('#3a6a8a', '#6fe6ff', 1.2);
+        const runeM = lum(...(PP.rune || ['#3a6a8a', '#6fe6ff']), 1.2);
         for (const sx of [-1, 1]) for (let k = 0; k < 5; k++) { const r = group(g, sx * 2.62, PY + 0.75 - k * 0.42, 0.0); add(r, box(0.035, 0.22, 0.02), runeM, 0, 0, 0, { cast: false }); const d = add(r, box(0.035, 0.13, 0.02), runeM, 0.05 * ((k % 2) * 2 - 1), 0.03 * (k % 3 - 1), 0, { cast: false }); d.rotation.z = (k % 2 ? 1 : -1) * (0.7 + 0.2 * k); }
         const pl = group(g, -1.25, DAIS + 0.3, 0.75); pl.rotation.x = -0.45; add(pl, K.roundedBox(2.05, 0.5, 0.12, 0.03, 2), M.stoneLight);
         const plText = group(pl);
@@ -483,7 +491,7 @@
         });
         const well = new THREE.Vector3(2.0, DAIS + 0.24, 0.8);
         add(g, new THREE.CylinderGeometry(0.15, 0.2, 0.24, 8), std('#1a1436', 0.2, 0.25, { flatShading: true }), well.x, DAIS + 0.12, well.z); add(g, new THREE.CylinderGeometry(0.16, 0.16, 0.04, 8), M.gold, well.x, DAIS + 0.25, well.z);
-        shards(g, -2.3, DAIS, 0.8, 0.5, M_CYAN, 31, 3);
+        accent(g, -2.3, DAIS, 0.8, 0.5, M_CYAN, 31, 3);
         g.updateMatrixWorld(true);
         const rest = face.worldToLocal(g.localToWorld(well.clone()));
         const quill = group(face); quill.rotation.z = -0.5;
@@ -510,7 +518,7 @@
           for (let i = 0; i < 140; i++) { ctx.fillStyle = `rgba(200,210,255,${0.1 + rnd() * 0.35})`; ctx.beginPath(); ctx.arc(rnd() * w, rnd() * h, 0.6 + rnd() * 1.3, 0, 7); ctx.fill(); }
         });
         const gg = new THREE.ShapeGeometry(arch(PW + 0.12, PH + 0.2, 0.3), 10); { const p = gg.attributes.position, uv = gg.attributes.uv; for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / (PW + 0.12) + 0.5, p.getY(i) / (PH + 0.8) + 0.5); }
-        add(g, gg, std('#ffffff', 0.5, 0.16, { map: glassTex }), 0, PY, -0.02, { cast: false });
+        add(g, gg, std(PP.glass || '#ffffff', 0.5, 0.16, { map: glassTex }), 0, PY, -0.02, { cast: false });
         for (const sx of [-1, 1]) { add(g, new THREE.CylinderGeometry(0.12, 0.2, 1.0, 6), M.gold, sx * 2.2, DAIS + 0.5, -0.1); const jm = add(g, OCTA, M_CYAN, sx * (PW / 2 + 0.28), PY + 1.02, 0.1, { cast: false }); jm.scale.set(0.1, 0.16, 0.1); }
         const face = group(g, 0, PY, -0.012);
         const gilt = lum('#8a6a2a', '#ffd88a', 1.25, { rough: 0.4 }), sf = staff(face, -2.15, 4.3, -0.6, gilt);
@@ -536,9 +544,9 @@
       {
         const g = props[4];
         const slabG = extrude([[-2.8, -1.6], [2.76, -1.6], [2.96, 0.2], [2.52, 1.1], [0.9, 1.3], [-1.3, 1.2], [-2.62, 1.08], [-2.96, 0.1]], [], 0.6); slabG.translate(0, 0, -0.6);
-        add(g, slabG, facet(C.ice, 0.3, { emissive: '#2a6a8a', emissiveIntensity: 0.0 }), 0, PY, -0.02);
+        add(g, slabG, facet(PP.slab || C.ice, PP.slab ? 0.75 : 0.3, { emissive: '#2a6a8a', emissiveIntensity: 0.0 }), 0, PY, -0.02);
         add(g, K.roundedBox(PW, PH, 0.05, 0.04, 2), M.frost, 0, PY, 0.0);
-        shards(g, -2.9, 1.0, -0.3, 1.1, M_CYAN, 51, 4); shards(g, 2.95, 1.0, -0.3, 0.9, M_VIOLET, 52, 4);
+        accent(g, -2.9, 1.0, -0.3, 1.1, M_CYAN, 51, 4); accent(g, 2.95, 1.0, -0.3, 0.9, M_VIOLET, 52, 4);
         const face = group(g, 0, PY, 0.027), sf = staff(face, -2.15, 4.3, -0.55);
         add(g, K.roundedBox(5.3, 0.5, 1.5, 0.05, 2), M.stone, 0, 0.25, 0.3); add(g, box(5.5, 0.12, 1.7), M.stoneDark, 0, 0.06, 0.3); add(g, box(5.0, 0.9, 0.5), M.stone, 0, 0.75, -0.05);
         const deck = group(g, 0, 1.02, 0.55); deck.rotation.x = -0.5;
@@ -581,6 +589,14 @@
         anims.push((t) => keys.forEach((kg, k) => { const u = kg.userData, sw = 0.06 * Math.sin(t * 1.3 + k), h = bump(t, u.hitAt, 0.4); kg.rotation.z = sw + 0.25 * h; u.body.rotation.y = u.turnAt < 0 ? 0 : K.seg(t, u.turnAt, u.turnAt + 0.5) * Math.PI / 2; }));
         restLocal[5] = [2.9, PY + 1.5, 1.1];
       }
+
+      // the chapter dresses the props with its own small details: on top of posts and pillars, and hanging from rods and lintels
+      if (LAND && LAND.dress) LAND.dress({
+        top: [[props[0], -(PW / 2 + 0.34), DAIS + 3.3, -0.14], [props[0], PW / 2 + 0.34, DAIS + 3.3, -0.14], [props[1], -1.6, PY + 1.36, -0.4], [props[1], 1.5, PY + 1.4, -0.4],
+          [props[3], 0, PY + PH / 2 + 0.62, -0.08], [props[4], -2.55, PY + 1.12, -0.32], [props[4], 2.5, PY + 1.12, -0.32], ...(CH.keys ? [[props[5], -(PW / 2 + 0.42), 4.55, -0.2], [props[5], PW / 2 + 0.42, 4.55, -0.2]] : [])],
+        hang: [[props[0], -1.7, PY + PH / 2 + 0.06, 0.06], [props[0], -0.55, PY + PH / 2 + 0.06, 0.06], [props[0], 0.6, PY + PH / 2 + 0.06, 0.06], [props[0], 1.75, PY + PH / 2 + 0.06, 0.06],
+          ...(CH.keys ? [[props[5], -1.9, 3.88, 0.22], [props[5], 1.9, 3.88, 0.22]] : [])],
+      });
 
       // ------------------------------------------------------------ between and around the islands
       for (let i = 0; i < NS - 1; i++) for (let k = 1; k <= 3; k++) {

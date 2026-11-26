@@ -3,6 +3,8 @@
 // The dragon circles the peak between islands in a chain of rising and falling arcs, like slurs. At the summit it settles on
 // its nest, and far above the clouds a domed observatory floats among the stars (Chapter 12).
 const DRAGON_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#3a3436', 'stoneDark':  '#241e20', 'stoneLight':  '#6a5a58', 'wood':  '#2e2422', 'woodDark':  '#1a1414', 'gold':  '#d8a840', 'banner':  '#8a1a1a', 'bannerDark':  '#5a1010', 'pale':  '#d8c8b8', 'frost':  '#c8b0a0', 'slab':  '#1e1a1c', 'rune':  ['#8a2a0a', '#ff6a1a'], 'flame':  ['#8a2a0a', '#ff7a2a'], 'glass':  '#ffb090', 'leather':  '#5a1a1a'},
   env: { top: '#4a2a3a', horizon: '#ff7a3a', bottom: '#2a1410', intensity: 0.55, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffa070', power: 3.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff6a3a', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#c88aa0', power: 1.8 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb060', power: 2.4 }] },
   hemi: ['#ffb090', '#4a1a10', 0.5], sun: '#ffb080', sunPower: 2.3, fog: '#6a3a34',
@@ -108,6 +110,8 @@ function sceneDragon(X) {
     for (let k = 0; k < 30; k++) { const s = add(g, OCT, glowMat('#fff4d0', 2), (K.hash(k, 1) - 0.5) * 160, 10 + K.hash(k, 2) * 90, (K.hash(k, 3) - 0.5) * 60, { cast: false }); s.scale.setScalar(0.8 + K.hash(k, 4) * 1.4); }
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['ember', 'egg', 'ember', 'jag', 'egg'], 'top':  'horn', 'hang':  'emberLamp', 'accent':  'ember'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.dragon = { look: DRAGON_LOOK, make: sceneDragon };

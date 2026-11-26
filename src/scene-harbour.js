@@ -3,6 +3,8 @@
 // are docks and crow's nests on timber arms. The wind follows the hairpins: on the Crescendo question every sail swells, on the
 // Diminuendo question they fall slack. From the top, a giant clock face stands in the distance (Chapter 9).
 const HARBOUR_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#9a948a', 'stoneDark':  '#6e685e', 'stoneLight':  '#d8d2c8', 'wood':  '#9a7046', 'woodDark':  '#6e4c30', 'gold':  '#c8983a', 'banner':  '#c8463a', 'bannerDark':  '#8a2a22', 'pale':  '#f4ecdc', 'frost':  '#f4ecdc', 'slab':  '#f0e6d2', 'rune':  ['#2a5a9a', '#8ac8ff'], 'glass':  '#d8ecff', 'leather':  '#7a4a2a'},
   env: { top: '#4a88e8', horizon: '#e8f0ff', bottom: '#8aa0c0', intensity: 0.72, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#fffaf0', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#d8e8ff', power: 2.2 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffe8c0', power: 2.0 }] },
   hemi: ['#e0ecff', '#8a90a0', 0.6], sun: '#fffaf0', sunPower: 3.0, fog: '#c8d8ee',
@@ -99,6 +101,8 @@ function sceneHarbour(X) {
     anims.push((t) => { mins.rotation.z = -t * 0.2; hrs.rotation.z = -t * 0.2 / 12 - 1; });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['barrel', 'crate', 'rope', 'barrel', 'crate'], 'top':  'pennant', 'hang':  'ropeLoop', 'accent':  'barrel'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.harbour = { look: HARBOUR_LOOK, make: sceneHarbour };

@@ -4,6 +4,8 @@
 // circle per beat and the lamp flashes on the notes (SIG, shared with the game). At the summit the lamp blazes and its beam swings
 // across the water to Chapter 4's ice spire on the horizon.
 const LIGHT_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#b8b4ac', 'stoneDark':  '#6e6874', 'stoneLight':  '#e8e4dc', 'wood':  '#7a6a5a', 'woodDark':  '#4a4038', 'gold':  '#b89a5a', 'banner':  '#1e3a6a', 'bannerDark':  '#142a4e', 'pale':  '#f0ece4', 'frost':  '#f4f0e8', 'slab':  '#e8e0d0', 'rune':  ['#2a6a7a', '#6ff0e0'], 'glass':  '#b8e0ff', 'leather':  '#2a4a6a'},
   env: { top: '#2a2c6e', horizon: '#ff9c74', bottom: '#1a2648', intensity: 0.62, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffc090', power: 4.4 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff9ab8', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a9cff', power: 2.2 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffa060', power: 2.6 }] },
   hemi: ['#a4a8ff', '#3a3452', 0.45], sun: '#ffb486', sunPower: 2.4, fog: '#5e4f80',
@@ -187,5 +189,8 @@ function sceneLight(X) {
     anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (['summit', 'finale', 'summary'].includes(getG().mode) ? 0.6 : 0); });
   }
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  const kit = sceneKit(X);
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['shell', 'rope', 'buoy', 'shell', 'pebbles'], 'top':  'buoyTop', 'hang':  'ropeLoop', 'accent':  'rope'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }

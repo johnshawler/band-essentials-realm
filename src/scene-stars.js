@@ -4,6 +4,8 @@
 // the summit they form a five-line staff. At the summit the telescope turns over the realm and the earlier chapters' landmarks
 // light up round the horizon one by one.
 const STARS_LOOK = {
+  // the game props' palette on this chapter's islands
+  props: {'stone':  '#d8d8e8', 'stoneDark':  '#8a8aa8', 'stoneLight':  '#f4f4fc', 'wood':  '#2a2a4a', 'woodDark':  '#1a1a30', 'gold':  '#d0c090', 'banner':  '#1a1a4a', 'bannerDark':  '#101034', 'pale':  '#eef0ff', 'frost':  '#e8ecff', 'slab':  '#1a1e48', 'rune':  ['#5a5aa0', '#c8d0ff'], 'flame':  ['#5a5aa0', '#c8d0ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a5a'},
   env: { top: '#10163a', horizon: '#3a3a7a', bottom: '#141a36', intensity: 0.5, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffd8a0', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#a090ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#a8c8ff', power: 1.8 }] },
   hemi: ['#b0b8ff', '#1e2240', 0.5], sun: '#d0d8ff', sunPower: 1.8, fog: '#1e2448',
@@ -96,6 +98,8 @@ function sceneStars(X) {
   function distant() {}
   SIG.summit = { dur: 11, caption: 'The telescope sweeps the realm, and every summit you climbed lights up. You have finished Band Essentials 1!', cam: X.summitView({ pan: 1.9, aimY: 35, r: 560, h: SUM + 20, back: 24, swing: 0.2 }) };
 
-  return { islet, tree, rocklet, step, landmark, distant, T };
+  // the islands' own decorations and the props' small details
+  const dressing = kit.theme({'ground':  ['star', 'orb', 'star', 'pebbles', 'orb'], 'top':  'starTop', 'hang':  'charm', 'accent':  'star'});
+  return { ...dressing, islet, tree, rocklet, step, landmark, distant, T };
 }
 SCENE_REG.stars = { look: STARS_LOOK, make: sceneStars };
