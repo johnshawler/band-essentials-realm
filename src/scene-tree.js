@@ -113,12 +113,30 @@ function sceneTree(X) {
     for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + 0.2, l = add(hg, new THREE.SphereGeometry(0.28, 8, 6), lum('#7a5a20', '#ffd27a', 2.6), Math.sin(a) * 9.6, 2.1, Math.cos(a) * 9.6, { cast: false }); lanterns.push(l); }
     anims.push((t) => { flag.rotation.y = 0.15 * Math.sin(t * 2.2); lanterns.forEach((l, k) => { l.position.y = 2.1 + 0.06 * Math.sin(t * 1.3 + k); }); });
     void mast;
+    // the summit: the canopy unfolds into blossom, and the camera turns to the sea and a far lighthouse (Chapter 3)
+    const bloomM = [std('#f4b0cc', 0, 0.7), std('#fff0f6', 0, 0.7), std('#ffd0e0', 0, 0.7)], blooms = [];
+    for (let k = 0; k < 90; k++) { const a = k * 2.399 + 0.2, r = 4 + 24 * Math.sqrt(K.hash(k, 91)), m = add(scene, ICO, bloomM[k % 3], Math.sin(a) * r, SUM + 18 + K.hash(k, 92) * 13 - r * 0.12, Math.cos(a) * r, { cast: false }); m.scale.setScalar(0.0001); blooms.push({ m, s: 1.3 + 1.3 * K.hash(k, 93), d: K.hash(k, 94) * 2 }); }
+    let bloomAt = -1;
+    anims.push((t) => {
+      const on = ['summit', 'finale', 'summary'].includes(X.getG().mode); if (on && bloomAt < 0) bloomAt = t; if (!on) bloomAt = -1;
+      blooms.forEach((b) => { const u = bloomAt < 0 ? 0 : K.clamp((t - bloomAt - 0.8 - b.d) / 0.7); b.m.scale.setScalar(Math.max(0.0001, b.s * K.ease.out(u))); });
+    });
+    X.SIG.summit = { dur: 8.5, caption: 'The treehouse canopy unfolds into blossom. Far across the sea, a lighthouse stands on a rock.', cam: X.summitView({ aimY: 20, h: SUM + 48, back: 50, swing: 0.3 }) };
   }
 
-  // far away, other great trees stand in the haze
+  // far away, other great trees stand in the haze; beyond them the sea, and a lighthouse on a rock
   function distant() {
+    const seaR = new THREE.RingGeometry(380, 1050, 64); seaR.rotateX(-Math.PI / 2); add(scene, seaR, std('#4a7aa0', 0.2, 0.3), 0, -45, 0, { cast: false });
+    const lg = group(scene, Math.sin(X.spireA) * 560, -45, Math.cos(X.spireA) * 560); lg.scale.setScalar(1.7); const wh = std('#f2eee4', 0, 0.7), rd = std('#c0343c', 0, 0.7);
+    add(lg, new THREE.CylinderGeometry(16, 24, 30, 8), T.barkDark, 0, 15, 0, { cast: false });
+    add(lg, new THREE.CylinderGeometry(4.2, 6, 46, 14), wh, 0, 53, 0, { cast: false });
+    for (const y of [42, 62]) add(lg, new THREE.CylinderGeometry(5.0, 5.4, 7, 14), rd, 0, y, 0, { cast: false });
+    add(lg, new THREE.SphereGeometry(3.6, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff0b0').multiplyScalar(1.8), fog: false }), 0, 79, 0, { cast: false });
+    add(lg, new THREE.ConeGeometry(5, 5, 14), rd, 0, 84, 0, { cast: false });
     for (let k = 0; k < 16; k++) {
-      const a = k / 16 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 470 + K.hash(k, 82) * 220, h = 110 + K.hash(k, 83) * 90, g = group(scene, Math.sin(a) * r, -60, Math.cos(a) * r);
+      const a = k / 16 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 470 + K.hash(k, 82) * 220, h = 110 + K.hash(k, 83) * 90;
+      if (Math.abs(((a - X.spireA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.3) continue;
+      const g = group(scene, Math.sin(a) * r, -60, Math.cos(a) * r);
       add(g, new THREE.CylinderGeometry(h * 0.05, h * 0.09, h, 7), T.barkDark, 0, h / 2, 0, { cast: false });
       for (let j = 0; j < 4; j++) { const m = add(g, ICO, j % 2 ? T.leafD : T.leafA, (K.hash(k, j) - 0.5) * h * 0.4, h * (0.85 + 0.15 * j), (K.hash(k, j + 4) - 0.5) * h * 0.4, { cast: false }); m.scale.setScalar(h * (0.22 + 0.06 * K.hash(k, j + 8))); }
     }

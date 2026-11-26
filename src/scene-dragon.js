@@ -66,7 +66,7 @@ function sceneDragon(X) {
     const sea = kit.water(H0 + 18, '#3a1a10', 0.6, 0); sea.material.emissive = new THREE.Color('#ff4a10'); sea.material.emissiveIntensity = 0.35;
     const EM = 120, emb = new THREE.InstancedMesh(OCT, T.ember, EM); emb.castShadow = false; emb.frustumCulled = false; scene.add(emb);
     // the dragon: circling the peak in arcs (slurs), settling on its nest at the summit
-    const D = dragon(); let land = 0;
+    const D = dragon(); dragonRef = D; let land = 0;
     anims.push((t) => {
       for (let i = 0; i < EM; i++) { const a = K.hash(i, 1) * Math.PI * 2, r = 20 + 40 * K.hash(i, 2), u = (t * (0.03 + 0.03 * K.hash(i, 3)) + K.hash(i, 4)) % 1; K.place(emb, i, [Math.sin(a + u) * r, H0 + 18 + u * (SUM + 30), Math.cos(a + u) * r], [t, i, 0], 0.15 * (1 - u)); }
       emb.instanceMatrix.needsUpdate = true;
@@ -80,8 +80,25 @@ function sceneDragon(X) {
     });
   }
 
+  let dragonRef = null, carry = false;
+  const T0 = X.towards, back = X.spireA + Math.PI, FINE = T0(back, 9.5, SUM + 1.5);
+  const stair = (i, dy) => X.islandAt(i, RAD + 18, dy + 3), look = (i) => X.islandAt(i, RAD - 4, 2);
+  const keys = [[0, T0(back, 30, SUM + 16), [0, SUM, 0]], [0.18, stair(0, 5), look(0)]];
+  for (let k = 1; k <= 4; k++) { const i = Math.round(k * (NS - 1) / 4); keys.push([0.18 + 0.1 * k, stair(i, 5), look(i)]); }
+  keys.push([0.68, T0(back, 21, SUM + 5), [FINE[0], FINE[1] + 2.5, FINE[2]]], [1, T0(back, 8, SUM + 52), T0(X.spireA, 560, 150)]);
+  SIG.summit = { dur: 12, caption: 'Da capo: back to the first island, up to Fine at the top, and the dragon carries you above the clouds toward an observatory among the stars.', cam: kit.path(keys),
+    start: () => { carry = false; },
+    update: (u, pos, t) => {
+      if (!dragonRef || u < 0.7) return; carry = true;
+      const a = X.spireA, f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), side = new THREE.Vector3(f.z, 0, -f.x), d = dragonRef.d;
+      d.position.set(pos[0], pos[1], pos[2]).addScaledVector(f, 13).addScaledVector(side, 4); d.position.y -= 3.5 - 0.6 * Math.sin(t * 2);
+      d.rotation.set(0, a, 0); const flap = Math.sin(t * 4) * 0.6; dragonRef.wings[0].rotation.z = flap; dragonRef.wings[1].rotation.z = -flap;
+    } };
+  // the Fine banner on the crater's lip, facing the way the camera comes up
+  function fine() { const g = group(scene, FINE[0], FINE[1], FINE[2]); g.rotation.y = back; add(g, new THREE.CylinderGeometry(0.15, 0.15, 4.4, 6), T.twig, -1.8, 2.2, 0); add(g, new THREE.CylinderGeometry(0.15, 0.15, 4.4, 6), T.twig, 1.8, 2.2, 0); add(g, new THREE.BoxGeometry(4, 1.5, 0.12), std('#e8d8b0', 0, 0.8), 0, 3.4, 0.1); X.textL(g, 'Fine', 0, 3.4, 0.2, { height: 1.0, color: '#7a1a1a', face: 'italic 700 {px}px "Alegreya"' }); }
   // high above the clouds: a domed observatory floating among the stars (Chapter 12)
   function distant() {
+    fine();
     const g = kit.tease(560); g.position.y = 140;
     add(g, new THREE.ConeGeometry(30, 40, 9), facet('#4a4a6a'), 0, -20, 0, { cast: false }).rotation.x = Math.PI;
     add(g, X.turfGeo(30, 3, 12, 2), facet('#6a6a8a'), 0, 0, 0, { cast: false });

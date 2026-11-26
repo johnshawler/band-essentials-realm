@@ -82,6 +82,7 @@ function sceneTowers(X) {
     let rang = false; anims.push(() => { if (ending() && !rang && SIG.snd) { rang = true; SIG.snd.chime('F#4', 0.15, SIG.now() + 0.2); SIG.snd.chime('F#5', 0.13, SIG.now() + 0.22); SIG.snd.chime('F#4', 0.1, SIG.now() + 1.4); SIG.snd.chime('F#5', 0.09, SIG.now() + 1.42); } if (!ending()) rang = false; });
   }
 
+  SIG.summit = { dur: 8.5, caption: 'Both bells ring F♯, an octave apart, and airships rise from a harbour in the clouds.', cam: X.summitView({ aimY: 55, h: SUM + 12, back: 36, swing: 0.35 }) };
   // far off: airships rising from a harbour in the clouds (Chapter 8)
   function distant() {
     const g = kit.tease(480), hull = facet('#7a5a3a'), env = facet('#e8dcc4'), sail = facet('#c84a3a');

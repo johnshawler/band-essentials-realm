@@ -34,14 +34,14 @@ function sceneStars(X) {
   const step = kit.stepOf(T.glass, T.stone, new THREE.OctahedronGeometry(0.4, 0));
 
   // the sky staff: five lines of stars on a great arc behind the tower, lit three at a time by right answers
-  const STAFF = [], PER = 22;
+  const STAFF = [], PER = 64;
   const skyStar = (x, y, z, s) => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff2c8'), fog: false, transparent: true, opacity: 0.12 }); const o = new THREE.Mesh(starGeo, m); o.position.set(x, y, z); o.scale.setScalar(s); scene.add(o); return { o, m, at: -9 }; };
   // the arc runs all the way round behind the tower, so some of it is in view from every island
-  for (let line = 0; line < 5; line++) for (let k = 0; k < PER; k++) { const a = 0.8 + 4.7 * k / (PER - 1), r = 430; STAFF.push(skyStar(Math.sin(a) * r, 62 + line * 11, Math.cos(a) * r, 2.2)); }
+  for (let line = 0; line < 5; line++) for (let k = 0; k < PER; k++) { const a = 0.8 + 4.7 * k / (PER - 1), r = 430; STAFF.push(skyStar(Math.sin(a) * r, 62 + line * 11, Math.cos(a) * r, 1.2)); }
   const order = STAFF.map((_, i) => i).sort((a, b) => (a % PER) - (b % PER) || a - b);   // round the arc, a column at a time
   let lit = 0, tNow = 0;
-  const light = (n) => { for (let k = 0; k < n && lit < order.length; k++) STAFF[order[lit++]].at = tNow + k * 0.12; };
-  SIG.onRight = (stop, info) => { light(4); if (SIG.snd) SIG.snd.chime(info.note ? info.note.replace(/(-?\d)$/, (d) => String(Math.max(5, Math.min(6, +d)))) : 'F6', 0.08, SIG.now() + 0.3); };
+  const light = (n, step = 0.12) => { for (let k = 0; k < n && lit < order.length; k++) STAFF[order[lit++]].at = tNow + k * step; };
+  SIG.onRight = (stop, info) => { light(10, 0.05); if (SIG.snd) SIG.snd.chime(info.note ? info.note.replace(/(-?\d)$/, (d) => String(Math.max(5, Math.min(6, +d)))) : 'F6', 0.08, SIG.now() + 0.3); };
 
   function landmark() {
     // the tower: pale stone with brass bands, rising through the clouds; a domed observatory on top with a turning telescope
@@ -87,13 +87,14 @@ function sceneStars(X) {
       tNow = t;
       for (let i = 0; i < MO; i++) { const u = (i / MO + t * 0.004) % 1, a = u * Math.PI * 14 + i, r = tR(u * SUM) + 3 + 2 * Math.sin(t + i); K.place(motes, i, [Math.sin(a) * r, -20 + u * (SUM + 30), Math.cos(a) * r], [t, i, 0], 0.12 + 0.06 * Math.sin(t * 3 + i)); }
       motes.instanceMatrix.needsUpdate = true;
-      if (ending()) { if (endAt < 0) { endAt = t; light(order.length); } } else endAt = -1;
-      STAFF.forEach((s) => { const u = s.at < 0 ? 0 : K.clamp((t - s.at) / 0.5); s.m.opacity = 0.12 + 0.88 * u; s.o.scale.setScalar(2.2 * (1 + 0.6 * (s.at < 0 ? 0 : Math.max(0, 1 - (t - s.at) / 0.6)))); s.o.rotation.y = t * 0.5; });
+      if (ending()) { if (endAt < 0) { endAt = t; light(order.length, 0.008); } } else endAt = -1;
+      STAFF.forEach((s) => { const u = s.at < 0 ? 0 : K.clamp((t - s.at) / 0.5); s.m.opacity = 0.06 + 0.94 * u; s.o.scale.setScalar(1.2 * (1 + 0.8 * (s.at < 0 ? 0 : Math.max(0, 1 - (t - s.at) / 0.6)))); s.o.rotation.y = t * 0.5; });
       marks.forEach((m, k) => { m.emissiveIntensity = endAt < 0 ? 0 : 1.6 * K.clamp((t - endAt - 0.4 - k * 0.35) / 0.5); });
       scope.rotation.y = endAt < 0 ? 0.15 * Math.sin(t * 0.1) : 0.15 * Math.sin(t * 0.1) + K.clamp((t - endAt) / 4) * Math.PI * 1.2;
     });
   }
   function distant() {}
+  SIG.summit = { dur: 11, caption: 'The telescope sweeps the realm, and every summit you climbed lights up. You have finished Band Essentials 1!', cam: X.summitView({ pan: 1.9, aimY: 35, r: 560, h: SUM + 20, back: 24, swing: 0.2 }) };
 
   return { islet, tree, rocklet, step, landmark, distant, T };
 }

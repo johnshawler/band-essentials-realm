@@ -65,9 +65,17 @@ function sceneClock(X) {
     // the clock: four faces near the top, hands, a bell cupola above, and a pendulum low on the front
     const top = group(scene, 0, SUM + 2, 0);
     add(top, new THREE.BoxGeometry(20, 16, 20), T.stone, 0, 8, 0, { cast: false });
-    const hands = [];
+    const hands = [], toCam = X.spireA + Math.PI, kOpen = Math.round((((toCam % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 2)) % 4;
+    let hinge = null, inner = null;
     for (let k = 0; k < 4; k++) {
-      const f = group(top, 0, 8, 0); f.rotation.y = k * Math.PI / 2; f.translateZ(10.05);
+      const f0 = group(top, 0, 8, 0); f0.rotation.y = k * Math.PI / 2; f0.translateZ(10.05);
+      let f = f0;
+      if (k === kOpen) {
+        // behind this face, glowing clockwork: it shows when the face swings open at the summit
+        hinge = group(f0, -7, 0, 0); f = group(hinge, 7, 0, 0);
+        add(f0, new THREE.CircleGeometry(6.6, 36), glowMat('#ffb050', 1.4), 0, 0, -0.04, { cast: false });
+        inner = addGear(f0, 5.2, 22, 0.3, T.brass2, 0, 0, 0.12, [0, 0, 0], 1, 0.6); addGear(f0, 2.4, 12, 0.3, T.copper, 3.3, -3.0, 0.3, [0, 0, 0], -1, 1.2);
+      }
       add(f, new THREE.CylinderGeometry(7, 7, 0.5, 36), T.brass, 0, 0, 0, { cast: false }).rotation.x = Math.PI / 2;
       add(f, new THREE.CircleGeometry(6.3, 36), T.face, 0, 0, 0.27, { cast: false });
       for (let j = 0; j < 12; j++) { const a = j / 12 * Math.PI * 2; add(f, new THREE.BoxGeometry(0.3, 1.0, 0.1), T.ink, Math.sin(a) * 5.4, Math.cos(a) * 5.4, 0.3, { cast: false }).rotation.z = -a; }
@@ -78,7 +86,7 @@ function sceneClock(X) {
     const bell = group(top, 0, 18.4, 0); add(bell, new THREE.CylinderGeometry(1, 2.1, 2.6, 14, 1, true), T.brass, 0, 0, 0, { cast: false });
     const pend = group(scene, 0, 4, 0); pend.rotation.y = A0 + (NS / 2) * DA; const pa = group(pend, 0, 0, tR(4) + 1.6);
     add(pa, new THREE.CylinderGeometry(0.15, 0.15, 14, 6), T.brass2, 0, -7, 0, { cast: false }); add(pa, new THREE.CylinderGeometry(2.2, 2.2, 0.5, 20), T.brass, 0, -14, 0, { cast: false }).rotation.x = Math.PI / 2;
-    let struck = false;
+    let struck = false, openAt = -1;
     anims.push((t) => {
       const r = tick, on = r && t >= r.t0 && t <= r.ts + r.total * r.beat + 0.3;
       gears.forEach((g) => {
@@ -92,9 +100,15 @@ function sceneClock(X) {
       if (ending() && !struck && SIG.snd) { struck = true; const n0 = SIG.now(); ['D4', 'D4', 'D4', 'D4', 'A3', 'D4'].forEach((n, k) => { SIG.snd.chime(n, 0.18, n0 + 0.4 + k * 0.9); SIG.snd.play('thud', { gain: 0.25, f: 90 }, n0 + 0.4 + k * 0.9); }); }
       if (!ending()) struck = false;
       bell.rotation.z = ending() ? 0.25 * Math.sin(t * 3.5) : 0;
+      if (ending() && openAt < 0) openAt = t; if (!ending()) openAt = -1;
+      if (hinge) hinge.rotation.y = -1.9 * K.ease.inOut(openAt < 0 ? 0 : K.clamp((t - openAt - 1.8) / 1.6)); void inner;
     });
   }
 
+  const T0 = X.towards;
+  SIG.summit = { dur: 10, caption: 'The clock strikes, and its face swings open. Beyond it, storm clouds gather round a jagged peak.', cam: kit.path([
+    [0, T0(X.spireA + Math.PI, 40, SUM + 11), [0, SUM + 10, 0]], [0.5, T0(X.spireA + Math.PI, 31, SUM + 10), [0, SUM + 10, 0]],
+    [0.78, [0, SUM + 38, 0], T0(X.spireA, 300, SUM + 20)], [1, T0(X.spireA, 14, SUM + 34), T0(X.spireA, 560, 90)]]) };
   // far off: a jagged black peak wrapped in storm clouds, lightning flickering inside (Chapter 10)
   function distant() {
     const g = kit.tease(560), dark = facet('#2a2a36'), cloudM = facet('#4a4a5e');

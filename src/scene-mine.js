@@ -80,13 +80,14 @@ function sceneMine(X) {
     });
   }
 
+  SIG.summit = { dur: 8.5, caption: 'You climb out of the mine into the sunrise. Across the valley stand two towers, one low and one high.', cam: X.summitView({ aimY: 75, h: SUM + 8, back: 28, rise: 18, swing: 0.25 }) };
   // beyond the rim, across the valley: two stone towers on neighbouring crags, a low one and a high one (Chapter 7)
   function distant() {
-    const g = kit.tease(520), stone = facet('#8a7e90'), roof = facet('#3a4a8a'), win = glowMat('#ffd890', 1.6);
+    const g = kit.tease(520); g.rotation.y = X.spireA; const stone = facet('#8a7e90'), roof = facet('#3a4a8a'), win = glowMat('#ffd890', 1.6);
     [[-40, 0, 70, 9], [40, 0, 130, 11]].forEach(([x, z, h, r]) => {
       const t = group(g, x, 0, z); add(t, new THREE.CylinderGeometry(r * 3, r * 4, 70, 8), T.rock2, 0, 5, 0, { cast: false });
       add(t, new THREE.CylinderGeometry(r * 0.9, r, h, 10), stone, 0, 40 + h / 2, 0, { cast: false }); add(t, new THREE.ConeGeometry(r * 1.3, r * 2.4, 10), roof, 0, 40 + h + r * 1.2, 0, { cast: false });
-      for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.35, r * 0.6), win); t.add(w); w.position.set(0, 46 + k * h / 4.5, 0); w.rotation.y = Math.atan2(-g.position.x - x, -g.position.z - z); w.translateZ(r * 0.98); }
+      for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.35, r * 0.6), win); t.add(w); w.position.set(0, 46 + k * h / 4.5, 0); w.rotation.y = Math.PI; w.translateZ(r * 0.98); }
     });
   }
 

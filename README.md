@@ -2,7 +2,7 @@
 
 **Twelve chapters, one for each unit of Band Essentials 1**
 
-A playable game grown from the High Fantasy *Band Essentials* motion graphic. Each chapter is a climb up a landmark on a stair of floating islands, and each island holds one exercise from the course's games, in turn: Read Rhythms, Fingering Trainer, Write Notes, Read Notes and Terms & Symbols (and Key Signatures from Chapter 7), three times round. Reaching the top plays the movie's ending.
+A playable game grown from the High Fantasy *Band Essentials* motion graphic. Each chapter is a climb up a landmark on a stair of floating islands, and each island holds one exercise from the course's games, in turn: Read Rhythms, Fingering Trainer, Write Notes, Read Notes and Terms & Symbols (and Key Signatures from Chapter 7), three times round. Reaching the top plays the chapter's own summit scene (the camera turns to the next chapter's landmark on the horizon; Enter skips it), then the movie's ending.
 
 ## Chapters
 

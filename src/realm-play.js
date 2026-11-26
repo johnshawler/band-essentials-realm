@@ -168,8 +168,16 @@ function createGame(E) {
       snd.gust(1.1, 0.12); snd.gliss(runs[j % 4], 0.085, 0.07, now() + 0.5);
       flyPath([[0, G.tau], [0.6, T.leave[j]], [2.8, T.arrive[j + 1]], [3.4, hold(j + 1)]], () => startStop(j + 1));
       at(0.5, () => wispTo(restOf(j + 1), 2.6, 2.2));
-    } else finale();
+    } else if (R1.sig && R1.sig.summit) summit(); else finale();
   }
+  // the chapter's own summit moment, before the logo sequence (Enter, Space or a click skips it)
+  function summit() {
+    const S = R1.sig.summit; G.mode = 'summit'; G.summitAt = G.t; st.summitDone = false; st.captionAt = G.t;
+    snd.play('riser', { gain: 0.22, dur: 2.2 }); snd.gliss(['Bb3', 'D4', 'F4', 'Bb4', 'D5', 'F5', 'Bb5'], 0.18, 0.07, now() + 0.6);
+    if (S.start) S.start();
+    at(S.dur, endSummit);
+  }
+  function endSummit() { if (G.mode !== 'summit' || st.summitDone) return; st.summitDone = true; G.mode = 'fly'; finale(); }
   function finale() {
     // the eight cards carry the names of the last question's answers, as the movie's did
     flyPath([[0, G.tau], [0.7, T.lift - 0.01], [1.2, T.lift]], () => {
@@ -684,6 +692,7 @@ function createGame(E) {
     // down
     audio();
     const bi = hitBtn(px, py); if (bi >= 0) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1397 }); b.fn(); } return; }
+    if (G.mode === 'summit') { keydown({ key: 'Enter', preventDefault() {} }); return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm' && (s.phase === 'tap' || s.phase === 'count')) { rhythmTap(); return; }  // anywhere counts as the drum
     const p = pickAt(ndc); if (!p) return;
@@ -701,6 +710,7 @@ function createGame(E) {
   function keydown(e) {
     const s = st.sub, k = e.key;
     if (G.mode === 'title' && (k === 'Enter' || k === ' ')) { e.preventDefault(); begin(); return; }
+    if (G.mode === 'summit' && (k === 'Enter' || k === ' ' || k === 'Escape')) { e.preventDefault(); G.summitAt = Math.min(G.summitAt, G.t - R1.sig.summit.dur * 0.88); st.events = st.events.filter((ev) => ev.fn !== endSummit); at(R1.sig.summit.dur * 0.12 + 0.05, endSummit); return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm') {
       if (k === ' ' || e.code === 'Space') { e.preventDefault(); if (s.phase === 'ready') runRhythm(true); else rhythmTap(); }
@@ -775,6 +785,11 @@ function createGame(E) {
       if (best && best.some((b) => b != null)) { ctx.font = `700 ${H * 0.022}px "Alegreya"`; ctx.fillStyle = '#d8cfdf'; ctx.fillText('Best: ' + GAMES.map((g, i) => `${g.name} ${best[i] == null ? '–' : best[i] + '%'}`).join(' · '), W / 2, H * 0.665); }
       return;
     }
+    if (G.mode === 'summit') {
+      const S = R1.sig.summit, a = Math.min(K.seg(t, st.captionAt + 0.6, st.captionAt + 1.2), 1 - K.seg(t, G.summitAt + S.dur - 0.9, G.summitAt + S.dur - 0.4));
+      if (a > 0) { ctx.globalAlpha = a; ribbon(S.caption, H * 0.9, H * 0.034, W * 0.72); ctx.font = `700 ${H * 0.02}px "Alegreya"`; ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,233,188,0.75)'; ctx.fillText('Enter to skip', W - H * 0.03, H * 0.97); ctx.globalAlpha = 1; }
+      return;
+    }
     if (G.mode === 'play' || G.mode === 'fly') {
       // score and progress, top left
       ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Correct 100%').width + H * 0.05;
@@ -815,6 +830,8 @@ function createGame(E) {
 
   return {
     frame, pointer, keydown, drawHud, begin, toTitle, clock: now, startStop, showTerm: termScene,
+    // for checking a chapter's ending without climbing: jump to the top island and play the summit
+    toSummit() { audio(); resetJourney(); st.stop = NS - 1; G.island = NS - 1; G.tau = hold(NS - 1); G.mode = 'play'; leaveStop(NS - 1); },
     setInstrument(k) { st.inst = INST.find((i) => i.key === k) || st.inst; saved.inst = st.inst.key; persist(); toTitle(); },
     get inst() { return st.inst; }, setSound, get sound() { return soundOn; }, st,
   };

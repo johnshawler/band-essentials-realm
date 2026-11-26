@@ -39,7 +39,7 @@ function sceneStorm(X) {
     const c = new THREE.Color(), band = bands(['#34343e', '#2a2a32', '#3e3e48'], 3.4, H0);
     column({ y0: H0, y1: SUM + 2, r0: 22, r1: 9, seg: 14, rows: 16, jag: 0.22, wob: 2.4, colour: (y, f) => c.copy(band(y, f)) });
     for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2 + K.hash(k, 1), y = H0 + 10 + K.hash(k, 2) * (SUM - H0 - 10), r = mR(y), m = add(scene, CONE, T.rock2, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); m.scale.set(3, 10 + 8 * K.hash(k, 3), 3); m.rotation.set(Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5); }
-    const crown = add(scene, CONE, T.rock, 0, SUM + 9, 0, { cast: false }); crown.scale.set(9, 16, 9);
+    const crown = add(scene, CONE, T.rock, 0, SUM + 8, 0, { cast: false }); crown.scale.set(4.5, 12, 4.5);
     add(scene, X.turfGeo(9.2, 51, 14, 0.6), T.grass, 0, SUM + 2, 0, { cast: false });
     // storm clouds wrapped round the mountain below the summit
     const CL = 70, clouds = new THREE.InstancedMesh(ICO, T.cloud, CL); clouds.castShadow = false; scene.add(clouds);
@@ -74,8 +74,24 @@ function sceneStorm(X) {
     });
   }
 
+  // the summit: the road forks at two signposts, 1. and 2.; the camera takes the first, loops back by the repeat sign, takes the second
+  // and rises above the storm, where a volcano smokes to the south
+  const T0 = X.towards, back = X.spireA + Math.PI, S1 = T0(back - 0.6, 7, SUM + 2), S2 = T0(back + 0.6, 7, SUM + 2), RP = T0(back, 7.5, SUM + 2);
+  function signs() {
+    const plankM = facet('#7a5a3a'), postM = facet('#4a3a2a');
+    [[S1, '1.'], [S2, '2.'], [RP, ':||']].forEach(([p, txt]) => {
+      const g = group(scene, p[0], p[1], p[2]); g.rotation.y = Math.atan2(p[0], p[2]);
+      add(g, new THREE.CylinderGeometry(0.12, 0.14, 3.2, 6), postM, 0, 1.6, 0); add(g, new THREE.BoxGeometry(2.0, 1.1, 0.14), plankM, 0, 2.8, 0.1);
+      X.textL(g, txt, 0, 2.8, 0.2, { height: 0.75, color: '#ffe2a0', face: '700 {px}px "Texturina"' });
+    });
+  }
+  const out = (p, d, dy = 0) => { const r = Math.hypot(p[0], p[2]); return [p[0] / r * (r + d), p[1] + dy, p[2] / r * (r + d)]; };
+  SIG.summit = { dur: 11, caption: 'First ending, back to the repeat sign, then the second ending, and up above the storm. To the south, a volcano smokes.', cam: kit.path([
+    [0, out(RP, 16, 5), [RP[0], RP[1] + 2, RP[2]]], [0.22, out(S1, 5, 2.5), [S1[0], S1[1] + 2.8, S1[2]]], [0.36, out(RP, 6, 2.5), [RP[0], RP[1] + 2.8, RP[2]]],
+    [0.55, out(S2, 5, 2.5), [S2[0], S2[1] + 2.8, S2[2]]], [1, T0(back, 18, SUM + 44), T0(X.spireA, 560, 55)]]) };
   // far to the south: a volcano with a glowing crater and a column of smoke (Chapter 11)
   function distant() {
+    signs();
     const g = kit.tease(560), vm = facet('#3a2a2a');
     add(g, new THREE.CylinderGeometry(18, 110, 150, 12), vm, 0, -5, 0, { cast: false });
     const crater = add(g, new THREE.CylinderGeometry(16, 16, 2, 16), glowMat('#ff6a20', 1.8), 0, 70, 0, { cast: false }); void crater;

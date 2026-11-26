@@ -143,7 +143,7 @@ function sceneLight(X) {
     const glass0 = glassM.userData.rest, aimTo = ((spireA - Math.PI / 2) % Math.PI + Math.PI) % Math.PI;
     anims.push((t) => {
       const dt = Math.max(0, Math.min(0.1, t - lastT)); lastT = t;
-      const G = getG(), lit = G.mode === 'finale' || G.mode === 'summary', s = SIG.sweep;
+      const G = getG(), lit = G.mode === 'summit' || G.mode === 'finale' || G.mode === 'summary', s = SIG.sweep;
       if (lit) { let d = (aimTo - ang) % Math.PI; if (d > Math.PI / 2) d -= Math.PI; if (d < -Math.PI / 2) d += Math.PI; ang += d * Math.min(1, dt * 1.6); }
       else if (s && t >= s.t0 && t <= s.t1) { if (sw !== s) { sw = s; s.a0 = ang - Math.PI * (t - s.t0) / s.beat; } ang = s.a0 + Math.PI * (t - s.t0) / s.beat; }
       else ang += 0.55 * dt;
@@ -170,6 +170,7 @@ function sceneLight(X) {
   }
 
   // far off: other sea stacks, and Chapter 4's ice spire glittering on the horizon where the summit's beam will point
+  SIG.summit = { dur: 8, caption: 'You light the lamp! Its beam crosses the sea to a glittering spire of ice.', cam: X.summitView({ aimY: 40, h: SUM + 29, back: 30, swing: 0.3 }) };
   function distant() {
     for (let k = 0; k < 11; k++) {
       const a = k / 11 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 190 + K.hash(k, 82) * 330, h = 30 + K.hash(k, 83) * 70, w = 7 + 9 * K.hash(k, 84);
@@ -183,7 +184,7 @@ function sceneLight(X) {
     add(spire, OCT, ice, 0, 40, 0, { cast: false }).scale.set(9, 62, 9);
     for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, d = 9 + 6 * K.hash(k, 7), m = add(spire, OCT, ice, Math.sin(a) * d, 12 + 10 * K.hash(k, 8), Math.cos(a) * d, { cast: false }); m.scale.set(3, 14 + 14 * K.hash(k, 9), 3); m.rotation.set((K.hash(k, 10) - 0.5) * 0.6, k, (K.hash(k, 11) - 0.5) * 0.6); }
     add(spire, new THREE.CylinderGeometry(40, 46, 1.2, 16), new THREE.MeshStandardMaterial({ color: '#dceefa', roughness: 0.4, fog: false }), 0, 0.3, 0, { cast: false });
-    anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (getG().mode === 'finale' || getG().mode === 'summary' ? 0.6 : 0); });
+    anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (['summit', 'finale', 'summary'].includes(getG().mode) ? 0.6 : 0); });
   }
 
   return { islet, tree, rocklet, step, landmark, distant, T };

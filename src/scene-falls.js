@@ -77,6 +77,11 @@ function sceneFalls(X) {
     });
   }
 
+  // the summit: first the spring that feeds the falls, then far below, the glowing mouth of a mine
+  SIG.summit = { dur: 9, caption: 'At the top is the spring that feeds the falls. Far below, the mouth of a mine glows.', cam: (u) => {
+    const v = X.summitView({ aimY: -14, h: SUM + 20, back: 30, swing: 0.25, r: 520 })(u), e = K.ease.inOut(K.seg(u, 0.3, 0.7)), spring = [0, SUM + 1, 0];
+    return { pos: v.pos, aim: spring.map((x, i) => K.lerp(x, v.aim[i], e)) };
+  } };
   // far off and low: other cliffs, and the glowing mouth of a mine (Chapter 6)
   function distant() {
     for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 240 + K.hash(k, 82) * 300, h = 40 + K.hash(k, 83) * 70, w = 20 + 20 * K.hash(k, 84); if (Math.abs(((a - X.spireA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.25) continue; add(scene, new THREE.CylinderGeometry(w * 0.7, w, h, 7), k % 2 ? T.rock : T.rock2, Math.sin(a) * r, POOL + h / 2, Math.cos(a) * r, { cast: false }).rotation.y = k; add(scene, X.turfGeo(w * 0.72, k, 9, 1.2), T.grass, Math.sin(a) * r, POOL + h, Math.cos(a) * r, { cast: false }); }

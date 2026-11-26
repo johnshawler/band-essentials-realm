@@ -1101,9 +1101,17 @@ function sceneClock(X) {
     // the clock: four faces near the top, hands, a bell cupola above, and a pendulum low on the front
     const top = group(scene, 0, SUM + 2, 0);
     add(top, new THREE.BoxGeometry(20, 16, 20), T.stone, 0, 8, 0, { cast: false });
-    const hands = [];
+    const hands = [], toCam = X.spireA + Math.PI, kOpen = Math.round((((toCam % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 2)) % 4;
+    let hinge = null, inner = null;
     for (let k = 0; k < 4; k++) {
-      const f = group(top, 0, 8, 0); f.rotation.y = k * Math.PI / 2; f.translateZ(10.05);
+      const f0 = group(top, 0, 8, 0); f0.rotation.y = k * Math.PI / 2; f0.translateZ(10.05);
+      let f = f0;
+      if (k === kOpen) {
+        // behind this face, glowing clockwork: it shows when the face swings open at the summit
+        hinge = group(f0, -7, 0, 0); f = group(hinge, 7, 0, 0);
+        add(f0, new THREE.CircleGeometry(6.6, 36), glowMat('#ffb050', 1.4), 0, 0, -0.04, { cast: false });
+        inner = addGear(f0, 5.2, 22, 0.3, T.brass2, 0, 0, 0.12, [0, 0, 0], 1, 0.6); addGear(f0, 2.4, 12, 0.3, T.copper, 3.3, -3.0, 0.3, [0, 0, 0], -1, 1.2);
+      }
       add(f, new THREE.CylinderGeometry(7, 7, 0.5, 36), T.brass, 0, 0, 0, { cast: false }).rotation.x = Math.PI / 2;
       add(f, new THREE.CircleGeometry(6.3, 36), T.face, 0, 0, 0.27, { cast: false });
       for (let j = 0; j < 12; j++) { const a = j / 12 * Math.PI * 2; add(f, new THREE.BoxGeometry(0.3, 1.0, 0.1), T.ink, Math.sin(a) * 5.4, Math.cos(a) * 5.4, 0.3, { cast: false }).rotation.z = -a; }
@@ -1114,7 +1122,7 @@ function sceneClock(X) {
     const bell = group(top, 0, 18.4, 0); add(bell, new THREE.CylinderGeometry(1, 2.1, 2.6, 14, 1, true), T.brass, 0, 0, 0, { cast: false });
     const pend = group(scene, 0, 4, 0); pend.rotation.y = A0 + (NS / 2) * DA; const pa = group(pend, 0, 0, tR(4) + 1.6);
     add(pa, new THREE.CylinderGeometry(0.15, 0.15, 14, 6), T.brass2, 0, -7, 0, { cast: false }); add(pa, new THREE.CylinderGeometry(2.2, 2.2, 0.5, 20), T.brass, 0, -14, 0, { cast: false }).rotation.x = Math.PI / 2;
-    let struck = false;
+    let struck = false, openAt = -1;
     anims.push((t) => {
       const r = tick, on = r && t >= r.t0 && t <= r.ts + r.total * r.beat + 0.3;
       gears.forEach((g) => {
@@ -1128,9 +1136,15 @@ function sceneClock(X) {
       if (ending() && !struck && SIG.snd) { struck = true; const n0 = SIG.now(); ['D4', 'D4', 'D4', 'D4', 'A3', 'D4'].forEach((n, k) => { SIG.snd.chime(n, 0.18, n0 + 0.4 + k * 0.9); SIG.snd.play('thud', { gain: 0.25, f: 90 }, n0 + 0.4 + k * 0.9); }); }
       if (!ending()) struck = false;
       bell.rotation.z = ending() ? 0.25 * Math.sin(t * 3.5) : 0;
+      if (ending() && openAt < 0) openAt = t; if (!ending()) openAt = -1;
+      if (hinge) hinge.rotation.y = -1.9 * K.ease.inOut(openAt < 0 ? 0 : K.clamp((t - openAt - 1.8) / 1.6)); void inner;
     });
   }
 
+  const T0 = X.towards;
+  SIG.summit = { dur: 10, caption: 'The clock strikes, and its face swings open. Beyond it, storm clouds gather round a jagged peak.', cam: kit.path([
+    [0, T0(X.spireA + Math.PI, 40, SUM + 11), [0, SUM + 10, 0]], [0.5, T0(X.spireA + Math.PI, 31, SUM + 10), [0, SUM + 10, 0]],
+    [0.78, [0, SUM + 38, 0], T0(X.spireA, 300, SUM + 20)], [1, T0(X.spireA, 14, SUM + 34), T0(X.spireA, 560, 90)]]) };
   // far off: a jagged black peak wrapped in storm clouds, lightning flickering inside (Chapter 10)
   function distant() {
     const g = kit.tease(560), dark = facet('#2a2a36'), cloudM = facet('#4a4a5e');
@@ -1213,7 +1227,7 @@ function sceneDragon(X) {
     const sea = kit.water(H0 + 18, '#3a1a10', 0.6, 0); sea.material.emissive = new THREE.Color('#ff4a10'); sea.material.emissiveIntensity = 0.35;
     const EM = 120, emb = new THREE.InstancedMesh(OCT, T.ember, EM); emb.castShadow = false; emb.frustumCulled = false; scene.add(emb);
     // the dragon: circling the peak in arcs (slurs), settling on its nest at the summit
-    const D = dragon(); let land = 0;
+    const D = dragon(); dragonRef = D; let land = 0;
     anims.push((t) => {
       for (let i = 0; i < EM; i++) { const a = K.hash(i, 1) * Math.PI * 2, r = 20 + 40 * K.hash(i, 2), u = (t * (0.03 + 0.03 * K.hash(i, 3)) + K.hash(i, 4)) % 1; K.place(emb, i, [Math.sin(a + u) * r, H0 + 18 + u * (SUM + 30), Math.cos(a + u) * r], [t, i, 0], 0.15 * (1 - u)); }
       emb.instanceMatrix.needsUpdate = true;
@@ -1227,8 +1241,25 @@ function sceneDragon(X) {
     });
   }
 
+  let dragonRef = null, carry = false;
+  const T0 = X.towards, back = X.spireA + Math.PI, FINE = T0(back, 9.5, SUM + 1.5);
+  const stair = (i, dy) => X.islandAt(i, RAD + 18, dy + 3), look = (i) => X.islandAt(i, RAD - 4, 2);
+  const keys = [[0, T0(back, 30, SUM + 16), [0, SUM, 0]], [0.18, stair(0, 5), look(0)]];
+  for (let k = 1; k <= 4; k++) { const i = Math.round(k * (NS - 1) / 4); keys.push([0.18 + 0.1 * k, stair(i, 5), look(i)]); }
+  keys.push([0.68, T0(back, 21, SUM + 5), [FINE[0], FINE[1] + 2.5, FINE[2]]], [1, T0(back, 8, SUM + 52), T0(X.spireA, 560, 150)]);
+  SIG.summit = { dur: 12, caption: 'Da capo: back to the first island, up to Fine at the top, and the dragon carries you above the clouds toward an observatory among the stars.', cam: kit.path(keys),
+    start: () => { carry = false; },
+    update: (u, pos, t) => {
+      if (!dragonRef || u < 0.7) return; carry = true;
+      const a = X.spireA, f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), side = new THREE.Vector3(f.z, 0, -f.x), d = dragonRef.d;
+      d.position.set(pos[0], pos[1], pos[2]).addScaledVector(f, 13).addScaledVector(side, 4); d.position.y -= 3.5 - 0.6 * Math.sin(t * 2);
+      d.rotation.set(0, a, 0); const flap = Math.sin(t * 4) * 0.6; dragonRef.wings[0].rotation.z = flap; dragonRef.wings[1].rotation.z = -flap;
+    } };
+  // the Fine banner on the crater's lip, facing the way the camera comes up
+  function fine() { const g = group(scene, FINE[0], FINE[1], FINE[2]); g.rotation.y = back; add(g, new THREE.CylinderGeometry(0.15, 0.15, 4.4, 6), T.twig, -1.8, 2.2, 0); add(g, new THREE.CylinderGeometry(0.15, 0.15, 4.4, 6), T.twig, 1.8, 2.2, 0); add(g, new THREE.BoxGeometry(4, 1.5, 0.12), std('#e8d8b0', 0, 0.8), 0, 3.4, 0.1); X.textL(g, 'Fine', 0, 3.4, 0.2, { height: 1.0, color: '#7a1a1a', face: 'italic 700 {px}px "Alegreya"' }); }
   // high above the clouds: a domed observatory floating among the stars (Chapter 12)
   function distant() {
+    fine();
     const g = kit.tease(560); g.position.y = 140;
     add(g, new THREE.ConeGeometry(30, 40, 9), facet('#4a4a6a'), 0, -20, 0, { cast: false }).rotation.x = Math.PI;
     add(g, X.turfGeo(30, 3, 12, 2), facet('#6a6a8a'), 0, 0, 0, { cast: false });
@@ -1321,6 +1352,11 @@ function sceneFalls(X) {
     });
   }
 
+  // the summit: first the spring that feeds the falls, then far below, the glowing mouth of a mine
+  SIG.summit = { dur: 9, caption: 'At the top is the spring that feeds the falls. Far below, the mouth of a mine glows.', cam: (u) => {
+    const v = X.summitView({ aimY: -14, h: SUM + 20, back: 30, swing: 0.25, r: 520 })(u), e = K.ease.inOut(K.seg(u, 0.3, 0.7)), spring = [0, SUM + 1, 0];
+    return { pos: v.pos, aim: spring.map((x, i) => K.lerp(x, v.aim[i], e)) };
+  } };
   // far off and low: other cliffs, and the glowing mouth of a mine (Chapter 6)
   function distant() {
     for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 240 + K.hash(k, 82) * 300, h = 40 + K.hash(k, 83) * 70, w = 20 + 20 * K.hash(k, 84); if (Math.abs(((a - X.spireA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.25) continue; add(scene, new THREE.CylinderGeometry(w * 0.7, w, h, 7), k % 2 ? T.rock : T.rock2, Math.sin(a) * r, POOL + h / 2, Math.cos(a) * r, { cast: false }).rotation.y = k; add(scene, X.turfGeo(w * 0.72, k, 9, 1.2), T.grass, Math.sin(a) * r, POOL + h, Math.cos(a) * r, { cast: false }); }
@@ -1413,8 +1449,18 @@ function sceneHarbour(X) {
     });
   }
 
+  // the summit: board an airship at the top of the spire and sail out toward the giant clock
+  let escort = null;
+  SIG.summit = { dur: 10, caption: 'You board an airship and sail toward a giant clock.', start: () => { if (escort) escort.visible = true; },
+    cam: (u) => { const e = K.ease.inOut(u), a = X.spireA, P = X.towards(a + Math.PI - 0.2, 26, SUM + 14), Q = X.towards(a + 0.05, 190, SUM + 22); return { pos: P.map((x, i) => K.lerp(x, Q[i], e)), aim: X.towards(a, 515, 70) }; },
+    update: (u, pos, t) => {
+      if (!escort) return; const a = X.spireA, f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), side = new THREE.Vector3(f.z, 0, -f.x);
+      escort.position.set(pos[0], pos[1], pos[2]).addScaledVector(f, 16).addScaledVector(side, -5); escort.position.y -= 8 - 0.4 * Math.sin(t);
+      escort.rotation.set(0, a + Math.PI / 2, 0.03 * Math.sin(t * 0.7)); escort.visible = K.ease.inOut(K.seg(u, 0, 0.1)) > 0.01;
+    } };
   // far off: a giant clock face on a brass-and-stone tower (Chapter 9)
   function distant() {
+    escort = airship(0, -200, 0, 1.1, 0, 21); escort.visible = false;
     const g = kit.tease(540), face = Math.atan2(-g.position.x, -g.position.z);
     add(g, new THREE.CylinderGeometry(24, 34, 150, 8), T.stone, 0, -20, 0, { cast: false });
     const dial = group(g, 0, 70, 0); dial.rotation.y = face; dial.translateZ(25);
@@ -1524,6 +1570,7 @@ function sceneIce(X) {
     });
   }
   let lift0 = 0;
+  SIG.summit = { dur: 8, caption: 'The aurora blazes into a curtain of light. Through it, a waterfall pours off a far cliff.', cam: X.summitView({ aimY: 55, h: SUM + 30, back: 30, rise: 8, swing: 0.3 }) };
 
   // far off: snowy mountains (the castle world's peaks, recoloured), and Chapter 5's waterfall pouring off a cliff
   function distant() {
@@ -1532,7 +1579,7 @@ function sceneIce(X) {
     const fallTex = K.canvasTex(64, 512, (ctx, w, h) => { const r = K.rng(4); ctx.fillStyle = '#9ad0f0'; ctx.fillRect(0, 0, w, h); for (let i = 0; i < 300; i++) { ctx.fillStyle = `rgba(255,255,255,${0.3 + r() * 0.6})`; ctx.fillRect(r() * w, r() * h, 1 + r() * 3, 8 + r() * 40); } });
     fallTex.wrapT = THREE.RepeatWrapping;
     const fallM = new THREE.MeshBasicMaterial({ map: fallTex, fog: false, color: new THREE.Color('#cfe8ff') });
-    const fall = new THREE.Mesh(new THREE.PlaneGeometry(26, 145), fallM); g.add(fall); fall.position.set(0, 58, 0); fall.rotation.y = Math.atan2(-g.position.x, -g.position.z);
+    const fall = new THREE.Mesh(new THREE.PlaneGeometry(26, 145), fallM); g.add(fall); fall.position.set(-g.position.x / 560 * 40, 58, -g.position.z / 560 * 40); fall.rotation.y = Math.atan2(-g.position.x, -g.position.z);
     add(g, kit.ICO, T.snow, 0, -18, 0, { cast: false }).scale.set(30, 8, 20);
     anims.push((t) => { fallTex.offset.y = -t * 0.6; });
   }
@@ -1548,7 +1595,7 @@ SCENE_REG.ice = { look: ICE_LOOK, make: sceneIce };
 function sceneKit(X) {
   const { THREE, K, scene, add, group, std, facet, anims, turfGeo, rockGeo, RAD, SUM, getG, spireA } = X;
   const UPV = new THREE.Vector3(0, 1, 0), ICO = new THREE.IcosahedronGeometry(1, 1), OCT = new THREE.OctahedronGeometry(1, 0), CONE = new THREE.ConeGeometry(1, 1, 7);
-  const ending = () => { const m = getG().mode; return m === 'finale' || m === 'summary'; };
+  const ending = () => { const m = getG().mode; return m === 'summit' || m === 'finale' || m === 'summary'; };
   const beam = (parent, a, b, r, mat, seg = 6) => {
     const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), m = add(parent, new THREE.CylinderGeometry(r, r, d.length(), seg), mat, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
     m.quaternion.setFromUnitVectors(UPV, d.normalize()); return m;
@@ -1597,7 +1644,9 @@ function sceneKit(X) {
   const water = (y, color, rough = 0.3, metal = 0.15, rad = 1050) => { const w = add(scene, new THREE.CircleGeometry(rad, 72), std(color, metal, rough), 0, y, 0, { cast: false }); w.rotation.x = -Math.PI / 2; return w; };
   const glowMat = (color, k = 1, o = {}) => new THREE.MeshBasicMaterial(Object.assign({ color: new THREE.Color(color).multiplyScalar(k), fog: false }, o));
   const add2 = (geo, mat, x, y, z) => add(scene, geo, mat, x, y, z, { cast: false });
-  return { beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
+  // a camera path through keys [u, pos, aim], easing between each pair
+  const path = (list) => (u) => { let i = 0; while (i < list.length - 2 && u > list[i + 1][0]) i++; const [u0, p0, a0] = list[i], [u1, p1, a1] = list[i + 1], e = K.ease.inOut(K.clamp((u - u0) / (u1 - u0))); return { pos: p0.map((x, j) => K.lerp(x, p1[j], e)), aim: a0.map((x, j) => K.lerp(x, a1[j], e)) }; };
+  return { path, beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
 }
 
 // ================================================================ Chapter 3 scenery: the Lighthouse at Cloud's End
@@ -1745,7 +1794,7 @@ function sceneLight(X) {
     const glass0 = glassM.userData.rest, aimTo = ((spireA - Math.PI / 2) % Math.PI + Math.PI) % Math.PI;
     anims.push((t) => {
       const dt = Math.max(0, Math.min(0.1, t - lastT)); lastT = t;
-      const G = getG(), lit = G.mode === 'finale' || G.mode === 'summary', s = SIG.sweep;
+      const G = getG(), lit = G.mode === 'summit' || G.mode === 'finale' || G.mode === 'summary', s = SIG.sweep;
       if (lit) { let d = (aimTo - ang) % Math.PI; if (d > Math.PI / 2) d -= Math.PI; if (d < -Math.PI / 2) d += Math.PI; ang += d * Math.min(1, dt * 1.6); }
       else if (s && t >= s.t0 && t <= s.t1) { if (sw !== s) { sw = s; s.a0 = ang - Math.PI * (t - s.t0) / s.beat; } ang = s.a0 + Math.PI * (t - s.t0) / s.beat; }
       else ang += 0.55 * dt;
@@ -1772,6 +1821,7 @@ function sceneLight(X) {
   }
 
   // far off: other sea stacks, and Chapter 4's ice spire glittering on the horizon where the summit's beam will point
+  SIG.summit = { dur: 8, caption: 'You light the lamp! Its beam crosses the sea to a glittering spire of ice.', cam: X.summitView({ aimY: 40, h: SUM + 29, back: 30, swing: 0.3 }) };
   function distant() {
     for (let k = 0; k < 11; k++) {
       const a = k / 11 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 190 + K.hash(k, 82) * 330, h = 30 + K.hash(k, 83) * 70, w = 7 + 9 * K.hash(k, 84);
@@ -1785,7 +1835,7 @@ function sceneLight(X) {
     add(spire, OCT, ice, 0, 40, 0, { cast: false }).scale.set(9, 62, 9);
     for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, d = 9 + 6 * K.hash(k, 7), m = add(spire, OCT, ice, Math.sin(a) * d, 12 + 10 * K.hash(k, 8), Math.cos(a) * d, { cast: false }); m.scale.set(3, 14 + 14 * K.hash(k, 9), 3); m.rotation.set((K.hash(k, 10) - 0.5) * 0.6, k, (K.hash(k, 11) - 0.5) * 0.6); }
     add(spire, new THREE.CylinderGeometry(40, 46, 1.2, 16), new THREE.MeshStandardMaterial({ color: '#dceefa', roughness: 0.4, fog: false }), 0, 0.3, 0, { cast: false });
-    anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (getG().mode === 'finale' || getG().mode === 'summary' ? 0.6 : 0); });
+    anims.push((t) => { ice.emissiveIntensity = 0.5 + 0.15 * Math.sin(t * 2.3) + (['summit', 'finale', 'summary'].includes(getG().mode) ? 0.6 : 0); });
   }
 
   return { islet, tree, rocklet, step, landmark, distant, T };
@@ -1873,13 +1923,14 @@ function sceneMine(X) {
     });
   }
 
+  SIG.summit = { dur: 8.5, caption: 'You climb out of the mine into the sunrise. Across the valley stand two towers, one low and one high.', cam: X.summitView({ aimY: 75, h: SUM + 8, back: 28, rise: 18, swing: 0.25 }) };
   // beyond the rim, across the valley: two stone towers on neighbouring crags, a low one and a high one (Chapter 7)
   function distant() {
-    const g = kit.tease(520), stone = facet('#8a7e90'), roof = facet('#3a4a8a'), win = glowMat('#ffd890', 1.6);
+    const g = kit.tease(520); g.rotation.y = X.spireA; const stone = facet('#8a7e90'), roof = facet('#3a4a8a'), win = glowMat('#ffd890', 1.6);
     [[-40, 0, 70, 9], [40, 0, 130, 11]].forEach(([x, z, h, r]) => {
       const t = group(g, x, 0, z); add(t, new THREE.CylinderGeometry(r * 3, r * 4, 70, 8), T.rock2, 0, 5, 0, { cast: false });
       add(t, new THREE.CylinderGeometry(r * 0.9, r, h, 10), stone, 0, 40 + h / 2, 0, { cast: false }); add(t, new THREE.ConeGeometry(r * 1.3, r * 2.4, 10), roof, 0, 40 + h + r * 1.2, 0, { cast: false });
-      for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.35, r * 0.6), win); t.add(w); w.position.set(0, 46 + k * h / 4.5, 0); w.rotation.y = Math.atan2(-g.position.x - x, -g.position.z - z); w.translateZ(r * 0.98); }
+      for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.35, r * 0.6), win); t.add(w); w.position.set(0, 46 + k * h / 4.5, 0); w.rotation.y = Math.PI; w.translateZ(r * 0.98); }
     });
   }
 
@@ -1923,14 +1974,14 @@ function sceneStars(X) {
   const step = kit.stepOf(T.glass, T.stone, new THREE.OctahedronGeometry(0.4, 0));
 
   // the sky staff: five lines of stars on a great arc behind the tower, lit three at a time by right answers
-  const STAFF = [], PER = 22;
+  const STAFF = [], PER = 64;
   const skyStar = (x, y, z, s) => { const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff2c8'), fog: false, transparent: true, opacity: 0.12 }); const o = new THREE.Mesh(starGeo, m); o.position.set(x, y, z); o.scale.setScalar(s); scene.add(o); return { o, m, at: -9 }; };
   // the arc runs all the way round behind the tower, so some of it is in view from every island
-  for (let line = 0; line < 5; line++) for (let k = 0; k < PER; k++) { const a = 0.8 + 4.7 * k / (PER - 1), r = 430; STAFF.push(skyStar(Math.sin(a) * r, 62 + line * 11, Math.cos(a) * r, 2.2)); }
+  for (let line = 0; line < 5; line++) for (let k = 0; k < PER; k++) { const a = 0.8 + 4.7 * k / (PER - 1), r = 430; STAFF.push(skyStar(Math.sin(a) * r, 62 + line * 11, Math.cos(a) * r, 1.2)); }
   const order = STAFF.map((_, i) => i).sort((a, b) => (a % PER) - (b % PER) || a - b);   // round the arc, a column at a time
   let lit = 0, tNow = 0;
-  const light = (n) => { for (let k = 0; k < n && lit < order.length; k++) STAFF[order[lit++]].at = tNow + k * 0.12; };
-  SIG.onRight = (stop, info) => { light(4); if (SIG.snd) SIG.snd.chime(info.note ? info.note.replace(/(-?\d)$/, (d) => String(Math.max(5, Math.min(6, +d)))) : 'F6', 0.08, SIG.now() + 0.3); };
+  const light = (n, step = 0.12) => { for (let k = 0; k < n && lit < order.length; k++) STAFF[order[lit++]].at = tNow + k * step; };
+  SIG.onRight = (stop, info) => { light(10, 0.05); if (SIG.snd) SIG.snd.chime(info.note ? info.note.replace(/(-?\d)$/, (d) => String(Math.max(5, Math.min(6, +d)))) : 'F6', 0.08, SIG.now() + 0.3); };
 
   function landmark() {
     // the tower: pale stone with brass bands, rising through the clouds; a domed observatory on top with a turning telescope
@@ -1976,13 +2027,14 @@ function sceneStars(X) {
       tNow = t;
       for (let i = 0; i < MO; i++) { const u = (i / MO + t * 0.004) % 1, a = u * Math.PI * 14 + i, r = tR(u * SUM) + 3 + 2 * Math.sin(t + i); K.place(motes, i, [Math.sin(a) * r, -20 + u * (SUM + 30), Math.cos(a) * r], [t, i, 0], 0.12 + 0.06 * Math.sin(t * 3 + i)); }
       motes.instanceMatrix.needsUpdate = true;
-      if (ending()) { if (endAt < 0) { endAt = t; light(order.length); } } else endAt = -1;
-      STAFF.forEach((s) => { const u = s.at < 0 ? 0 : K.clamp((t - s.at) / 0.5); s.m.opacity = 0.12 + 0.88 * u; s.o.scale.setScalar(2.2 * (1 + 0.6 * (s.at < 0 ? 0 : Math.max(0, 1 - (t - s.at) / 0.6)))); s.o.rotation.y = t * 0.5; });
+      if (ending()) { if (endAt < 0) { endAt = t; light(order.length, 0.008); } } else endAt = -1;
+      STAFF.forEach((s) => { const u = s.at < 0 ? 0 : K.clamp((t - s.at) / 0.5); s.m.opacity = 0.06 + 0.94 * u; s.o.scale.setScalar(1.2 * (1 + 0.8 * (s.at < 0 ? 0 : Math.max(0, 1 - (t - s.at) / 0.6)))); s.o.rotation.y = t * 0.5; });
       marks.forEach((m, k) => { m.emissiveIntensity = endAt < 0 ? 0 : 1.6 * K.clamp((t - endAt - 0.4 - k * 0.35) / 0.5); });
       scope.rotation.y = endAt < 0 ? 0.15 * Math.sin(t * 0.1) : 0.15 * Math.sin(t * 0.1) + K.clamp((t - endAt) / 4) * Math.PI * 1.2;
     });
   }
   function distant() {}
+  SIG.summit = { dur: 11, caption: 'The telescope sweeps the realm, and every summit you climbed lights up. You have finished Band Essentials 1!', cam: X.summitView({ pan: 1.9, aimY: 35, r: 560, h: SUM + 20, back: 24, swing: 0.2 }) };
 
   return { islet, tree, rocklet, step, landmark, distant, T };
 }
@@ -2029,7 +2081,7 @@ function sceneStorm(X) {
     const c = new THREE.Color(), band = bands(['#34343e', '#2a2a32', '#3e3e48'], 3.4, H0);
     column({ y0: H0, y1: SUM + 2, r0: 22, r1: 9, seg: 14, rows: 16, jag: 0.22, wob: 2.4, colour: (y, f) => c.copy(band(y, f)) });
     for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2 + K.hash(k, 1), y = H0 + 10 + K.hash(k, 2) * (SUM - H0 - 10), r = mR(y), m = add(scene, CONE, T.rock2, Math.sin(a) * r, y, Math.cos(a) * r, { cast: false }); m.scale.set(3, 10 + 8 * K.hash(k, 3), 3); m.rotation.set(Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5); }
-    const crown = add(scene, CONE, T.rock, 0, SUM + 9, 0, { cast: false }); crown.scale.set(9, 16, 9);
+    const crown = add(scene, CONE, T.rock, 0, SUM + 8, 0, { cast: false }); crown.scale.set(4.5, 12, 4.5);
     add(scene, X.turfGeo(9.2, 51, 14, 0.6), T.grass, 0, SUM + 2, 0, { cast: false });
     // storm clouds wrapped round the mountain below the summit
     const CL = 70, clouds = new THREE.InstancedMesh(ICO, T.cloud, CL); clouds.castShadow = false; scene.add(clouds);
@@ -2064,8 +2116,24 @@ function sceneStorm(X) {
     });
   }
 
+  // the summit: the road forks at two signposts, 1. and 2.; the camera takes the first, loops back by the repeat sign, takes the second
+  // and rises above the storm, where a volcano smokes to the south
+  const T0 = X.towards, back = X.spireA + Math.PI, S1 = T0(back - 0.6, 7, SUM + 2), S2 = T0(back + 0.6, 7, SUM + 2), RP = T0(back, 7.5, SUM + 2);
+  function signs() {
+    const plankM = facet('#7a5a3a'), postM = facet('#4a3a2a');
+    [[S1, '1.'], [S2, '2.'], [RP, ':||']].forEach(([p, txt]) => {
+      const g = group(scene, p[0], p[1], p[2]); g.rotation.y = Math.atan2(p[0], p[2]);
+      add(g, new THREE.CylinderGeometry(0.12, 0.14, 3.2, 6), postM, 0, 1.6, 0); add(g, new THREE.BoxGeometry(2.0, 1.1, 0.14), plankM, 0, 2.8, 0.1);
+      X.textL(g, txt, 0, 2.8, 0.2, { height: 0.75, color: '#ffe2a0', face: '700 {px}px "Texturina"' });
+    });
+  }
+  const out = (p, d, dy = 0) => { const r = Math.hypot(p[0], p[2]); return [p[0] / r * (r + d), p[1] + dy, p[2] / r * (r + d)]; };
+  SIG.summit = { dur: 11, caption: 'First ending, back to the repeat sign, then the second ending, and up above the storm. To the south, a volcano smokes.', cam: kit.path([
+    [0, out(RP, 16, 5), [RP[0], RP[1] + 2, RP[2]]], [0.22, out(S1, 5, 2.5), [S1[0], S1[1] + 2.8, S1[2]]], [0.36, out(RP, 6, 2.5), [RP[0], RP[1] + 2.8, RP[2]]],
+    [0.55, out(S2, 5, 2.5), [S2[0], S2[1] + 2.8, S2[2]]], [1, T0(back, 18, SUM + 44), T0(X.spireA, 560, 55)]]) };
   // far to the south: a volcano with a glowing crater and a column of smoke (Chapter 11)
   function distant() {
+    signs();
     const g = kit.tease(560), vm = facet('#3a2a2a');
     add(g, new THREE.CylinderGeometry(18, 110, 150, 12), vm, 0, -5, 0, { cast: false });
     const crater = add(g, new THREE.CylinderGeometry(16, 16, 2, 16), glowMat('#ff6a20', 1.8), 0, 70, 0, { cast: false }); void crater;
@@ -2162,6 +2230,7 @@ function sceneTowers(X) {
     let rang = false; anims.push(() => { if (ending() && !rang && SIG.snd) { rang = true; SIG.snd.chime('F#4', 0.15, SIG.now() + 0.2); SIG.snd.chime('F#5', 0.13, SIG.now() + 0.22); SIG.snd.chime('F#4', 0.1, SIG.now() + 1.4); SIG.snd.chime('F#5', 0.09, SIG.now() + 1.42); } if (!ending()) rang = false; });
   }
 
+  SIG.summit = { dur: 8.5, caption: 'Both bells ring F♯, an octave apart, and airships rise from a harbour in the clouds.', cam: X.summitView({ aimY: 55, h: SUM + 12, back: 36, swing: 0.35 }) };
   // far off: airships rising from a harbour in the clouds (Chapter 8)
   function distant() {
     const g = kit.tease(480), hull = facet('#7a5a3a'), env = facet('#e8dcc4'), sail = facet('#c84a3a');
@@ -2293,12 +2362,30 @@ function sceneTree(X) {
     for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + 0.2, l = add(hg, new THREE.SphereGeometry(0.28, 8, 6), lum('#7a5a20', '#ffd27a', 2.6), Math.sin(a) * 9.6, 2.1, Math.cos(a) * 9.6, { cast: false }); lanterns.push(l); }
     anims.push((t) => { flag.rotation.y = 0.15 * Math.sin(t * 2.2); lanterns.forEach((l, k) => { l.position.y = 2.1 + 0.06 * Math.sin(t * 1.3 + k); }); });
     void mast;
+    // the summit: the canopy unfolds into blossom, and the camera turns to the sea and a far lighthouse (Chapter 3)
+    const bloomM = [std('#f4b0cc', 0, 0.7), std('#fff0f6', 0, 0.7), std('#ffd0e0', 0, 0.7)], blooms = [];
+    for (let k = 0; k < 90; k++) { const a = k * 2.399 + 0.2, r = 4 + 24 * Math.sqrt(K.hash(k, 91)), m = add(scene, ICO, bloomM[k % 3], Math.sin(a) * r, SUM + 18 + K.hash(k, 92) * 13 - r * 0.12, Math.cos(a) * r, { cast: false }); m.scale.setScalar(0.0001); blooms.push({ m, s: 1.3 + 1.3 * K.hash(k, 93), d: K.hash(k, 94) * 2 }); }
+    let bloomAt = -1;
+    anims.push((t) => {
+      const on = ['summit', 'finale', 'summary'].includes(X.getG().mode); if (on && bloomAt < 0) bloomAt = t; if (!on) bloomAt = -1;
+      blooms.forEach((b) => { const u = bloomAt < 0 ? 0 : K.clamp((t - bloomAt - 0.8 - b.d) / 0.7); b.m.scale.setScalar(Math.max(0.0001, b.s * K.ease.out(u))); });
+    });
+    X.SIG.summit = { dur: 8.5, caption: 'The treehouse canopy unfolds into blossom. Far across the sea, a lighthouse stands on a rock.', cam: X.summitView({ aimY: 20, h: SUM + 48, back: 50, swing: 0.3 }) };
   }
 
-  // far away, other great trees stand in the haze
+  // far away, other great trees stand in the haze; beyond them the sea, and a lighthouse on a rock
   function distant() {
+    const seaR = new THREE.RingGeometry(380, 1050, 64); seaR.rotateX(-Math.PI / 2); add(scene, seaR, std('#4a7aa0', 0.2, 0.3), 0, -45, 0, { cast: false });
+    const lg = group(scene, Math.sin(X.spireA) * 560, -45, Math.cos(X.spireA) * 560); lg.scale.setScalar(1.7); const wh = std('#f2eee4', 0, 0.7), rd = std('#c0343c', 0, 0.7);
+    add(lg, new THREE.CylinderGeometry(16, 24, 30, 8), T.barkDark, 0, 15, 0, { cast: false });
+    add(lg, new THREE.CylinderGeometry(4.2, 6, 46, 14), wh, 0, 53, 0, { cast: false });
+    for (const y of [42, 62]) add(lg, new THREE.CylinderGeometry(5.0, 5.4, 7, 14), rd, 0, y, 0, { cast: false });
+    add(lg, new THREE.SphereGeometry(3.6, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff0b0').multiplyScalar(1.8), fog: false }), 0, 79, 0, { cast: false });
+    add(lg, new THREE.ConeGeometry(5, 5, 14), rd, 0, 84, 0, { cast: false });
     for (let k = 0; k < 16; k++) {
-      const a = k / 16 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 470 + K.hash(k, 82) * 220, h = 110 + K.hash(k, 83) * 90, g = group(scene, Math.sin(a) * r, -60, Math.cos(a) * r);
+      const a = k / 16 * Math.PI * 2 + K.hash(k, 81) * 0.3, r = 470 + K.hash(k, 82) * 220, h = 110 + K.hash(k, 83) * 90;
+      if (Math.abs(((a - X.spireA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.3) continue;
+      const g = group(scene, Math.sin(a) * r, -60, Math.cos(a) * r);
       add(g, new THREE.CylinderGeometry(h * 0.05, h * 0.09, h, 7), T.barkDark, 0, h / 2, 0, { cast: false });
       for (let j = 0; j < 4; j++) { const m = add(g, ICO, j % 2 ? T.leafD : T.leafA, (K.hash(k, j) - 0.5) * h * 0.4, h * (0.85 + 0.15 * j), (K.hash(k, j + 4) - 0.5) * h * 0.4, { cast: false }); m.scale.setScalar(h * (0.22 + 0.06 * K.hash(k, j + 8))); }
     }
@@ -2311,7 +2398,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 20; // shown top left; add one for every release to the public site
+  const VERSION = 21; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -2491,7 +2578,8 @@ function sceneTree(X) {
       const SC = Object.assign({ tree: { look: TREE_LOOK, make: sceneTree }, light: { look: LIGHT_LOOK, make: sceneLight } }, SCENE_REG)[CH.scene], LOOK = SC ? SC.look : null, LIGHT = CH.scene === 'light';
       // Chapter 3: the lighthouse lamp and the scroll's lantern flash on the rhythm's notes (filled in by the game)
       // a chapter's scenery reacts to the game through SIG: the game calls its hooks (onRhythm, onRight, onTerm, onStop) and gives it sounds
-      const SIG = SC ? { flashAt: [], sweep: null } : null;
+      // SIG.summit, set by the scenery, is the chapter's own ending: { dur, caption, cam(u) -> { pos, aim }, update(u, pos) }
+      const SIG = { flashAt: [], sweep: null };
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -2556,7 +2644,7 @@ function sceneTree(X) {
         (LOOK ? LOOK.sky : [[0, '#070a2c'], [0.22, '#141550'], [0.36, '#2f2278'], [0.44, '#6a3a90'], [0.485, '#d06a88'], [0.5, '#f4a070'], [0.515, '#a8588a'], [0.58, '#3f2c70'], [1, '#141038']]).forEach(([s, c]) => g.addColorStop(s, c));
         ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'lighter';
-        for (const [u, a, r] of (LOOK ? LOOK.skyGlow : [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]])) { ctx.save(); ctx.translate(u * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(${LOOK ? LOOK.glowRGB : '255,205,140'},${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); }
+        for (const [u, a, r] of (LOOK ? LOOK.skyGlow : [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]])) { for (const du of [-1, 0, 1]) { ctx.save(); ctx.translate((u + du) * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(${LOOK ? LOOK.glowRGB : '255,205,140'},${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); } }
         if (!LOOK || LOOK.stars) for (let i = 0; i < 1500; i++) { const y = Math.pow(rnd(), 1.5) * h * 0.43, a = (1 - y / (h * 0.45)) * (0.3 + rnd() * 0.7), r = rnd() < 0.04 ? 2.2 : 0.7 + rnd() * 0.9; ctx.fillStyle = `rgba(${rnd() < 0.3 ? '190,215,255' : '255,240,220'},${a})`; ctx.beginPath(); ctx.arc(rnd() * w, y, r, 0, 7); ctx.fill(); }
         ctx.globalCompositeOperation = 'source-over';
       });
@@ -2572,7 +2660,8 @@ function sceneTree(X) {
       if (LOOK) { M.peak.color.set(LOOK.peak); M.cloud.color.set(LOOK.cloud); }
       {
         const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks); peaks.visible = !LOOK || LOOK.peaks !== false;
-        for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
+        const tA = A0 + (NS - 1) * DA + Math.PI - 0.35;   // keep the view from the summit to the next chapter's landmark clear
+        for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90, clear = Math.abs(((a - tA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.3; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], clear ? 0.0001 : [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
         if (!LOOK || LOOK.cloudSea !== false) { const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
         for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); } }
       }
@@ -2617,7 +2706,14 @@ function sceneTree(X) {
 
       // ------------------------------------------------------------ the islands
       const SUM = (NS - 1) * STEP + 4;
-      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: A0 + (NS - 1) * DA + Math.PI - 0.35, A0, DA, STEP, NS, CH }) : null;
+      // the summit view: from above the landmark's top, looking out to the next chapter's landmark on the horizon (at SPIRE_A)
+      const SPIRE_A = A0 + (NS - 1) * DA + Math.PI - 0.35, towards = (a, r, y) => [Math.sin(a) * r, y, Math.cos(a) * r];
+      const summitView = (o = {}) => (u) => {
+        const a = o.a == null ? SPIRE_A : o.a, e = K.ease.inOut(u);
+        return { pos: towards(a + Math.PI + (o.swing == null ? 0.3 : o.swing) * (e - 0.5), (o.back || 34) - (o.push || 0) * e, (o.h || SUM + 16) + (o.rise || 0) * e), aim: towards(a + (o.pan || 0) * (e - 0.5), o.r || 540, o.aimY == null ? 40 : o.aimY) };
+      };
+      const islandAt = (i, r = RAD, dy = 0) => towards(A0 + i * DA, r, i * STEP + dy);
+      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: SPIRE_A, A0, DA, STEP, NS, CH, summitView, towards, islandAt, textL: (...a) => text(...a) }) : null;
       const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
       const gameOf = (i) => i % NG;
@@ -2926,6 +3022,11 @@ function sceneTree(X) {
         add(cg, new THREE.CylinderGeometry(11, 11.4, 3.2, 14, 1, true), facet(C.wall, 0.85, { side: THREE.DoubleSide }), 0, 1.6, 0, { cast: false });
         [[-7, 9, 3.5], [7.5, 8, 4.2], [-10.5, -3, 5], [10, -5.5, 4.6]].forEach(([x, z, h], k) => pine(cg, x, 0, z, h, k));
         const big = add(cg, OCTA, lum('#3a8ab0', '#7ff0ff', 2.6, { facet: true, rough: 0.2 }), 0, 41, 0, { cast: false }); big.scale.set(1.5, 3.2, 1.5);
+        // far off over the clouds, the Great Tree (Chapter 2), seen from the citadel at the summit
+        { const tg = group(scene, ...towards(SPIRE_A, 600, -40)); tg.scale.setScalar(0.7); const bark = facet('#5a4030'), lf = [facet('#4f8a3a'), facet('#6aa448'), facet('#3e7a3a')];
+          add(tg, new THREE.CylinderGeometry(14, 26, 170, 9), bark, 0, 85, 0, { cast: false });
+          for (let k = 0; k < 9; k++) { const a = k * 2.4, d = k ? 30 + 14 * K.hash(k, 2) : 0, m = add(tg, OCTA.clone ? new THREE.IcosahedronGeometry(1, 1) : OCTA, lf[k % 3], Math.sin(a) * d, 180 + 22 * K.hash(k, 3) - (k ? 10 : -12), Math.cos(a) * d, { cast: false }); m.scale.setScalar(k ? 30 + 10 * K.hash(k, 4) : 46); } }
+        SIG.summit = { dur: 8, caption: 'From the citadel the realm opens out. Far away, a great tree rises above the clouds.', cam: summitView({ aimY: 40, h: SUM + 30, back: 40, swing: 0.4 }) };
         anims.push((t) => { big.rotation.y = t * 0.5; big.position.y = 41 + 0.5 * Math.sin(t * 0.8); });
       }
       }
@@ -3043,11 +3144,19 @@ function sceneTree(X) {
           wLight.intensity = 1.2 * day; wisp.visible = day > 0.02;
           R.vignette = BASE.vignette * day; R.grain = BASE.grain * day; R.bloom = BASE.bloom * day; R.ca = BASE.ca * day;
           const tau = et >= 0 ? et : G.tau;
-          const c = camAt(tau), pos = uncyl(c.pos), aim = uncyl(c.aim);
+          const c = camAt(tau); let pos = uncyl(c.pos), aim = uncyl(c.aim), sw = 0;
+          // a chapter's summit: blend out to its own camera, and back again before the logo sequence
+          const SM = SIG.summit;
+          if (G.mode === 'summit' && SM) {
+            const u = K.clamp((t - G.summitAt) / SM.dur); sw = K.ease.inOut(K.seg(u, 0, 0.16)) * (1 - K.ease.inOut(K.seg(u, 0.88, 1)));
+            const v = SM.cam(K.clamp((u - 0.04) / 0.86));
+            pos = pos.map((x, i) => K.lerp(x, v.pos[i], sw)); aim = aim.map((x, i) => K.lerp(x, v.aim[i], sw));
+            if (SM.update) SM.update(K.clamp((u - 0.04) / 0.86), pos, t);
+          }
           K.look(camera, pos, aim, FOV);
           const still = K.seg(tau, T.lift, T.camEnd), wide = 1 - K.seg(tau, 0.6, T.arrive[0] - 0.3, K.ease.inOut);
           const fa = { a: c.aim.a, y: c.aim.y + (TALL ? 1.45 : 0), r: c.aim.r + 0.15 }, fp = uncyl(fa);
-          K.focus(camera, K.lerp(_s.set(fp[0], fp[1], fp[2]).distanceTo(camera.position), DIST, still), 0.06 * (TALL ? 1.8 : 1) * (1 - still) * (1 - 0.8 * wide));
+          K.focus(camera, K.lerp(_s.set(fp[0], fp[1], fp[2]).distanceTo(camera.position), DIST, still), 0.06 * (TALL ? 1.8 : 1) * (1 - still) * (1 - 0.8 * wide) * (1 - sw));
           key.intensity = BASE.key * day * (1 - 0.6 * wide);
           sun.target.position.set(fp[0], fp[1] - 2, fp[2]); sun.position.copy(SUN_OFF).applyAxisAngle(Y_AXIS, c.aim.a).add(sun.target.position);
           key.target.position.set(fp[0], fp[1], fp[2]); const kp = uncyl({ a: c.aim.a - 0.1, y: c.aim.y + 6, r: c.aim.r + 13 }); key.position.set(kp[0], kp[1], kp[2]);
@@ -3248,8 +3357,16 @@ function createGame(E) {
       snd.gust(1.1, 0.12); snd.gliss(runs[j % 4], 0.085, 0.07, now() + 0.5);
       flyPath([[0, G.tau], [0.6, T.leave[j]], [2.8, T.arrive[j + 1]], [3.4, hold(j + 1)]], () => startStop(j + 1));
       at(0.5, () => wispTo(restOf(j + 1), 2.6, 2.2));
-    } else finale();
+    } else if (R1.sig && R1.sig.summit) summit(); else finale();
   }
+  // the chapter's own summit moment, before the logo sequence (Enter, Space or a click skips it)
+  function summit() {
+    const S = R1.sig.summit; G.mode = 'summit'; G.summitAt = G.t; st.summitDone = false; st.captionAt = G.t;
+    snd.play('riser', { gain: 0.22, dur: 2.2 }); snd.gliss(['Bb3', 'D4', 'F4', 'Bb4', 'D5', 'F5', 'Bb5'], 0.18, 0.07, now() + 0.6);
+    if (S.start) S.start();
+    at(S.dur, endSummit);
+  }
+  function endSummit() { if (G.mode !== 'summit' || st.summitDone) return; st.summitDone = true; G.mode = 'fly'; finale(); }
   function finale() {
     // the eight cards carry the names of the last question's answers, as the movie's did
     flyPath([[0, G.tau], [0.7, T.lift - 0.01], [1.2, T.lift]], () => {
@@ -3764,6 +3881,7 @@ function createGame(E) {
     // down
     audio();
     const bi = hitBtn(px, py); if (bi >= 0) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1397 }); b.fn(); } return; }
+    if (G.mode === 'summit') { keydown({ key: 'Enter', preventDefault() {} }); return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm' && (s.phase === 'tap' || s.phase === 'count')) { rhythmTap(); return; }  // anywhere counts as the drum
     const p = pickAt(ndc); if (!p) return;
@@ -3781,6 +3899,7 @@ function createGame(E) {
   function keydown(e) {
     const s = st.sub, k = e.key;
     if (G.mode === 'title' && (k === 'Enter' || k === ' ')) { e.preventDefault(); begin(); return; }
+    if (G.mode === 'summit' && (k === 'Enter' || k === ' ' || k === 'Escape')) { e.preventDefault(); G.summitAt = Math.min(G.summitAt, G.t - R1.sig.summit.dur * 0.88); st.events = st.events.filter((ev) => ev.fn !== endSummit); at(R1.sig.summit.dur * 0.12 + 0.05, endSummit); return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm') {
       if (k === ' ' || e.code === 'Space') { e.preventDefault(); if (s.phase === 'ready') runRhythm(true); else rhythmTap(); }
@@ -3855,6 +3974,11 @@ function createGame(E) {
       if (best && best.some((b) => b != null)) { ctx.font = `700 ${H * 0.022}px "Alegreya"`; ctx.fillStyle = '#d8cfdf'; ctx.fillText('Best: ' + GAMES.map((g, i) => `${g.name} ${best[i] == null ? '–' : best[i] + '%'}`).join(' · '), W / 2, H * 0.665); }
       return;
     }
+    if (G.mode === 'summit') {
+      const S = R1.sig.summit, a = Math.min(K.seg(t, st.captionAt + 0.6, st.captionAt + 1.2), 1 - K.seg(t, G.summitAt + S.dur - 0.9, G.summitAt + S.dur - 0.4));
+      if (a > 0) { ctx.globalAlpha = a; ribbon(S.caption, H * 0.9, H * 0.034, W * 0.72); ctx.font = `700 ${H * 0.02}px "Alegreya"`; ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,233,188,0.75)'; ctx.fillText('Enter to skip', W - H * 0.03, H * 0.97); ctx.globalAlpha = 1; }
+      return;
+    }
     if (G.mode === 'play' || G.mode === 'fly') {
       // score and progress, top left
       ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Correct 100%').width + H * 0.05;
@@ -3895,6 +4019,8 @@ function createGame(E) {
 
   return {
     frame, pointer, keydown, drawHud, begin, toTitle, clock: now, startStop, showTerm: termScene,
+    // for checking a chapter's ending without climbing: jump to the top island and play the summit
+    toSummit() { audio(); resetJourney(); st.stop = NS - 1; G.island = NS - 1; G.tau = hold(NS - 1); G.mode = 'play'; leaveStop(NS - 1); },
     setInstrument(k) { st.inst = INST.find((i) => i.key === k) || st.inst; saved.inst = st.inst.key; persist(); toTitle(); },
     get inst() { return st.inst; }, setSound, get sound() { return soundOn; }, st,
   };

@@ -92,6 +92,7 @@ function sceneIce(X) {
     });
   }
   let lift0 = 0;
+  SIG.summit = { dur: 8, caption: 'The aurora blazes into a curtain of light. Through it, a waterfall pours off a far cliff.', cam: X.summitView({ aimY: 55, h: SUM + 30, back: 30, rise: 8, swing: 0.3 }) };
 
   // far off: snowy mountains (the castle world's peaks, recoloured), and Chapter 5's waterfall pouring off a cliff
   function distant() {
@@ -100,7 +101,7 @@ function sceneIce(X) {
     const fallTex = K.canvasTex(64, 512, (ctx, w, h) => { const r = K.rng(4); ctx.fillStyle = '#9ad0f0'; ctx.fillRect(0, 0, w, h); for (let i = 0; i < 300; i++) { ctx.fillStyle = `rgba(255,255,255,${0.3 + r() * 0.6})`; ctx.fillRect(r() * w, r() * h, 1 + r() * 3, 8 + r() * 40); } });
     fallTex.wrapT = THREE.RepeatWrapping;
     const fallM = new THREE.MeshBasicMaterial({ map: fallTex, fog: false, color: new THREE.Color('#cfe8ff') });
-    const fall = new THREE.Mesh(new THREE.PlaneGeometry(26, 145), fallM); g.add(fall); fall.position.set(0, 58, 0); fall.rotation.y = Math.atan2(-g.position.x, -g.position.z);
+    const fall = new THREE.Mesh(new THREE.PlaneGeometry(26, 145), fallM); g.add(fall); fall.position.set(-g.position.x / 560 * 40, 58, -g.position.z / 560 * 40); fall.rotation.y = Math.atan2(-g.position.x, -g.position.z);
     add(g, kit.ICO, T.snow, 0, -18, 0, { cast: false }).scale.set(30, 8, 20);
     anims.push((t) => { fallTex.offset.y = -t * 0.6; });
   }

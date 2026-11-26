@@ -5,7 +5,7 @@
 function sceneKit(X) {
   const { THREE, K, scene, add, group, std, facet, anims, turfGeo, rockGeo, RAD, SUM, getG, spireA } = X;
   const UPV = new THREE.Vector3(0, 1, 0), ICO = new THREE.IcosahedronGeometry(1, 1), OCT = new THREE.OctahedronGeometry(1, 0), CONE = new THREE.ConeGeometry(1, 1, 7);
-  const ending = () => { const m = getG().mode; return m === 'finale' || m === 'summary'; };
+  const ending = () => { const m = getG().mode; return m === 'summit' || m === 'finale' || m === 'summary'; };
   const beam = (parent, a, b, r, mat, seg = 6) => {
     const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), m = add(parent, new THREE.CylinderGeometry(r, r, d.length(), seg), mat, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
     m.quaternion.setFromUnitVectors(UPV, d.normalize()); return m;
@@ -54,5 +54,7 @@ function sceneKit(X) {
   const water = (y, color, rough = 0.3, metal = 0.15, rad = 1050) => { const w = add(scene, new THREE.CircleGeometry(rad, 72), std(color, metal, rough), 0, y, 0, { cast: false }); w.rotation.x = -Math.PI / 2; return w; };
   const glowMat = (color, k = 1, o = {}) => new THREE.MeshBasicMaterial(Object.assign({ color: new THREE.Color(color).multiplyScalar(k), fog: false }, o));
   const add2 = (geo, mat, x, y, z) => add(scene, geo, mat, x, y, z, { cast: false });
-  return { beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
+  // a camera path through keys [u, pos, aim], easing between each pair
+  const path = (list) => (u) => { let i = 0; while (i < list.length - 2 && u > list[i + 1][0]) i++; const [u0, p0, a0] = list[i], [u1, p1, a1] = list[i + 1], e = K.ease.inOut(K.clamp((u - u0) / (u1 - u0))); return { pos: p0.map((x, j) => K.lerp(x, p1[j], e)), aim: a0.map((x, j) => K.lerp(x, a1[j], e)) }; };
+  return { path, beam, column, bands, islet, rocklet, stepOf, cluster, tease, water, glowMat, ending, add2, ICO, OCT, CONE, UPV };
 }

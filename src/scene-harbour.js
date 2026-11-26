@@ -76,8 +76,18 @@ function sceneHarbour(X) {
     });
   }
 
+  // the summit: board an airship at the top of the spire and sail out toward the giant clock
+  let escort = null;
+  SIG.summit = { dur: 10, caption: 'You board an airship and sail toward a giant clock.', start: () => { if (escort) escort.visible = true; },
+    cam: (u) => { const e = K.ease.inOut(u), a = X.spireA, P = X.towards(a + Math.PI - 0.2, 26, SUM + 14), Q = X.towards(a + 0.05, 190, SUM + 22); return { pos: P.map((x, i) => K.lerp(x, Q[i], e)), aim: X.towards(a, 515, 70) }; },
+    update: (u, pos, t) => {
+      if (!escort) return; const a = X.spireA, f = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), side = new THREE.Vector3(f.z, 0, -f.x);
+      escort.position.set(pos[0], pos[1], pos[2]).addScaledVector(f, 16).addScaledVector(side, -5); escort.position.y -= 8 - 0.4 * Math.sin(t);
+      escort.rotation.set(0, a + Math.PI / 2, 0.03 * Math.sin(t * 0.7)); escort.visible = K.ease.inOut(K.seg(u, 0, 0.1)) > 0.01;
+    } };
   // far off: a giant clock face on a brass-and-stone tower (Chapter 9)
   function distant() {
+    escort = airship(0, -200, 0, 1.1, 0, 21); escort.visible = false;
     const g = kit.tease(540), face = Math.atan2(-g.position.x, -g.position.z);
     add(g, new THREE.CylinderGeometry(24, 34, 150, 8), T.stone, 0, -20, 0, { cast: false });
     const dial = group(g, 0, 70, 0); dial.rotation.y = face; dial.translateZ(25);

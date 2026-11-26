@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 20; // shown top left; add one for every release to the public site
+  const VERSION = 21; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -182,7 +182,8 @@
       const SC = Object.assign({ tree: { look: TREE_LOOK, make: sceneTree }, light: { look: LIGHT_LOOK, make: sceneLight } }, SCENE_REG)[CH.scene], LOOK = SC ? SC.look : null, LIGHT = CH.scene === 'light';
       // Chapter 3: the lighthouse lamp and the scroll's lantern flash on the rhythm's notes (filled in by the game)
       // a chapter's scenery reacts to the game through SIG: the game calls its hooks (onRhythm, onRight, onTerm, onStop) and gives it sounds
-      const SIG = SC ? { flashAt: [], sweep: null } : null;
+      // SIG.summit, set by the scenery, is the chapter's own ending: { dur, caption, cam(u) -> { pos, aim }, update(u, pos) }
+      const SIG = { flashAt: [], sweep: null };
       const bump = (t, t0, len = 0.28) => { const u = (t - t0) / len; return u <= 0 || u >= 1 ? 0 : Math.sin(u * Math.PI) * (1 - u); };
 
       // ------------------------------------------------------------ materials
@@ -247,7 +248,7 @@
         (LOOK ? LOOK.sky : [[0, '#070a2c'], [0.22, '#141550'], [0.36, '#2f2278'], [0.44, '#6a3a90'], [0.485, '#d06a88'], [0.5, '#f4a070'], [0.515, '#a8588a'], [0.58, '#3f2c70'], [1, '#141038']]).forEach(([s, c]) => g.addColorStop(s, c));
         ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'lighter';
-        for (const [u, a, r] of (LOOK ? LOOK.skyGlow : [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]])) { ctx.save(); ctx.translate(u * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(${LOOK ? LOOK.glowRGB : '255,205,140'},${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); }
+        for (const [u, a, r] of (LOOK ? LOOK.skyGlow : [[0.84, 0.6, 0.2], [0.68, 0.28, 0.16]])) { for (const du of [-1, 0, 1]) { ctx.save(); ctx.translate((u + du) * w, h * 0.5); ctx.scale(1, 0.3); const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * r); sg.addColorStop(0, `rgba(${LOOK ? LOOK.glowRGB : '255,205,140'},${a})`); sg.addColorStop(1, 'rgba(255,160,120,0)'); ctx.fillStyle = sg; ctx.fillRect(-w * r, -w * r, w * r * 2, w * r * 2); ctx.restore(); } }
         if (!LOOK || LOOK.stars) for (let i = 0; i < 1500; i++) { const y = Math.pow(rnd(), 1.5) * h * 0.43, a = (1 - y / (h * 0.45)) * (0.3 + rnd() * 0.7), r = rnd() < 0.04 ? 2.2 : 0.7 + rnd() * 0.9; ctx.fillStyle = `rgba(${rnd() < 0.3 ? '190,215,255' : '255,240,220'},${a})`; ctx.beginPath(); ctx.arc(rnd() * w, y, r, 0, 7); ctx.fill(); }
         ctx.globalCompositeOperation = 'source-over';
       });
@@ -263,7 +264,8 @@
       if (LOOK) { M.peak.color.set(LOOK.peak); M.cloud.color.set(LOOK.cloud); }
       {
         const peaks = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 5), M.peak, 46); peaks.castShadow = false; scene.add(peaks); peaks.visible = !LOOK || LOOK.peaks !== false;
-        for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
+        const tA = A0 + (NS - 1) * DA + Math.PI - 0.35;   // keep the view from the summit to the next chapter's landmark clear
+        for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2 + K.hash(i, 1) * 0.1, r = 330 + K.hash(i, 2) * 130, hgt = 70 + K.hash(i, 3) * 90, clear = Math.abs(((a - tA) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.3; K.place(peaks, i, [Math.sin(a) * r, -60 + hgt / 2, Math.cos(a) * r], [0, K.hash(i, 4) * 6, 0], clear ? 0.0001 : [45 + K.hash(i, 5) * 55, hgt, 45 + K.hash(i, 6) * 55]); }
         if (!LOOK || LOOK.cloudSea !== false) { const sea = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M.cloud, 170); sea.castShadow = false; sea.receiveShadow = false; scene.add(sea);
         for (let i = 0; i < 170; i++) { const a = K.hash(i, 7) * Math.PI * 2, r = 14 + 300 * Math.sqrt(K.hash(i, 8)), s = 9 + K.hash(i, 9) * 16; K.place(sea, i, [Math.sin(a) * r, -21 - K.hash(i, 10) * 6, Math.cos(a) * r], [0, K.hash(i, 11) * 6, 0], [s, 3 + K.hash(i, 12) * 3, s * (0.6 + 0.5 * K.hash(i, 13))]); } }
       }
@@ -308,7 +310,14 @@
 
       // ------------------------------------------------------------ the islands
       const SUM = (NS - 1) * STEP + 4;
-      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: A0 + (NS - 1) * DA + Math.PI - 0.35, A0, DA, STEP, NS, CH }) : null;
+      // the summit view: from above the landmark's top, looking out to the next chapter's landmark on the horizon (at SPIRE_A)
+      const SPIRE_A = A0 + (NS - 1) * DA + Math.PI - 0.35, towards = (a, r, y) => [Math.sin(a) * r, y, Math.cos(a) * r];
+      const summitView = (o = {}) => (u) => {
+        const a = o.a == null ? SPIRE_A : o.a, e = K.ease.inOut(u);
+        return { pos: towards(a + Math.PI + (o.swing == null ? 0.3 : o.swing) * (e - 0.5), (o.back || 34) - (o.push || 0) * e, (o.h || SUM + 16) + (o.rise || 0) * e), aim: towards(a + (o.pan || 0) * (e - 0.5), o.r || 540, o.aimY == null ? 40 : o.aimY) };
+      };
+      const islandAt = (i, r = RAD, dy = 0) => towards(A0 + i * DA, r, i * STEP + dy);
+      const LAND = SC ? SC.make({ THREE, K, scene, add, group, std, facet, lum, anims, turfGeo, rockGeo, CYL6, M, RAD, SUM, SIG, getG: () => G, spireA: SPIRE_A, A0, DA, STEP, NS, CH, summitView, towards, islandAt, textL: (...a) => text(...a) }) : null;
       const ISLET = LAND ? LAND.islet : islet, PINE = LAND ? LAND.tree : pine;
       const PY = 2.55, PW = 4.7, PH = 1.9, DAIS = 0.55;
       const gameOf = (i) => i % NG;
@@ -617,6 +626,11 @@
         add(cg, new THREE.CylinderGeometry(11, 11.4, 3.2, 14, 1, true), facet(C.wall, 0.85, { side: THREE.DoubleSide }), 0, 1.6, 0, { cast: false });
         [[-7, 9, 3.5], [7.5, 8, 4.2], [-10.5, -3, 5], [10, -5.5, 4.6]].forEach(([x, z, h], k) => pine(cg, x, 0, z, h, k));
         const big = add(cg, OCTA, lum('#3a8ab0', '#7ff0ff', 2.6, { facet: true, rough: 0.2 }), 0, 41, 0, { cast: false }); big.scale.set(1.5, 3.2, 1.5);
+        // far off over the clouds, the Great Tree (Chapter 2), seen from the citadel at the summit
+        { const tg = group(scene, ...towards(SPIRE_A, 600, -40)); tg.scale.setScalar(0.7); const bark = facet('#5a4030'), lf = [facet('#4f8a3a'), facet('#6aa448'), facet('#3e7a3a')];
+          add(tg, new THREE.CylinderGeometry(14, 26, 170, 9), bark, 0, 85, 0, { cast: false });
+          for (let k = 0; k < 9; k++) { const a = k * 2.4, d = k ? 30 + 14 * K.hash(k, 2) : 0, m = add(tg, OCTA.clone ? new THREE.IcosahedronGeometry(1, 1) : OCTA, lf[k % 3], Math.sin(a) * d, 180 + 22 * K.hash(k, 3) - (k ? 10 : -12), Math.cos(a) * d, { cast: false }); m.scale.setScalar(k ? 30 + 10 * K.hash(k, 4) : 46); } }
+        SIG.summit = { dur: 8, caption: 'From the citadel the realm opens out. Far away, a great tree rises above the clouds.', cam: summitView({ aimY: 40, h: SUM + 30, back: 40, swing: 0.4 }) };
         anims.push((t) => { big.rotation.y = t * 0.5; big.position.y = 41 + 0.5 * Math.sin(t * 0.8); });
       }
       }
@@ -734,11 +748,19 @@
           wLight.intensity = 1.2 * day; wisp.visible = day > 0.02;
           R.vignette = BASE.vignette * day; R.grain = BASE.grain * day; R.bloom = BASE.bloom * day; R.ca = BASE.ca * day;
           const tau = et >= 0 ? et : G.tau;
-          const c = camAt(tau), pos = uncyl(c.pos), aim = uncyl(c.aim);
+          const c = camAt(tau); let pos = uncyl(c.pos), aim = uncyl(c.aim), sw = 0;
+          // a chapter's summit: blend out to its own camera, and back again before the logo sequence
+          const SM = SIG.summit;
+          if (G.mode === 'summit' && SM) {
+            const u = K.clamp((t - G.summitAt) / SM.dur); sw = K.ease.inOut(K.seg(u, 0, 0.16)) * (1 - K.ease.inOut(K.seg(u, 0.88, 1)));
+            const v = SM.cam(K.clamp((u - 0.04) / 0.86));
+            pos = pos.map((x, i) => K.lerp(x, v.pos[i], sw)); aim = aim.map((x, i) => K.lerp(x, v.aim[i], sw));
+            if (SM.update) SM.update(K.clamp((u - 0.04) / 0.86), pos, t);
+          }
           K.look(camera, pos, aim, FOV);
           const still = K.seg(tau, T.lift, T.camEnd), wide = 1 - K.seg(tau, 0.6, T.arrive[0] - 0.3, K.ease.inOut);
           const fa = { a: c.aim.a, y: c.aim.y + (TALL ? 1.45 : 0), r: c.aim.r + 0.15 }, fp = uncyl(fa);
-          K.focus(camera, K.lerp(_s.set(fp[0], fp[1], fp[2]).distanceTo(camera.position), DIST, still), 0.06 * (TALL ? 1.8 : 1) * (1 - still) * (1 - 0.8 * wide));
+          K.focus(camera, K.lerp(_s.set(fp[0], fp[1], fp[2]).distanceTo(camera.position), DIST, still), 0.06 * (TALL ? 1.8 : 1) * (1 - still) * (1 - 0.8 * wide) * (1 - sw));
           key.intensity = BASE.key * day * (1 - 0.6 * wide);
           sun.target.position.set(fp[0], fp[1] - 2, fp[2]); sun.position.copy(SUN_OFF).applyAxisAngle(Y_AXIS, c.aim.a).add(sun.target.position);
           key.target.position.set(fp[0], fp[1], fp[2]); const kp = uncyl({ a: c.aim.a - 0.1, y: c.aim.y + 6, r: c.aim.r + 13 }); key.position.set(kp[0], kp[1], kp[2]);
