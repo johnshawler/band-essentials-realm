@@ -497,10 +497,11 @@ function createGame(E) {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.p = null; s.acc = 0; s.tries = 0; s.locked = false; s.drag = null;
     const w = which(n); clear(R3.askG); text(R3.askG, w + pretty(n), -1.245, 0.18, 0.004, { height: w ? 0.4 : 0.56, face: CINZEL_B, color: C.ember, maxW: 2.0 });
     R3.seals.forEach((sg) => { tintTo(sg.userData.mat, '#ffd27a'); set(sg.userData.mat, 0); }); R3.qPath = null; R3.ring = null; R3.inkAt = -1; R3.stampAt = -1;
-    drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff, and the quill writes it. Up and Down move it one line or space. Use a signet ring to stamp a flat or sharp.`);
+    drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff, and the quill writes it. The gold arrows below the book move it one line or space. Use a signet ring to stamp a flat or sharp.`);
   }
   function drawWritten(colour) {
     const s = st.sub, sf = R3.sf; clear(R3.noteG); clear(R3.accG);
+    R3.stepOff = [s.locked || s.p === P_HI, s.locked || s.p === P_LO];                          // the arrow medallions dim when they can do nothing
     const mat = inkLit(); if (colour) { tintTo(mat, colour); set(mat, 1); }
     R3.crisp = R3.dots = null;
     if (s.drag && s.drag.free) note(R3.noteG, 'w', 0, s.drag.x, s.drag.y, mat);              // carried in the hand
@@ -562,7 +563,7 @@ function createGame(E) {
   function stepWrite(d) {
     const s = st.sub; if (!s || s.kind !== 'write' || s.locked || s.drag) return;
     const p = s.p == null ? 2 : K.clamp(s.p + d * 0.5, P_LO, P_HI); if (p === s.p) return;
-    s.p = p; snd.play('tick', { gain: 0.15, f: 2600 }); quillWrite(); drawWritten();
+    s.p = p; R3.stepAt[d > 0 ? 0 : 1] = G.t; snd.play('tick', { gain: 0.15, f: 2600 }); quillWrite(); drawWritten();
   }
   function setSeal(acc) {
     const s = st.sub; if (!s || s.kind !== 'write' || s.locked) return;
@@ -795,6 +796,7 @@ function createGame(E) {
     else if (p.kind === 'tray' && s.kind === 'write' && !s.locked) { s.drag = { free: true, x: R3.home.x, y: R3.home.y }; s.p = null; drawWritten(); snd.play('paper', { gain: 0.6, dur: 0.2 }); }
     else if (p.kind === 'page' && s.kind === 'write' && !s.locked) { ray.setFromCamera(ndc, S.camera); writeAt(facePoint(ray.ray), true); }
     else if (p.kind === 'seal') setSeal(p.acc);
+    else if (p.kind === 'step') stepWrite(p.dir);
     else if (p.kind === 'shield') strike(p.k);
     else if (p.kind === 'card') pickCard(p.k);
     else if (p.kind === 'key') pickKey(p.k);
@@ -845,19 +847,13 @@ function createGame(E) {
     // buttons: small purple banners with gold lettering, laid out in a row centred on cx
     const row = (list, cy, cx = W / 2, scale = 1) => {
       const px = H * 0.034 * scale; ctx.font = `700 ${px}px "Texturina"`;
-      const ic = px * 0.9, ig = px * 0.38;                                                       // a drawn arrow (b.icon 'up' or 'down') before the label: shapes, not font glyphs, so every device shows them
-      const ws = list.map((b) => ctx.measureText(b.label).width + px * 1.4 + (b.icon ? ic + ig : 0)), gap = px * 1.1, total = ws.reduce((a, b) => a + b, 0) + gap * (list.length - 1);
+      const ws = list.map((b) => ctx.measureText(b.label).width + px * 1.4), gap = px * 1.1, total = ws.reduce((a, b) => a + b, 0) + gap * (list.length - 1);
       let x = cx - total / 2;
       list.forEach((b, i) => {
         const w = ws[i], h = px * 1.55, y = cy - h / 2, idx = st.btns.length, hov = st.hover === idx && !b.off;
         ctx.globalAlpha = b.off ? 0.45 : 1;
         scroll(x, y, w, h, b.active ? '#c9502a' : hov ? '#5a32a0' : '#3a2070', '#e8c060');
-        ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        if (b.icon) {
-          const tw = ctx.measureText(b.label).width, x0 = x + w / 2 - (tw + ic + ig) / 2, cy2 = y + h * 0.5, d = b.icon === 'up' ? -1 : 1;
-          ctx.beginPath(); ctx.moveTo(x0, cy2 - d * ic * 0.42); ctx.lineTo(x0 + ic, cy2 - d * ic * 0.42); ctx.lineTo(x0 + ic / 2, cy2 + d * ic * 0.48); ctx.closePath(); ctx.fill();
-          ctx.fillText(b.label, x0 + ic + ig + tw / 2, y + h * 0.53);
-        } else ctx.fillText(b.label, x + w / 2, y + h * 0.53);
+        ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.label, x + w / 2, y + h * 0.53);
         ctx.globalAlpha = 1;
         st.btns.push({ x: x - h * 0.3, y, w: w + h * 0.6, h, fn: b.fn, off: b.off });
         x += w + gap;
@@ -914,9 +910,7 @@ function createGame(E) {
         } else if (s && s.kind === 'finger') {
           col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(concert(s.n)) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(concert(s.n)); } }]);
         } else if (s && s.kind === 'write') {
-          col([{ label: 'Check', fn: checkWrite, off: s.locked },
-            { label: 'Up', icon: 'up', fn: () => stepWrite(1), off: s.locked || s.p === P_HI },
-            { label: 'Down', icon: 'down', fn: () => stepWrite(-1), off: s.locked || s.p === P_LO }]);
+          col([{ label: 'Check', fn: checkWrite, off: s.locked }]);
         }
       }
       return;

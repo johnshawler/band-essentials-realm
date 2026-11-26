@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 30; // shown top left; add one for every release to the public site
+  const VERSION = 31; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -411,12 +411,17 @@
         const sf = staff(face, -2.15 / RS, 4.3 / RS, -0.05 / RS - 2 * U);
         sf.put('four', 3.8, 2); sf.put('four', 3.8, 0);
         const dyn = group(face);
-        const drum = group(g, -1.8, DAIS + 0.36, 0.72); drum.rotation.x = 0.55;
+        // the drum sits on a low carved block with TAP cut in gilt on its front
+        const stool = group(g, -1.7, DAIS, 0.8);
+        add(stool, K.roundedBox(1.0, 0.26, 0.74, 0.04, 2), M.woodDark, 0, 0.13, 0); add(stool, K.roundedBox(1.06, 0.045, 0.8, 0.015, 2), M.gold, 0, 0.27, 0);
+        text(stool, 'Tap', 0, 0.125, 0.375, { height: 0.24, face: CINZEL_B, color: C.gilt });
+        pickable(add(stool, box(1.06, 0.32, 0.8), M.hit, 0, 0.15, 0, { cast: false }), { kind: 'drum' });
+        const drum = group(g, -1.7, DAIS + 0.66, 0.72); drum.rotation.x = 0.55;
         add(drum, new THREE.CylinderGeometry(0.44, 0.37, 0.5, 12), M.wood); add(drum, new THREE.CylinderGeometry(0.455, 0.455, 0.07, 12), M.gold, 0, 0.21, 0); const skin = add(drum, new THREE.CylinderGeometry(0.415, 0.415, 0.03, 12), M.skin, 0, 0.255, 0); add(drum, new THREE.CylinderGeometry(0.39, 0.39, 0.05, 12), M.gold, 0, -0.2, 0);
         pickable(add(drum, new THREE.CylinderGeometry(0.6, 0.6, 0.9, 10), M.hit, 0, 0.1, 0, { cast: false }), { kind: 'drum' });
         const sticks = [-1, 1].map((sx) => { const s = group(drum, sx * 0.56, 0.52, 0.02); add(s, cylX(0.02, 0.5, 6), M.woodDark, -sx * 0.25, 0, 0); add(s, new THREE.SphereGeometry(0.05, 8, 6), M.pale, -sx * 0.5, 0, 0); return s; });
-        const sTap = sign(g, 'Tap', -0.98, DAIS, 0.78), sCount = sign(g, 'Count in', 0.02, DAIS, 0.78);
-        pickable(sTap.userData.plank, { kind: 'drum' }); pickable(sCount.userData.plank, { kind: 'countin' });
+        const sCount = sign(g, 'Count in', -0.05, DAIS, 0.78);
+        pickable(sCount.userData.plank, { kind: 'countin' });
         const SX = [0.95, 1.39, 1.83, 2.27].slice(0, CH.rhythm.meter === 3 ? 3 : 4), STONE = (() => { const s = new THREE.CylinderGeometry(0.23, 0.28, 0.52, 4); s.rotateY(Math.PI / 4); return s; })();
         const stones = SX.map((x, k) => { const s = group(g, x, DAIS + 0.26, 0.82); const body = add(s, STONE, M.stoneLight); pickable(body, { kind: 'countin' }); text(s, String(k + 1), 0, 0.0, 0.195, { height: 0.26, face: CINZEL_B }); const m = glowing('#5a2a1c', 0.6, { rough: 0.3, tint: 0.95, facet: true }); add(s, OCTA, m, 0, 0.4, 0, { cast: false }).scale.set(0.085, 0.12, 0.085); s.userData.mat = m; return s; });
         Object.assign(R1, { face, sf, dyn, drum, skin, sticks, stones, notes: [], stoneAt: [-9, -9, -9, -9], tapAt: [] });
@@ -493,6 +498,18 @@
           pickable(add(sg, cylZ(0.26, 0.14, 10), M.hit, 0, -0.05, 0.05, { cast: false }), { kind: 'seal', acc });
           sg.userData = { mat: m, acc, home: sg.position.clone() }; return sg;
         });
+        // two gilded arrow medallions on posts under the staff page: touched, the written note moves up or down one line or space
+        const ARROW = extrude([[0, 0.25], [0.22, 0.02], [0.09, 0.02], [0.09, -0.22], [-0.09, -0.22], [-0.09, 0.02], [-0.22, 0.02]], [], 0.05);
+        const steps = [[1, 0.52], [-1, 1.38]].map(([dir, x]) => {
+          const sg = group(g, x, DAIS + 0.58, 0.95); sg.rotation.x = -0.18;
+          add(sg, new THREE.CylinderGeometry(0.045, 0.06, 0.6, 6), M.woodDark, 0, -0.32, -0.06);
+          const m = glowing('#b8862a', 0.45, { metal: 0.9, rough: 0.3, tint: 0.55, to: '#ffd27a', glow: '#ffb040' });
+          add(sg, cylZ(0.38, 0.07, 28), m, 0, 0, 0, { cast: false });
+          add(sg, cylZ(0.32, 0.075, 28), std('#5a1a22', 0.2, 0.5), 0, 0, 0.002, { cast: false });
+          const a = add(sg, ARROW, m, 0, 0, 0.03, { cast: false }); a.scale.set(1.25, 1.25, 1); a.rotation.z = dir > 0 ? 0 : Math.PI;
+          pickable(add(sg, cylZ(0.43, 0.2, 10), M.hit, 0, 0, 0.05, { cast: false }), { kind: 'step', dir });
+          sg.userData = { mat: m, dir }; return sg;
+        });
         const well = new THREE.Vector3(2.0, DAIS + 0.24, 0.8);
         add(g, new THREE.CylinderGeometry(0.15, 0.2, 0.24, 8), std('#1a1436', 0.2, 0.25, { flatShading: true }), well.x, DAIS + 0.12, well.z); add(g, new THREE.CylinderGeometry(0.16, 0.16, 0.04, 8), M.gold, well.x, DAIS + 0.25, well.z);
         accent(g, -2.3, DAIS, 0.8, 0.5, M_CYAN, 31, 3);
@@ -503,8 +520,10 @@
         quill.position.copy(rest);
         // the game sets R3.qPath (the quill's keyframes), R3.inkAt/inkDur (when its ink goes down), R3.ring (a signet's flight)
         // and R3.stampAt (when the stamped sign appears)
-        Object.assign(R3, { bk, face, sf, home, seals, quill, rest, clefG: group(face), askG: group(face), noteG: group(face), accG: group(face), qPath: null, inkAt: -1, inkDur: 1, ring: null, stampAt: -1, crisp: null, dots: null });
+        Object.assign(R3, { steps, stepAt: [-9, -9], stepOff: [false, false], bk, face, sf, home, seals, quill, rest, clefG: group(face), askG: group(face), noteG: group(face), accG: group(face), qPath: null, inkAt: -1, inkDur: 1, ring: null, stampAt: -1, crisp: null, dots: null });
         anims.push((t) => {
+          // the arrows: a flash and a small push when touched, dimmed when the note can go no further that way
+          steps.forEach((sg, k) => { const e = bump(t, R3.stepAt[k], 0.3); set(sg.userData.mat, R3.stepOff[k] ? 0 : Math.min(1, 0.25 + e)); sg.userData.mat.opacity = 1; sg.position.z = 0.95 - 0.05 * e; sg.scale.setScalar(R3.stepOff[k] ? 0.92 : 1); });
           // the quill: on its path while writing, otherwise resting in the inkwell; it trembles a little as the nib moves
           const qp = R3.qPath ? K.track(R3.qPath)(t) : rest.toArray(); if (R3.qPath && t > R3.qPath[R3.qPath.length - 1][0]) R3.qPath = null;
           const writing = R3.inkAt >= 0 && t >= R3.inkAt && t <= R3.inkAt + R3.inkDur;
