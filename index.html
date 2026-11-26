@@ -2510,7 +2510,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 28; // shown top left; add one for every release to the public site
+  const VERSION = 29; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -3853,7 +3853,7 @@ function createGame(E) {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.p = null; s.acc = 0; s.tries = 0; s.locked = false; s.drag = null;
     const w = which(n); clear(R3.askG); text(R3.askG, w + pretty(n), -1.245, 0.18, 0.004, { height: w ? 0.4 : 0.56, face: CINZEL_B, color: C.ember, maxW: 2.0 });
     R3.seals.forEach((sg) => { tintTo(sg.userData.mat, '#ffd27a'); set(sg.userData.mat, 0); }); R3.qPath = null; R3.ring = null; R3.inkAt = -1; R3.stampAt = -1;
-    drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff, and the quill writes it. Use a signet ring to stamp a flat or sharp.`);
+    drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff, and the quill writes it. Up and Down move it one line or space. Use a signet ring to stamp a flat or sharp.`);
   }
   function drawWritten(colour) {
     const s = st.sub, sf = R3.sf; clear(R3.noteG); clear(R3.accG);
@@ -3904,7 +3904,8 @@ function createGame(E) {
     const pl = new THREE.Plane().setFromNormalAndCoplanarPoint(nrm, o), hit = new THREE.Vector3();
     return ray.intersectPlane(pl, hit) ? f.worldToLocal(hit) : null;
   };
-  const snapP = (y) => K.clamp(Math.round((y - R3.sf.y0) / U * 2) / 2, -3, 7);
+  const P_LO = -3, P_HI = 7;                                                                   // lowest and highest spots a note can be written
+  const snapP = (y) => K.clamp(Math.round((y - R3.sf.y0) / U * 2) / 2, P_LO, P_HI);
   function writeAt(lp, drop) {
     const s = st.sub; if (!lp) return;
     if (lp.x > 0.15 && lp.x < 2.45 && lp.y > -1.1 && lp.y < 1.1) { const p = snapP(lp.y); if (s.drag) s.drag.free = false; if (p !== s.p) { s.p = p; snd.play('tick', { gain: 0.15, f: 2600 }); } }
@@ -3912,6 +3913,12 @@ function createGame(E) {
     else if (drop) { s.p = null; }
     if (drop && !s.drag && s.p != null) quillWrite();
     drawWritten();
+  }
+  // the Up and Down buttons (and arrow keys) move the written note one line or space at a time; the first press writes it on the middle line
+  function stepWrite(d) {
+    const s = st.sub; if (!s || s.kind !== 'write' || s.locked || s.drag) return;
+    const p = s.p == null ? 2 : K.clamp(s.p + d * 0.5, P_LO, P_HI); if (p === s.p) return;
+    s.p = p; snd.play('tick', { gain: 0.15, f: 2600 }); quillWrite(); drawWritten();
   }
   function setSeal(acc) {
     const s = st.sub; if (!s || s.kind !== 'write' || s.locked) return;
@@ -4159,7 +4166,7 @@ function createGame(E) {
       else if (k === 'l' || k === 'L') runRhythm(false);
     } else if (s.kind === 'finger') { if (k === 'Enter') { e.preventDefault(); s.waitNext ? nextFinger() : checkFinger(); } else if (/^[1-9]$/.test(k) && R2.gems[+k - 1]) touchGem(+k - 1); }
     else if (s.kind === 'write') {
-      if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); if (s.locked) return; s.p = s.p == null ? 2 : K.clamp(s.p + (k === 'ArrowUp' ? 0.5 : -0.5), -3, 7); quillWrite(); drawWritten(); }
+      if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); stepWrite(k === 'ArrowUp' ? 1 : -1); }
       else if (k === 'Enter') { e.preventDefault(); checkWrite(); } else if (k === 'b') setSeal(-1); else if (k === '#' || k === 's') setSeal(1);
     }
     else if (s.kind === 'read' && /^[1-3]$/.test(k)) strike(+k - 1);
@@ -4257,7 +4264,9 @@ function createGame(E) {
         } else if (s && s.kind === 'finger') {
           col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(concert(s.n)) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(concert(s.n)); } }]);
         } else if (s && s.kind === 'write') {
-          col([{ label: 'Check', fn: checkWrite, off: s.locked }]);
+          col([{ label: 'Check', fn: checkWrite, off: s.locked },
+            { label: '▲ Up', fn: () => stepWrite(1), off: s.locked || s.p === P_HI },
+            { label: '▼ Down', fn: () => stepWrite(-1), off: s.locked || s.p === P_LO }]);
         }
       }
       return;
