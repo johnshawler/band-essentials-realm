@@ -1,7 +1,13 @@
 // ================================================================ player: one continuous loop; the picture follows the game
 const K = window.K, style = window.STYLES[window.STYLES.length - 1];
 const $ = (id) => document.getElementById(id), canvas = $('view'), noteEl = $('note'), sel = $('inst'), bSnd = $('snd'), bRestart = $('restart'), bFs = $('fs'), page = document.querySelector('.page');
-const size = (params.get('size') || '1280x720').split('x').map(Number);
+// render at the screen's own resolution (device pixels), so the picture is never stretched and soft;
+// at least 1280x720, and at most 1920x1080 so a tablet keeps a smooth frame rate
+const autoSize = () => {
+  const el = document.querySelector('.stage'), css = el ? el.getBoundingClientRect().width : 1280, dpr = window.devicePixelRatio || 1;
+  const w = Math.round(Math.min(1920, Math.max(1280, css * dpr)) / 16) * 16; return [w, w * 9 / 16];
+};
+const size = params.get('size') ? params.get('size').split('x').map(Number) : autoSize();
 // no chapter chosen: show the realm map instead of a climb
 const MAP = !params.has('ch'), chSel = $('chapter'), bMap = $('map');
 CHAPTERS.forEach((c) => { const o = document.createElement('option'); o.value = c.n; o.textContent = `${c.n}. ${c.title}`; chSel.append(o); });
@@ -61,9 +67,15 @@ if (!MAP) try {
   requestAnimationFrame(loop);
 
   const at = (e) => { const r = canvas.getBoundingClientRect(), u = (e.clientX - r.left) / r.width, v = (e.clientY - r.top) / r.height; return [u * S.W, v * S.H, new THREE.Vector2(u * 2 - 1, -(v * 2 - 1))]; };
-  canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); canvas.focus(); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} GAME.pointer('down', ...at(e)); });
+  // a quick sideways swipe with a finger: to the right goes back an island, to the left forward again (up to the furthest reached)
+  let sw = null;
+  canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); canvas.focus(); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} sw = e.pointerType === 'mouse' ? null : { x: e.clientX, y: e.clientY, t: performance.now() }; GAME.pointer('down', ...at(e)); });
+  const swiped = (e) => {
+    if (!sw) return false; const dx = e.clientX - sw.x, dy = e.clientY - sw.y, dt = performance.now() - sw.t, w = canvas.getBoundingClientRect().width; sw = null;
+    return Math.abs(dx) > Math.max(60, w * 0.1) && Math.abs(dy) < Math.abs(dx) * 0.5 && dt < 800 && GAME.swipe(dx > 0 ? -1 : 1);
+  };
   canvas.addEventListener('pointermove', (e) => { canvas.style.cursor = GAME.pointer('move', ...at(e)) ? 'pointer' : 'default'; });
-  canvas.addEventListener('pointerup', (e) => GAME.pointer('up', ...at(e)));
+  canvas.addEventListener('pointerup', (e) => { if (!swiped(e)) GAME.pointer('up', ...at(e)); });
   canvas.addEventListener('pointercancel', (e) => GAME.pointer('up', ...at(e)));
   addEventListener('keydown', (e) => { if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return; GAME.keydown(e); });
   noteEl.hidden = true; canvas.focus();

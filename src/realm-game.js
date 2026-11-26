@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 27; // shown top left; add one for every release to the public site
+  const VERSION = 28; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -171,7 +171,7 @@
     name: 'High Fantasy (playable)',
     duration: 1e9,
     fonts: ['700 150px "Oswald"', '500 128px "Oswald"', '700 128px "Texturina"', '700 128px "Alegreya"', '500 128px "Alegreya"'],
-    render: { samples: 64, shutter: 0.4, tone: 'neutral', exposure: 1.0, bloom: 0.45, bloomThreshold: 1.15, bloomRadius: 1.2, vignette: 0.32, grain: 0.02, ca: 0.002, fov: 30, background: '#000000', far: 1400 },
+    render: { samples: 64, shutter: 0, tone: 'neutral', exposure: 1.0, bloom: 0.45, bloomThreshold: 1.15, bloomRadius: 1.2, vignette: 0.32, grain: 0.02, ca: 0, fov: 30, background: '#000000', far: 1400 },
 
     build(S) {
       const { THREE, K, scene, camera } = S;
@@ -813,9 +813,9 @@
             if (SM.update) SM.update(K.clamp((u - 0.04) / 0.86), pos, t);
           }
           K.look(camera, pos, aim, FOV);
-          const still = K.seg(tau, T.lift, T.camEnd), wide = 1 - K.seg(tau, 0.6, T.arrive[0] - 0.3, K.ease.inOut);
+          const wide = 1 - K.seg(tau, 0.6, T.arrive[0] - 0.3, K.ease.inOut);
           const fa = { a: c.aim.a, y: c.aim.y + (TALL ? 1.45 : 0), r: c.aim.r + 0.15 }, fp = uncyl(fa);
-          K.focus(camera, K.lerp(_s.set(fp[0], fp[1], fp[2]).distanceTo(camera.position), DIST, still), 0.06 * (TALL ? 1.8 : 1) * (1 - still) * (1 - 0.8 * wide) * (1 - sw));
+          K.focus(camera, DIST, 0);   // a pinhole lens: near and far are always both in focus
           key.intensity = BASE.key * day * (1 - 0.6 * wide);
           sun.target.position.set(fp[0], fp[1] - 2, fp[2]); sun.position.copy(SUN_OFF).applyAxisAngle(Y_AXIS, c.aim.a).add(sun.target.position);
           key.target.position.set(fp[0], fp[1], fp[2]); const kp = uncyl({ a: c.aim.a - 0.1, y: c.aim.y + 6, r: c.aim.r + 13 }); key.position.set(kp[0], kp[1], kp[2]);

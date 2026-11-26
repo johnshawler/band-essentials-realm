@@ -115,6 +115,7 @@ function createGame(E) {
   function resetJourney() {
     st.events = []; st.fly = null; st.sub = null; say('');
     st.tallies = GAMES.map(() => ({ c: 0, n: 0 })); st.skipped = GAMES.map(() => false); st.stopRes = new Array(NS).fill(null); st.stop = 0;
+    st.stopMarks = Array.from({ length: NS }, () => ({ c: 0, n: 0 })); st.reach = 0;
     st.seqs = { finger: noteSeq(3), write: noteSeq(3), read: noteSeq(3), terms: termSeq(), keys: keySeq() }; st.rhythmPrev = '';
     G.doneAt = new Array(NS).fill(-1); G.endTau = -1; G.summaryFade = 0;
     resetTiles(); GAMES.forEach((_, g) => placeProps(g, g));
@@ -137,16 +138,47 @@ function createGame(E) {
   function startStop(j) {
     const g = gameOf(j);
     G.mode = 'play'; G.island = j; G.tau = hold(j); st.stop = j; st.q = lapOf(j); st.captionAt = G.t; say('');
+    st.reach = Math.max(st.reach, j); histAt(j);
     // the game two islands back is out of sight now: carry its props up to its next island
     if (j >= 2 && j - 2 + NG < NS) { tidy(gameOf(j - 2)); placeProps(gameOf(j - 2), j - 2 + NG); }
     wispTo(restOf(j), 0.6, 0.2); sig('onStop', j);
     [setupRhythm, setupFinger, setupWrite, setupRead, setupTerms, setupKeys][g]();
   }
+  // back (or forward again) to an island already reached: a finished dot, a swipe, or the browser's back gesture.
+  // The island is played again, and its new answer replaces the old one in the score.
+  const canJump = (k) => G.mode === 'play' && !st.fly && k >= 0 && k <= st.reach && k !== st.stop && !(st.sub && st.sub.drag);
+  function jumpTo(k) {
+    if (!canJump(k)) return false;
+    const from = st.stop;
+    st.events = []; st.sub = null; say(''); sig('onLeave', from);
+    const m = st.stopMarks[k], tl = st.tallies[gameOf(k)]; tl.c -= m.c; tl.n -= m.n; st.stopMarks[k] = { c: 0, n: 0 }; st.stopRes[k] = null;
+    const dur = Math.min(3.6, 1.5 + 0.2 * Math.abs(k - from));
+    snd.gust(dur, 0.1); snd.gliss(k < from ? ['G5', 'F5', 'D5', 'C5', 'Bb4', 'G4', 'F4'] : ['F4', 'G4', 'Bb4', 'C5', 'D5', 'F5', 'G5'], 0.085, 0.07, now() + 0.2);
+    // halfway, out of sight of both islands, each game's props move to the island where it is played next from k
+    at(dur / 2, () => { const s0 = Math.max(0, k - 1); GAMES.forEach((_, g) => { tidy(g); let i = s0 + (((g - s0) % NG) + NG) % NG; if (i >= NS) i -= NG; placeProps(g, i); }); });
+    flyTo(G.tau, hold(k), dur, () => startStop(k));
+    wispTo(restOf(k), dur * 0.85, 0.15);
+    return true;
+  }
+  const swipe = (dir) => jumpTo(st.stop + (dir < 0 ? -1 : 1));
+  // each island is a page in the browser's history, so the back button and the iPad's edge swipe go back an island
+  const H_ = { idx: -1, top: -1 };
+  function histAt(j) {
+    try {
+      if (j === H_.idx) return;
+      if (H_.idx >= 0 && j <= H_.top) { const d = j - H_.idx; H_.idx = j; history.go(d); return; }
+      history[H_.idx < 0 ? 'replaceState' : 'pushState']({ isl: j }, ''); H_.idx = H_.top = j;
+    } catch (e) {}
+  }
+  try {
+    history.replaceState(Object.assign({}, history.state, { isl: -1 }), '');
+    addEventListener('popstate', (e) => { const k = e.state && typeof e.state.isl === 'number' ? e.state.isl : -1; const was = H_.idx; H_.idx = k; if (k >= 0 && k !== st.stop && k !== was) jumpTo(k); });
+  } catch (e) {}
   // percentage correct: questions answered right, or for rhythms, notes tapped in time (extra taps count as misses)
   // best results, per instrument and chapter (Chapter 1 keeps the key it has always used)
   const bestKey = () => (CH.n === 1 ? st.inst.key : `ch${CH.n}:${st.inst.key}`);
   const pctOf = (t) => (t.n ? Math.round(100 * t.c / t.n) : 0);
-  const mark = (c, n = 1) => { const t = st.tallies[gameOf(st.stop)]; t.c += c; t.n += n; };
+  const mark = (c, n = 1) => { const t = st.tallies[gameOf(st.stop)], m = st.stopMarks[st.stop]; t.c += c; t.n += n; m.c += c; m.n += n; };
   const finalPct = () => { const r = st.tallies.filter((t) => t.n); return r.length ? Math.round(r.reduce((a, t) => a + 100 * t.c / t.n, 0) / r.length) : 0; };
   // one exercise is done: light the island's crystal, then swoop on up the stair
   function saveBest() {
@@ -735,7 +767,7 @@ function createGame(E) {
     const s = st.sub;
     if (type === 'move') {
       if (s && s.kind === 'write' && s.drag) { ray.setFromCamera(ndc, S.camera); writeAt(facePoint(ray.ray), false); return true; }
-      st.hover = hitBtn(px, py); if (st.hover >= 0) return true;
+      st.hover = hitBtn(px, py); if (st.hover >= 0 && !st.btns[st.hover].off) return true;
       return G.mode === 'play' && !!pickAt(ndc);
     }
     if (type === 'up') {
@@ -744,7 +776,7 @@ function createGame(E) {
     }
     // down
     audio();
-    const bi = hitBtn(px, py); if (bi >= 0) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1397 }); b.fn(); } return; }
+    const bi = hitBtn(px, py); if (bi >= 0 && !(st.btns[bi].dot && st.btns[bi].off)) { const b = st.btns[bi]; if (!b.off) { snd.play('click', { gain: 0.5, f: 1397 }); b.fn(); } return; }
     if (G.mode === 'summit') { keydown({ key: 'Enter', preventDefault() {} }); return; }
     if (G.mode !== 'play' || !s) return;
     if (s.kind === 'rhythm' && (s.phase === 'tap' || s.phase === 'count')) { rhythmTap(); return; }  // anywhere counts as the drum
@@ -848,7 +880,13 @@ function createGame(E) {
       ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Correct 100%').width + H * 0.05;
       scroll(H * 0.04, H * 0.03, sw, H * 0.06, '#3a2070', '#e8c060'); ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('Correct ' + (st.tallies.some((t) => t.n) ? finalPct() + '%' : '–'), H * 0.06, H * 0.062);
       {
-        const n = NS; for (let k = 0; k < n; k++) { const r = k === st.stop && st.sub && st.sub.kind !== 'done' ? null : st.stopRes[k]; ctx.beginPath(); ctx.arc(H * 0.07 + k * H * 0.03, H * 0.125, H * 0.01, 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.stop ? '#ffe2a0' : k < st.stop ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)'; ctx.fill(); }
+        // one dot per island; any island already reached can be touched to go back to it
+        const n = NS; for (let k = 0; k < n; k++) {
+          const r = k === st.stop && st.sub && st.sub.kind !== 'done' ? null : st.stopRes[k], x = H * 0.07 + k * H * 0.03, y = H * 0.125, go = canJump(k), idx = st.btns.length, hov = go && st.hover === idx;
+          ctx.beginPath(); ctx.arc(x, y, H * (hov ? 0.013 : 0.01), 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.stop ? '#ffe2a0' : k <= st.reach ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)'; ctx.fill();
+          if (hov) { ctx.lineWidth = H * 0.003; ctx.strokeStyle = '#ffe2a0'; ctx.stroke(); }
+          st.btns.push({ x: x - H * 0.015, y: y - H * 0.03, w: H * 0.03, h: H * 0.06, fn: () => jumpTo(k), off: !go, dot: true });
+        }
         // island caption on arrival, then the game's own words at the bottom
         const ca = Math.min(K.seg(t, st.captionAt, st.captionAt + 0.3), 1 - K.seg(t, st.captionAt + 2.4, st.captionAt + 2.7));
         strip(`${GAMES[gameOf(G.island)].line} · ${lapOf(G.island) + 1} of 3`, null, ca);
@@ -882,7 +920,7 @@ function createGame(E) {
   }
 
   return {
-    frame, pointer, keydown, drawHud, begin, toTitle, clock: now, startStop, showTerm: termScene,
+    frame, pointer, keydown, drawHud, begin, toTitle, clock: now, startStop, showTerm: termScene, jumpTo, swipe,
     // for checking a chapter's ending without climbing: jump to the top island and play the summit
     toSummit() { audio(); resetJourney(); st.stop = NS - 1; G.island = NS - 1; G.tau = hold(NS - 1); G.mode = 'play'; leaveStop(NS - 1); },
     setInstrument(k) { st.inst = INST.find((i) => i.key === k) || st.inst; saved.inst = st.inst.key; persist(); toTitle(); },
