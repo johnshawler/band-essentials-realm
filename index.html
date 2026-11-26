@@ -2510,7 +2510,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 31; // shown top left; add one for every release to the public site
+  const VERSION = 32; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -4264,12 +4264,15 @@ function createGame(E) {
       ctx.font = `700 ${H * 0.03}px "Texturina"`; const sw = ctx.measureText('Correct 100%').width + H * 0.05;
       scroll(H * 0.04, H * 0.03, sw, H * 0.06, '#3a2070', '#e8c060'); ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('Correct ' + (st.tallies.some((t) => t.n) ? finalPct() + '%' : '–'), H * 0.06, H * 0.062);
       {
-        // one dot per island; any island already reached can be touched to go back to it
-        const n = NS; for (let k = 0; k < n; k++) {
-          const r = k === st.stop && st.sub && st.sub.kind !== 'done' ? null : st.stopRes[k], x = H * 0.07 + k * H * 0.03, y = H * 0.125, go = canJump(k), idx = st.btns.length, hov = go && st.hover === idx;
-          ctx.beginPath(); ctx.arc(x, y, H * (hov ? 0.013 : 0.01), 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.stop ? '#ffe2a0' : k <= st.reach ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)'; ctx.fill();
-          if (hov) { ctx.lineWidth = H * 0.003; ctx.strokeStyle = '#ffe2a0'; ctx.stroke(); }
-          st.btns.push({ x: x - H * 0.015, y: y - H * 0.03, w: H * 0.03, h: H * 0.06, fn: () => jumpTo(k), off: !go, dot: true });
+        // one dot per island, a row for each climb of the games (three rows, one column per game), sized for a fingertip;
+        // any island already reached can be touched to go back to it
+        const SP = H * 0.068, R0 = H * 0.02, gx = H * 0.075, gy = H * 0.14;
+        ctx.fillStyle = 'rgba(26,14,52,0.45)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(gx - SP * 0.5, gy - SP * 0.5, SP * NG, SP * 3, SP * 0.3); else ctx.rect(gx - SP * 0.5, gy - SP * 0.5, SP * NG, SP * 3); ctx.fill();
+        for (let k = 0; k < NS; k++) {
+          const r = k === st.stop && st.sub && st.sub.kind !== 'done' ? null : st.stopRes[k], x = gx + gameOf(k) * SP, y = gy + lapOf(k) * SP, go = canJump(k), idx = st.btns.length, hov = go && st.hover === idx;
+          ctx.beginPath(); ctx.arc(x, y, R0 * (hov ? 1.25 : 1), 0, 7); ctx.fillStyle = r === true ? C.good : r === false ? C.bad : k === st.stop ? '#ffe2a0' : k <= st.reach ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.22)'; ctx.fill();
+          if (hov || k === st.stop) { ctx.lineWidth = H * 0.004; ctx.strokeStyle = '#ffe2a0'; ctx.beginPath(); ctx.arc(x, y, R0 * (hov ? 1.25 : 1) + H * 0.006, 0, 7); ctx.stroke(); }
+          st.btns.push({ x: x - SP / 2, y: y - SP / 2, w: SP, h: SP, fn: () => jumpTo(k), off: !go, dot: true });
         }
         // island caption on arrival, then the game's own words at the bottom
         const ca = Math.min(K.seg(t, st.captionAt, st.captionAt + 0.3), 1 - K.seg(t, st.captionAt + 2.4, st.captionAt + 2.7));
