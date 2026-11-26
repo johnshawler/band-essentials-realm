@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 23; // shown top left; add one for every release to the public site
+  const VERSION = 24; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -482,12 +482,16 @@
         pickable(add(face, box(0.9, 0.56, 0.04), M.hit, LX, -0.6, 0.02, { cast: false }), { kind: 'tray' });
         const sf = staff(face, 0.2, 2.2, -0.42);
         pickable(add(face, box(2.3, 2.05, 0.01), M.hit, 1.245, 0, 0.02, { cast: false }), { kind: 'page' });
-        // two wax seals on the left page: flat and sharp
+        // two signet rings on the left page, one engraved ♭ and one ♯: picked, a ring flies to the staff, turns face down and
+        // stamps its sign beside the note
         const seals = [['♭', -1, -2.12], ['♯', 1, -0.38]].map(([s, acc, x]) => {
-          const sg = group(face, x, -0.6, 0.01), m = glowing('#8a1c2c', 0.5, { rough: 0.5, tint: 0.9, to: C.lit });
-          const body = add(sg, cylZ(0.2, 0.04, 14), m, 0, 0, 0.02, { cast: false }); pickable(body, { kind: 'seal', acc });
-          text(sg, s, -0.02, 0.0, 0.045, { height: 0.3, face: CINZEL_B, color: '#ffe2a0' });
-          sg.userData = { mat: m, acc }; return sg;
+          const sg = group(face, x, -0.6, 0.01), m = glowing('#b8862a', 0.45, { metal: 0.9, rough: 0.3, tint: 0.55, to: '#ffd27a', glow: '#ffb040' });
+          const band = add(sg, new THREE.TorusGeometry(0.15, 0.04, 8, 22), m, 0, -0.2, -0.02, { cast: false }); band.rotation.x = Math.PI / 2 - 0.35;
+          add(sg, cylZ(0.17, 0.07, 18), m, 0, 0, 0.035, { cast: false });
+          add(sg, cylZ(0.13, 0.072, 18), std('#5a1a22', 0.2, 0.5), 0, 0, 0.037, { cast: false });
+          text(sg, s, -0.01, 0.0, 0.08, { height: 0.24, face: CINZEL_B, color: '#ffd890' });
+          pickable(add(sg, cylZ(0.26, 0.14, 10), M.hit, 0, -0.05, 0.05, { cast: false }), { kind: 'seal', acc });
+          sg.userData = { mat: m, acc, home: sg.position.clone() }; return sg;
         });
         const well = new THREE.Vector3(2.0, DAIS + 0.24, 0.8);
         add(g, new THREE.CylinderGeometry(0.15, 0.2, 0.24, 8), std('#1a1436', 0.2, 0.25, { flatShading: true }), well.x, DAIS + 0.12, well.z); add(g, new THREE.CylinderGeometry(0.16, 0.16, 0.04, 8), M.gold, well.x, DAIS + 0.25, well.z);
@@ -497,11 +501,27 @@
         const quill = group(face); quill.rotation.z = -0.5;
         add(quill, extrude([[0, 0.16], [0.11, 0.42], [0.1, 0.8], [0, 1.05], [-0.1, 0.8], [-0.11, 0.42]], [], 0.012), std('#f4f1ff', 0, 0.6), 0, 0, -0.006); add(quill, new THREE.CylinderGeometry(0.012, 0.004, 1.0, 5), M.parchDark, 0, 0.5, 0);
         quill.position.copy(rest);
-        Object.assign(R3, { bk, face, sf, home, seals, quill, rest, clefG: group(face), askG: group(face), noteG: group(face), accG: group(face), quillAt: -9, quillTo: new THREE.Vector3() });
+        // the game sets R3.qPath (the quill's keyframes), R3.inkAt/inkDur (when its ink goes down), R3.ring (a signet's flight)
+        // and R3.stampAt (when the stamped sign appears)
+        Object.assign(R3, { bk, face, sf, home, seals, quill, rest, clefG: group(face), askG: group(face), noteG: group(face), accG: group(face), qPath: null, inkAt: -1, inkDur: 1, ring: null, stampAt: -1, crisp: null, dots: null });
         anims.push((t) => {
-          const q0 = R3.quillAt, fp = R3.quillTo;
-          const qp = K.track([[q0, rest.toArray()], [q0 + 0.46, [fp.x, fp.y + 0.36, 0.03]], [q0 + 0.8, [fp.x + 0.04, fp.y - 0.22, 0.03], 'linear'], [q0 + 1.0, [fp.x + 1.25, fp.y - 0.5, 0.35], 'in'], [q0 + 1.5, rest.toArray(), 'out']])(t);
-          quill.position.set(qp[0], qp[1], qp[2]); quill.rotation.z = -0.5 + 0.12 * Math.sin((t - q0) * 30) * K.seg(t, q0 + 0.42, q0 + 0.46) * (1 - K.seg(t, q0 + 0.8, q0 + 0.84));
+          // the quill: on its path while writing, otherwise resting in the inkwell; it trembles a little as the nib moves
+          const qp = R3.qPath ? K.track(R3.qPath)(t) : rest.toArray(); if (R3.qPath && t > R3.qPath[R3.qPath.length - 1][0]) R3.qPath = null;
+          const writing = R3.inkAt >= 0 && t >= R3.inkAt && t <= R3.inkAt + R3.inkDur;
+          quill.position.set(qp[0], qp[1], qp[2]); quill.rotation.z = -0.5 + (writing ? 0.06 * Math.sin(t * 38) : 0);
+          // the ink: dot by dot along the note's oval as the nib passes, then the finished note
+          const u = R3.inkAt < 0 ? 1 : K.clamp((t - R3.inkAt) / R3.inkDur);
+          if (R3.crisp) { R3.crisp.visible = u >= 1; R3.dots.visible = u < 1; R3.dots.children.forEach((d) => { d.visible = d.userData.u <= u; }); }
+          R3.accG.visible = R3.stampAt < 0 || t >= R3.stampAt;
+          // a signet ring: up and over to the staff, turning face down, a firm press, then home again
+          for (const sg of seals) { if (!R3.ring || R3.ring.sg !== sg) { sg.position.copy(sg.userData.home); sg.rotation.x = 0; sg.scale.setScalar(1); } }
+          if (R3.ring) {
+            const { sg, t0, to } = R3.ring, h = sg.userData.home, e = t - t0;
+            if (e < 0.42) { const k = K.ease.inOut(e / 0.42); sg.position.set(K.lerp(h.x, to[0], k), K.lerp(h.y, to[1], k), 0.01 + 0.45 * Math.sin(k * Math.PI) + 0.06 * k); sg.rotation.x = Math.PI * k; sg.scale.setScalar(1); }
+            else if (e < 0.72) { const k = K.seg(e, 0.42, 0.72), press = Math.sin(k * Math.PI); sg.position.set(to[0], to[1], 0.07 - 0.06 * press); sg.rotation.x = Math.PI; sg.scale.set(1 + 0.08 * press, 1 + 0.08 * press, 1 - 0.35 * press); }
+            else if (e < 1.25) { const k = K.ease.inOut((e - 0.72) / 0.53); sg.position.set(K.lerp(to[0], h.x, k), K.lerp(to[1], h.y, k), 0.07 + 0.4 * Math.sin(k * Math.PI) - 0.06 * k); sg.rotation.x = Math.PI * (1 - k); sg.scale.setScalar(1); }
+            else R3.ring = null;
+          }
         });
         restLocal[2] = [2.9, PY + 1.4, 0.9];
       }

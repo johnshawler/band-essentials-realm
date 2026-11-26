@@ -129,7 +129,7 @@ function createGame(E) {
   function tidy(g) {
     if (g === 0) { R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); }); R1.stoneAt = [-9, -9, -9, -9]; }
     if (g === 1) { R2.gems.forEach((o) => { o.on = false; tintTo(o.pearl, C.lit); set(o.pearl, 0); }); clear(R2.noteG); }
-    if (g === 2) { clear(R3.noteG); clear(R3.accG); clear(R3.askG); R3.seals.forEach((sg) => set(sg.userData.mat, 0)); }
+    if (g === 2) { clear(R3.noteG); clear(R3.accG); clear(R3.askG); R3.seals.forEach((sg) => set(sg.userData.mat, 0)); R3.qPath = null; R3.ring = null; R3.inkAt = -1; R3.stampAt = -1; R3.crisp = R3.dots = null; }
     if (g === 3) { clear(R4.noteG); R4.shields.forEach((q) => { tintTo(q.userData.mat, '#e05200'); set(q.userData.mat, 0); }); }
     if (g === 5) { clear(R6.dyn); R6.keys.forEach((kg) => { const u = kg.userData; u.turnAt = -9; tintTo(u.tagMat, C.lit); set(u.tagMat, 0); }); set(R6.panelM, 0); }
     if (g === 4) { clear(R5.dyn); R5.hlMats = []; tiles.forEach((tb) => { tintTo(tb.userData.mat, C.lit); set(tb.userData.mat, 0); }); }
@@ -463,20 +463,51 @@ function createGame(E) {
   function newWrite() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.p = null; s.acc = 0; s.tries = 0; s.locked = false; s.drag = null;
     const w = which(n); clear(R3.askG); text(R3.askG, w + pretty(n), -1.245, 0.18, 0.004, { height: w ? 0.4 : 0.56, face: CINZEL_B, color: C.ember, maxW: 2.0 });
-    R3.seals.forEach((sg) => { tintTo(sg.userData.mat, C.lit); set(sg.userData.mat, 0); });
-    drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff. Use a wax seal to add a flat or sharp.`);
+    R3.seals.forEach((sg) => { tintTo(sg.userData.mat, '#ffd27a'); set(sg.userData.mat, 0); }); R3.qPath = null; R3.ring = null; R3.inkAt = -1; R3.stampAt = -1;
+    drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff, and the quill writes it. Use a signet ring to stamp a flat or sharp.`);
   }
   function drawWritten(colour) {
     const s = st.sub, sf = R3.sf; clear(R3.noteG); clear(R3.accG);
     const mat = inkLit(); if (colour) { tintTo(mat, colour); set(mat, 1); }
-    if (s.drag && s.drag.free) note(R3.noteG, 'w', 0, s.drag.x, s.drag.y, mat);
-    else if (s.p == null) note(R3.noteG, 'w', 0, R3.home.x, R3.home.y, mat);
-    else {
-      for (let l = -1; l >= s.p - 0.01; l--) sf.put('ledger', GOAL_SU, l, mat, R3.noteG);
-      for (let l = 5; l <= s.p + 0.01; l++) sf.put('ledger', GOAL_SU, l, mat, R3.noteG);
-      note(R3.noteG, 'w', 0, sf.X(GOAL_SU), sf.Y(s.p), mat);
+    R3.crisp = R3.dots = null;
+    if (s.drag && s.drag.free) note(R3.noteG, 'w', 0, s.drag.x, s.drag.y, mat);              // carried in the hand
+    else if (s.p == null) note(R3.noteG, 'w', 0, R3.home.x, R3.home.y, mat);                  // waiting in its tray
+    else if (s.drag) {                                                                          // over the staff: a faint guide where the quill will write
+      const gm = inkLit(); gm.transparent = true; gm.opacity = 0.3; gm.depthWrite = false;
+      for (let l = -1; l >= s.p - 0.01; l--) sf.put('ledger', GOAL_SU, l, gm, R3.noteG);
+      for (let l = 5; l <= s.p + 0.01; l++) sf.put('ledger', GOAL_SU, l, gm, R3.noteG);
+      note(R3.noteG, 'w', 0, sf.X(GOAL_SU), sf.Y(s.p), gm);
+    } else {
+      // written: the finished note, and the ink dots the quill lays down along the way (realm-game shows one or the other)
+      const crisp = group(R3.noteG), dots = group(R3.noteG);
+      for (let l = -1; l >= s.p - 0.01; l--) { sf.put('ledger', GOAL_SU, l, mat, crisp); sf.put('ledger', GOAL_SU, l, mat, dots); }
+      for (let l = 5; l <= s.p + 0.01; l++) { sf.put('ledger', GOAL_SU, l, mat, crisp); sf.put('ledger', GOAL_SU, l, mat, dots); }
+      dots.children.forEach((c) => { c.userData.u = 0; });
+      note(crisp, 'w', 0, sf.X(GOAL_SU), sf.Y(s.p), mat);
+      const x = sf.X(GOAL_SU), y = sf.Y(s.p), N = 34;
+      for (let k = 0; k < N; k++) { const a = Math.PI + (k / N) * Math.PI * 2, r = U * (0.11 + 0.09 * Math.abs(Math.cos(a - 0.4))), d = add(dots, DOT, mat, x + Math.cos(a) * 0.62 * U, y + Math.sin(a) * 0.34 * U, 0.014, { cast: false }); d.scale.set(r, r, r * 0.4); d.userData.u = (k + 1) / N; }
+      R3.crisp = crisp; R3.dots = dots;
     }
     if (s.acc) { const p = s.p == null ? null : s.p; if (p != null && !(s.drag && s.drag.free)) sf.put(s.acc < 0 ? 'flat' : 'sharp', GOAL_SU - 1.45, p, mat, R3.accG); }
+  }
+  const DOT = new THREE.SphereGeometry(1, 8, 6);
+  // the quill writes a placed note: out of the inkwell, over to the staff, a trace round the note's oval, and back to the well
+  const WRITE_IN = 0.4, WRITE_DUR = 0.8;
+  function quillWrite() {
+    const s = st.sub, sf = R3.sf, x = sf.X(GOAL_SU), y = sf.Y(s.p), t0 = G.t, rx = 0.62 * U, ry = 0.34 * U;
+    const keys = [[t0, R3.rest.toArray()], [t0 + WRITE_IN, [x - rx, y + 0.02, 0.06], 'out']];
+    for (let k = 1; k <= 16; k++) { const a = Math.PI + (k / 16) * Math.PI * 2; keys.push([t0 + WRITE_IN + WRITE_DUR * k / 16, [x + Math.cos(a) * rx, y + Math.sin(a) * ry, 0.02], 'linear']); }
+    keys.push([t0 + WRITE_IN + WRITE_DUR + 0.18, [x + 0.25, y + 0.3, 0.3], 'out'], [t0 + WRITE_IN + WRITE_DUR + 0.7, R3.rest.toArray(), 'inOut']);
+    R3.qPath = keys; R3.inkAt = t0 + WRITE_IN; R3.inkDur = WRITE_DUR;
+    if (kit) for (let j = 0; j < 7; j++) kit.noise(now() + WRITE_IN + j * WRITE_DUR / 7, { dur: 0.08, filter: 'bandpass', f: 2400 + (j % 3) * 400, q: 2.5, gain: 0.045 });
+    // a flat or sharp already chosen is stamped once the note is written
+    if (s.acc) { const acc = s.acc; R3.stampAt = 1e9; at(WRITE_IN + WRITE_DUR + 0.25, () => { if (st.sub === s && s.acc === acc && s.p != null) ringStamp(acc); }); }
+  }
+  // a signet ring stamps its sign beside the note
+  function ringStamp(acc) {
+    const s = st.sub, sg = R3.seals.find((g) => g.userData.acc === acc); if (!sg || s.p == null) return;
+    R3.ring = { sg, t0: G.t, to: [R3.sf.X(GOAL_SU - 1.45), R3.sf.Y(s.p)] }; R3.stampAt = G.t + 0.55;
+    snd.play('swish', { gain: 0.2, dur: 0.25 }); snd.play('stamp', { gain: 0.32 }, now() + 0.55);
   }
   const facePoint = (ray) => {
     const f = R3.face; f.updateWorldMatrix(true, false);
@@ -490,14 +521,18 @@ function createGame(E) {
     if (lp.x > 0.15 && lp.x < 2.45 && lp.y > -1.1 && lp.y < 1.1) { const p = snapP(lp.y); if (s.drag) s.drag.free = false; if (p !== s.p) { s.p = p; snd.play('tick', { gain: 0.15, f: 2600 }); } }
     else if (s.drag && !drop) { s.drag.free = true; s.drag.x = lp.x; s.drag.y = lp.y; }
     else if (drop) { s.p = null; }
+    if (drop && !s.drag && s.p != null) quillWrite();
     drawWritten();
   }
   function setSeal(acc) {
     const s = st.sub; if (!s || s.kind !== 'write' || s.locked) return;
     s.acc = s.acc === acc ? 0 : acc;
     R3.seals.forEach((sg) => set(sg.userData.mat, sg.userData.acc === s.acc ? 1 : 0));
-    if (s.acc && s.p != null) { R3.quillAt = G.t; R3.quillTo.set(R3.sf.X(GOAL_SU - 1.45) - 0.03, R3.sf.Y(s.p) - 0.1, 0.03); for (let j = 0; j < 4; j++) kit && kit.noise(now() + 0.45 + j * 0.07, { dur: 0.06, filter: 'bandpass', f: 2600 + j * 300, q: 2.5, gain: 0.1, a: 0.01 }); }
-    snd.play('stamp', { gain: 0.25 });
+    if (s.acc && s.p != null) {
+      const left = R3.inkAt >= 0 ? R3.inkAt + R3.inkDur - G.t : 0, acc = s.acc;
+      if (left <= 0) ringStamp(acc); else { R3.stampAt = 1e9; at(left + 0.25, () => { if (st.sub === s && s.acc === acc && s.p != null) ringStamp(acc); }); }   // the quill is still writing
+    }
+    if (!s.acc) R3.stampAt = -1;
     drawWritten();
   }
   function checkWrite() {
@@ -513,9 +548,9 @@ function createGame(E) {
       const wrongSpot = s.p !== pOf(n, st.inst.clef), here = fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef]);
       say(wrongSpot ? (here.letter === n.letter ? `Right letter, but that is a different ${n.letter}: write the ${which(n) || 'asked '}one. Try once more.` : `Not quite: that spot is ${here.letter}. Try once more.`) : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
     } else {
-      s.locked = true; st.stopRes[st.stop] = false; mark(0); snd.wrong(); snd.pluck(concert(n), 0.6, 0.16, now() + 0.45); s.p = pOf(n, st.inst.clef); s.acc = n.acc; drawWritten(C.good);
+      s.locked = true; st.stopRes[st.stop] = false; mark(0); snd.wrong(); snd.pluck(concert(n), 0.6, 0.16, now() + 0.45); s.p = pOf(n, st.inst.clef); s.acc = n.acc; quillWrite(); drawWritten(C.good);
       R3.seals.forEach((sg) => set(sg.userData.mat, sg.userData.acc === s.acc ? 1 : 0));
-      say(`Here is ${sci(n)}.`, 'bad'); at(2.0, nextWrite);
+      say(`Here is ${sci(n)}.`, 'bad'); at(n.acc ? 3.0 : 2.2, nextWrite);
     }
   }
   function nextWrite() { finishStop(); }
@@ -696,7 +731,7 @@ function createGame(E) {
       return G.mode === 'play' && !!pickAt(ndc);
     }
     if (type === 'up') {
-      if (s && s.kind === 'write' && s.drag) { ray.setFromCamera(ndc, S.camera); writeAt(facePoint(ray.ray), true); s.drag = null; drawWritten(); }
+      if (s && s.kind === 'write' && s.drag) { ray.setFromCamera(ndc, S.camera); writeAt(facePoint(ray.ray), true); s.drag = null; if (s.p != null) quillWrite(); drawWritten(); }
       return;
     }
     // down
@@ -728,7 +763,7 @@ function createGame(E) {
       else if (k === 'l' || k === 'L') runRhythm(false);
     } else if (s.kind === 'finger') { if (k === 'Enter') { e.preventDefault(); s.waitNext ? nextFinger() : checkFinger(); } else if (/^[1-9]$/.test(k) && R2.gems[+k - 1]) touchGem(+k - 1); }
     else if (s.kind === 'write') {
-      if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); if (s.locked) return; s.p = s.p == null ? 2 : K.clamp(s.p + (k === 'ArrowUp' ? 0.5 : -0.5), -3, 7); drawWritten(); }
+      if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); if (s.locked) return; s.p = s.p == null ? 2 : K.clamp(s.p + (k === 'ArrowUp' ? 0.5 : -0.5), -3, 7); quillWrite(); drawWritten(); }
       else if (k === 'Enter') { e.preventDefault(); checkWrite(); } else if (k === 'b') setSeal(-1); else if (k === '#' || k === 's') setSeal(1);
     }
     else if (s.kind === 'read' && /^[1-3]$/.test(k)) strike(+k - 1);
