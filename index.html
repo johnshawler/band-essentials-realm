@@ -2510,7 +2510,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 26; // shown top left; add one for every release to the public site
+  const VERSION = 27; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -3896,14 +3896,21 @@ function createGame(E) {
     const s = st.sub; if (!s || s.kind !== 'write' || s.locked) return;
     if (s.p == null) { say('First drag the note onto the staff.'); return; }
     audio();
-    const n = s.n, ok = s.p === pOf(n, st.inst.clef) && s.acc === n.acc;
+    const n = s.n, goal = pOf(n, st.inst.clef), ok = s.p === goal && s.acc === n.acc;
+    // the right note in the wrong octave costs nothing: no mark, no used try, just another go
+    const here = fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef]);
+    if (!ok && s.p !== goal && here.letter === n.letter && s.acc === n.acc) {
+      snd.play('paper', { gain: 0.5, dur: 0.2 });
+      say(`Right note, wrong octave: write the ${which(n)}${pretty(n)} ${s.p < goal ? 'higher' : 'lower'} on the staff. That does not count against you, so try again.`);
+      return;
+    }
     if (ok) {
       s.locked = true; st.stopRes[st.stop] = !s.tries; mark(s.tries ? 0 : 1); snd.pluck(concert(n), 0.6, 0.2); snd.right(); drawWritten(C.good);
       say(s.tries ? 'That is it, on the second try.' : 'Correct!', 'good'); at(1.3, nextWrite);
     } else if (!s.tries) {
       s.tries = 1; snd.wrong();
-      const wrongSpot = s.p !== pOf(n, st.inst.clef), here = fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef]);
-      say(wrongSpot ? (here.letter === n.letter ? `Right letter, but that is a different ${n.letter}: write the ${which(n) || 'asked '}one. Try once more.` : `Not quite: that spot is ${here.letter}. Try once more.`) : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
+      const wrongSpot = s.p !== goal;
+      say(wrongSpot ? (here.letter === n.letter ? `That ${n.letter} is in the wrong octave, and ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}. Try once more.` : `Not quite: that spot is ${here.letter}. Try once more.`) : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
     } else {
       s.locked = true; st.stopRes[st.stop] = false; mark(0); snd.wrong(); snd.pluck(concert(n), 0.6, 0.16, now() + 0.45); s.p = pOf(n, st.inst.clef); s.acc = n.acc; quillWrite(); drawWritten(C.good);
       R3.seals.forEach((sg) => set(sg.userData.mat, sg.userData.acc === s.acc ? 1 : 0));
