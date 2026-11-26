@@ -2510,7 +2510,7 @@ function sceneTree(X) {
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 29; // shown top left; add one for every release to the public site
+  const VERSION = 30; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -4201,13 +4201,19 @@ function createGame(E) {
     // buttons: small purple banners with gold lettering, laid out in a row centred on cx
     const row = (list, cy, cx = W / 2, scale = 1) => {
       const px = H * 0.034 * scale; ctx.font = `700 ${px}px "Texturina"`;
-      const ws = list.map((b) => ctx.measureText(b.label).width + px * 1.4), gap = px * 1.1, total = ws.reduce((a, b) => a + b, 0) + gap * (list.length - 1);
+      const ic = px * 0.9, ig = px * 0.38;                                                       // a drawn arrow (b.icon 'up' or 'down') before the label: shapes, not font glyphs, so every device shows them
+      const ws = list.map((b) => ctx.measureText(b.label).width + px * 1.4 + (b.icon ? ic + ig : 0)), gap = px * 1.1, total = ws.reduce((a, b) => a + b, 0) + gap * (list.length - 1);
       let x = cx - total / 2;
       list.forEach((b, i) => {
         const w = ws[i], h = px * 1.55, y = cy - h / 2, idx = st.btns.length, hov = st.hover === idx && !b.off;
         ctx.globalAlpha = b.off ? 0.45 : 1;
         scroll(x, y, w, h, b.active ? '#c9502a' : hov ? '#5a32a0' : '#3a2070', '#e8c060');
-        ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b.label, x + w / 2, y + h * 0.53);
+        ctx.fillStyle = '#ffe2a0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (b.icon) {
+          const tw = ctx.measureText(b.label).width, x0 = x + w / 2 - (tw + ic + ig) / 2, cy2 = y + h * 0.5, d = b.icon === 'up' ? -1 : 1;
+          ctx.beginPath(); ctx.moveTo(x0, cy2 - d * ic * 0.42); ctx.lineTo(x0 + ic, cy2 - d * ic * 0.42); ctx.lineTo(x0 + ic / 2, cy2 + d * ic * 0.48); ctx.closePath(); ctx.fill();
+          ctx.fillText(b.label, x0 + ic + ig + tw / 2, y + h * 0.53);
+        } else ctx.fillText(b.label, x + w / 2, y + h * 0.53);
         ctx.globalAlpha = 1;
         st.btns.push({ x: x - h * 0.3, y, w: w + h * 0.6, h, fn: b.fn, off: b.off });
         x += w + gap;
@@ -4265,8 +4271,8 @@ function createGame(E) {
           col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(concert(s.n)) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(concert(s.n)); } }]);
         } else if (s && s.kind === 'write') {
           col([{ label: 'Check', fn: checkWrite, off: s.locked },
-            { label: '▲ Up', fn: () => stepWrite(1), off: s.locked || s.p === P_HI },
-            { label: '▼ Down', fn: () => stepWrite(-1), off: s.locked || s.p === P_LO }]);
+            { label: 'Up', icon: 'up', fn: () => stepWrite(1), off: s.locked || s.p === P_HI },
+            { label: 'Down', icon: 'down', fn: () => stepWrite(-1), off: s.locked || s.p === P_LO }]);
         }
       }
       return;
