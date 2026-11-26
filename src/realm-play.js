@@ -227,12 +227,13 @@ function createGame(E) {
       const nn = writeNote(R1.dyn, R1.sf, clef, mid, su, n.d === 4 ? 'w' : n.d === 2 ? 'h' : 'q', inkLit(), -1);
       R1.notes.push({ g: nn, su, d: n.d }); s.onsets.push(bi * 4 + n.beat);
     })); }
-    say(`${CH.rhythm.eighths ? 'Two beamed eighth notes share one beat: tap both. ' : ''}${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for three count-in beats, then tap the drum or press Space on every note.`);
+    say(`${CH.rhythm.eighths ? 'Two beamed eighth notes share one beat: tap both. ' : ''}${CH.rhythm.rests ? 'Rests are silent: no tap. ' : ''}Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for ${CIN() === 3 ? 'three' : 'four'} count-in beats, then tap the drum or press Space on every note.`);
   }
 
   // ---------------------------------------------------------------- rhythms from Chapter 3 on: 2/4, 3/4 or 4/4, eighths, ties, dots, eighth rests
   // A bar is a list of symbols { at, dur, kind: 'w'|'h'|'q'|'e', rest, dot, beam (1 or 2 for a beamed pair), flag, tie (to the next), accent }.
   const RH = CH.rhythm;
+  const CIN = () => (CH.rhythm.meter === 3 ? 3 : 4);   // count-in beats: three in 3/4, four in 2/4 and 4/4
   function genBarG(m) {
     for (;;) {
       const out = []; let b = 0;
@@ -281,7 +282,7 @@ function createGame(E) {
       if (need.includes('er') && !has(r, (x) => x.rest && x.kind === 'e')) continue;
       break;
     }
-    s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = []; s.cin = 3; s.total = nb * m;
+    s.prev = st.rhythmPrev = JSON.stringify(r); s.r = r; s.phase = 'ready'; s.taps = []; s.cin = m === 3 ? 3 : 4; s.total = nb * m;
     // the staff is drawn afresh each time, as large as the two (or three, or four) bars allow
     const nat = r.map((bar) => 1.3 + bar.reduce((q, x) => q + WID(x), 0)), sumNat = nat.reduce((a, b) => a + b, 0);
     const RS = Math.min(0.92, 4.3 / (U * (5.75 + sumNat))), total = 4.3 / (U * RS), free = total - 5.75 - sumNat;
@@ -314,16 +315,16 @@ function createGame(E) {
     if (has(r, (x) => x.tie)) tips.push('A tie joins two notes into one: tap only the first.');
     if (has(r, (x) => x.dot)) tips.push('A dot adds half the note\'s length.');
     if (RH.rests && has(r, (x) => x.rest)) tips.push('Rests are silent: no tap.');
-    say(`${tips.join(' ')} Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for ${s.cin} count-in beats, then tap the drum or press Space on every note.`);
+    say(`${tips.join(' ')} Press Listen (or touch the scroll) to hear it. Press Tap it (or the Count in sign) for ${s.cin === 3 ? 'three' : 'four'} count-in beats, then tap the drum or press Space on every note.`);
   }
   function runRhythm(tapping) {
     const s = st.sub; if (!s || s.phase !== 'ready' && s.phase !== 'result') return;
     if (s.phase === 'result') return;
     audio();
-    const beat = 60 / st.bpm, t0 = now() + 0.4, cin = s.cin || 3, total = s.total || 8, ts = t0 + cin * beat;
+    const beat = 60 / st.bpm, t0 = now() + 0.4, cin = s.cin || CIN(), total = s.total || 8, ts = t0 + cin * beat;
     s.phase = tapping ? 'count' : 'listen'; s.t0 = t0; s.ts = ts; s.beat = beat; s.taps = []; s.tapping = tapping; s.hit = s.onsets.map(() => false); s.extra = 0;
     R1.notes.forEach((n) => { tintTo(n.g.userData.mat, C.lit); set(n.g.userData.mat, 0); });
-    say(tapping ? `Count in: ${[1, 2, 3].slice(0, cin).join(', ')}…` : 'Listen…');
+    say(tapping ? `Count in: ${[1, 2, 3, 4].slice(0, cin).join(', ')}…` : 'Listen…');
     if (R1.sig) { R1.sig.flashAt = []; R1.sig.sweep = { t0: toAmb(t0), t1: toAmb(ts + total * beat), beat }; if (!tapping) s.onsets.forEach((o) => R1.sig.flashAt.push(toAmb(ts + o * beat))); }
     sig('onRhythm', { t0: toAmb(t0), ts: toAmb(ts), beat, cin, total, tapping, onsets: s.onsets.map((o) => toAmb(ts + o * beat)), accents: (s.accents || []).map((o) => toAmb(ts + o * beat)) });
     for (let b = 0; b < cin; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
@@ -851,7 +852,7 @@ function createGame(E) {
           if (s.phase === 'result') col([{ label: 'Next island', fn: nextRhythm }]);
           else col([{ label: 'Listen', fn: () => runRhythm(false), off: busy }, { label: 'Tap it', fn: () => runRhythm(true), off: busy },
             { label: 'Tempo ' + st.bpm, off: busy, fn: () => { st.bpm = st.bpm === 50 ? 80 : st.bpm === 80 ? 120 : 50; saved.bpm = st.bpm; persist(); } }]);
-          if (s.phase === 'tap' || s.phase === 'count' || s.phase === 'listen') { const b = Math.floor((now() - s.t0) / s.beat); if (b >= 0 && b < (s.cin || 3) + (s.total || 8)) { ctx.font = `700 ${H * 0.11}px "Texturina"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.008; const txt = b < (s.cin || 3) ? String(b + 1) : s.phase === 'listen' ? '♪' : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.4); ctx.fillText(txt, W * 0.895, H * 0.4); } }
+          if (s.phase === 'tap' || s.phase === 'count' || s.phase === 'listen') { const b = Math.floor((now() - s.t0) / s.beat); if (b >= 0 && b < (s.cin || CIN()) + (s.total || 8)) { ctx.font = `700 ${H * 0.11}px "Texturina"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe2a0'; ctx.strokeStyle = '#3a2070'; ctx.lineWidth = H * 0.008; const txt = b < (s.cin || CIN()) ? String(b + 1) : s.phase === 'listen' ? '♪' : 'Tap!'; ctx.strokeText(txt, W * 0.895, H * 0.4); ctx.fillText(txt, W * 0.895, H * 0.4); } }
         } else if (s && s.kind === 'finger') {
           col(s.waitNext ? [{ label: 'Next', fn: nextFinger }, { label: 'Hear it', fn: () => snd.horn(concert(s.n)) }] : [{ label: 'Check', fn: checkFinger }, { label: 'Hear it', fn: () => { audio(); snd.horn(concert(s.n)); } }]);
         } else if (s && s.kind === 'write') {
