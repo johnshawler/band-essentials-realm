@@ -360,7 +360,8 @@ function createGame(E) {
     if (R1.sig) { R1.sig.flashAt = []; R1.sig.sweep = { t0: toAmb(t0), t1: toAmb(ts + total * beat), beat }; if (!tapping) s.onsets.forEach((o) => R1.sig.flashAt.push(toAmb(ts + o * beat))); }
     sig('onRhythm', { t0: toAmb(t0), ts: toAmb(ts), beat, cin, total, tapping, onsets: s.onsets.map((o) => toAmb(ts + o * beat)), accents: (s.accents || []).map((o) => toAmb(ts + o * beat)) });
     for (let b = 0; b < cin; b++) { snd.play('tock', { gain: 0.55, f: b === 0 ? 1250 : 940 }, t0 + b * beat); snd.chime(b === 0 ? 'Bb5' : 'F5', 0.06, t0 + b * beat); R1.stoneAt[b] = toAmb(t0 + b * beat); const sp = R1.stones[b]; atAudio(t0 + b * beat - 0.12, () => wispTo(world(sp, 0, 0.75, 0.1), 0.12, 0.05)); }
-    for (let b = 0; b < total; b++) snd.play('tock', { gain: 0.14, f: 700 }, ts + b * beat);
+    // the metronome under the rhythm: loud enough to hear over the drum, with the first beat of each bar a little brighter
+    for (let b = 0; b < total; b++) { const one = b % METER() === 0; snd.play('tock', { gain: one ? 0.6 : 0.48, f: one ? 1100 : 880 }, ts + b * beat); }
     atAudio(ts - beat * 0.5, () => { if (tapping) { s.phase = 'tap'; say('Tap the drum (or Space) on every note!'); } });
     s.onsets.forEach((o, j) => {
       const tn = ts + o * beat, n = R1.notes[j];
