@@ -5,7 +5,7 @@
 // light up round the horizon one by one.
 const STARS_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#d8d8e8', 'stoneDark':  '#8a8aa8', 'stoneLight':  '#f4f4fc', 'wood':  '#2a2a4a', 'woodDark':  '#1a1a30', 'gold':  '#d0c090', 'banner':  '#1a1a4a', 'bannerDark':  '#101034', 'pale':  '#eef0ff', 'frost':  '#e8ecff', 'slab':  '#1a1e48', 'rune':  ['#5a5aa0', '#c8d0ff'], 'flame':  ['#5a5aa0', '#c8d0ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a5a'},
+  props: { shield: 'star', shieldRims: ['#d0c090', '#c8d0ff', '#d0c090'], shieldFace: '#f4f0ff', 'stone':  '#d8d8e8', 'stoneDark':  '#8a8aa8', 'stoneLight':  '#f4f4fc', 'wood':  '#2a2a4a', 'woodDark':  '#1a1a30', 'gold':  '#d0c090', 'banner':  '#1a1a4a', 'bannerDark':  '#101034', 'pale':  '#eef0ff', 'frost':  '#e8ecff', 'slab':  '#1a1e48', 'rune':  ['#5a5aa0', '#c8d0ff'], 'flame':  ['#5a5aa0', '#c8d0ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a5a'},
   env: { top: '#10163a', horizon: '#3a3a7a', bottom: '#141a36', intensity: 0.5, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.2 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffd8a0', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#a090ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#a8c8ff', power: 1.8 }] },
   hemi: ['#b0b8ff', '#1e2240', 0.5], sun: '#d0d8ff', sunPower: 1.8, fog: '#1e2448',
@@ -33,7 +33,7 @@ function sceneStars(X) {
   const decor = (parent, r, seed) => { add(parent, new THREE.TorusGeometry(r * 1.0, 0.06, 4, 28), T.star, 0, -0.32, 0).rotation.x = Math.PI / 2; for (let k = 0; k < 5; k++) { const a = K.hash(seed, k) * 6.3, s = add(parent, starGeo, T.star, Math.cos(a) * r * 0.6, -2.5 - 2 * K.hash(seed, k + 5), Math.sin(a) * r * 0.6, { cast: false }); s.scale.setScalar(0.18); } };
   const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.stone2, rock2: T.stone, top: T.white, under: T.stone, decor });
   const rocklet = kit.rocklet({ rock: T.stone2, rock2: T.stone, top: T.white }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
-  const step = kit.stepOf(T.glass, T.stone, new THREE.OctahedronGeometry(0.4, 0));
+  const step = kit.stepOf(T.glass, T.stone, new THREE.OctahedronGeometry(0.5, 0).scale(1, 0.3, 1));
 
   // the sky staff: five lines of stars on a great arc behind the tower, lit three at a time by right answers
   const STAFF = [], PER = 64;

@@ -457,10 +457,12 @@ function createGame(E) {
 
   // ---------------------------------------------------------------- 3. Write Notes
   const GOAL_SU = 7.4;
+  // when the chapter's notes hold this name in more than one octave, say which: "low A♭", "middle E", "high A♭"
+  const which = (n) => { const same = pool().filter((m) => pretty(m) === pretty(n)).map((m) => m.midi).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b); if (same.length < 2) return ''; const i = same.indexOf(n.midi); return (i === 0 ? 'low' : i === same.length - 1 ? 'high' : 'middle') + ' '; };
   function setupWrite() { clear(R3.clefG); putClef(R3.sf, st.inst.clef, R3.clefG); st.sub = { kind: 'write', seq: st.seqs.write }; newWrite(); }
   function newWrite() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.p = null; s.acc = 0; s.tries = 0; s.locked = false; s.drag = null;
-    clear(R3.askG); text(R3.askG, pretty(n), -1.245, 0.18, 0.004, { height: 0.56, face: CINZEL_B, color: C.ember });
+    const w = which(n); clear(R3.askG); text(R3.askG, w + pretty(n), -1.245, 0.18, 0.004, { height: w ? 0.4 : 0.56, face: CINZEL_B, color: C.ember, maxW: 2.0 });
     R3.seals.forEach((sg) => { tintTo(sg.userData.mat, C.lit); set(sg.userData.mat, 0); });
     drawWritten(); say(`Write ${sci(n)}: drag the whole note from its tray onto the staff. Use a wax seal to add a flat or sharp.`);
   }
@@ -509,7 +511,7 @@ function createGame(E) {
     } else if (!s.tries) {
       s.tries = 1; snd.wrong();
       const wrongSpot = s.p !== pOf(n, st.inst.clef), here = fromStep(Math.round(s.p * 2) + BOTTOM[st.inst.clef]);
-      say(wrongSpot ? `Not quite: that spot is ${here.letter}. Try once more.` : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
+      say(wrongSpot ? (here.letter === n.letter ? `Right letter, but that is a different ${n.letter}: write the ${which(n) || 'asked '}one. Try once more.` : `Not quite: that spot is ${here.letter}. Try once more.`) : `Right spot. ${pretty(n)} needs ${n.acc ? (n.acc < 0 ? 'a flat' : 'a sharp') : 'no flat or sharp'}.`, 'bad');
     } else {
       s.locked = true; st.stopRes[st.stop] = false; mark(0); snd.wrong(); snd.pluck(concert(n), 0.6, 0.16, now() + 0.45); s.p = pOf(n, st.inst.clef); s.acc = n.acc; drawWritten(C.good);
       R3.seals.forEach((sg) => set(sg.userData.mat, sg.userData.acc === s.acc ? 1 : 0));
@@ -525,12 +527,14 @@ function createGame(E) {
   }
   function newRead() {
     const s = st.sub, n = s.seq[st.q]; s.n = n; s.locked = false; s.t0 = G.t;
-    const others = shuffle(pool().filter((m) => m.name !== n.name)).slice(0, 2), ch = [n].concat(others).sort((a, b) => a.midi - b.midi); s.choices = ch;
-    R4.shields.forEach((q, k) => { clear(q.userData.labelG); q.visible = k < ch.length; if (ch[k]) text(q.userData.labelG, pretty(ch[k]), 0, 0.04, 0.012, { height: 0.42, face: CINZEL_B }); });
+    // two other choices, each with a different name from the answer and from each other (the shields show names, not octaves)
+    const others = []; for (const m of shuffle(pool())) { if (others.length === 2) break; if (pretty(m) !== pretty(n) && !others.some((o) => pretty(o) === pretty(m))) others.push(m); }
+    const ch = [n].concat(others).sort((a, b) => a.midi - b.midi); s.choices = ch;
+    R4.shields.forEach((q, k) => { clear(q.userData.labelG); q.visible = k < ch.length; if (ch[k]) text(q.userData.labelG, pretty(ch[k]), 0, 0.02, 0.012, { height: 0.42, face: CINZEL_B, maxW: 0.5 }); });
     clear(R4.noteG);
     s.nm = writeNote(R4.noteG, R4.sf, st.inst.clef, n, 7.6, 'q', glowing('#8a6a2a', 2.4, { rough: 0.4, rest: 1.25, restGlow: '#ffd88a', glow: C.lit, to: C.lit, tint: 1 }));
     R4.shields.forEach((q) => { tintTo(q.userData.mat, '#e05200'); set(q.userData.mat, 0); });
-    say('Which note is it? Strike its shield (or press 1, 2 or 3).');
+    say(R4.shieldWord ? `Which note is it? Strike its ${R4.shieldWord} (or press 1, 2 or 3).` : 'Which note is it? Click its name (or press 1, 2 or 3).');
   }
   function strike(k) {
     const s = st.sub; if (!s || s.kind !== 'read' || s.locked || !s.choices[k]) return;
@@ -602,9 +606,14 @@ function createGame(E) {
   // what the course's cards say each term means
   const MEANING = { Fermata: 'pause', 'Breath mark': 'take a breath', Forte: 'loud and strong', 'Mezzo forte': 'moderately loud', Piano: 'soft and quiet', Allegro: 'fast and bright', Moderato: 'moderate speed', Andante: 'moderately slow',
     Crescendo: 'gradually louder', Diminuendo: 'gradually softer', 'D.C. al Fine': 'repeat from the beginning until Fine', Accent: 'play the note stronger', Slur: 'play the notes smoothly', Tie: 'hold for both notes' };
+  // a card's words: one line, or two when the term is long (so "Dotted quarter note" stays readable)
   function setLabel(tb, str) {
-    const old = tb.userData.label; tb.remove(old); if (old.material.map) old.material.map.dispose(); old.material.dispose(); old.geometry.dispose();
-    tb.userData.label = text(tb, str, 0, -0.005, 0.026, { height: 0.172, maxW: tb.userData.w - 0.12 });
+    const old = tb.userData.label; tb.remove(old); old.traverse((o) => { if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); o.geometry.dispose(); } });
+    const g = new THREE.Group(), maxW = tb.userData.w - 0.12; tb.add(g); tb.userData.label = g;
+    if (str.length > 16 && str.includes(' ')) {
+      const sp = [...str].map((c, i) => (c === ' ' ? i : -1)).filter((i) => i > 0).sort((a, b) => Math.abs(a - str.length / 2) - Math.abs(b - str.length / 2))[0];
+      text(g, str.slice(0, sp), 0, 0.058, 0.026, { height: 0.13, maxW }); text(g, str.slice(sp + 1), 0, -0.068, 0.026, { height: 0.13, maxW });
+    } else text(g, str, 0, -0.005, 0.026, { height: 0.172, maxW });
   }
   function setupTerms() { st.sub = { kind: 'terms', order: st.seqs.terms }; newTerm(); }
   function newTerm() {
@@ -633,7 +642,8 @@ function createGame(E) {
   const KEYPOS = { treble: { F: 4, C: 2.5, B: 2 }, bass: { F: 3, C: 1.5, B: 1 } };
   const KEYWHY = { C: 'No sharps or flats is C major.', G: 'One sharp, F♯, is G major.', D: 'Two sharps, F♯ and C♯, is D major.', F: 'One flat, B♭, is F major.' };
   const TONICW = { treble: { C: 'C5', G: 'G4', D: 'D5', F: 'F4' }, bass: { C: 'C3', G: 'G2', D: 'D3', F: 'F2' } };
-  function keySeq() { if (!CH.keys) return []; let out = []; while (out.length < 3) out = out.concat(shuffle(CH.keys)); out = out.slice(0, 3); for (let k = 1; k < 3; k++) if (out[k] === out[k - 1]) { const j = (k + 1) % 3; [out[k], out[j]] = [out[j], out[k]]; } return out; }
+  // three keys, never the same one twice in a row
+  function keySeq() { if (!CH.keys) return []; const out = []; while (out.length < 3) { const c = CH.keys.filter((x) => x !== out[out.length - 1]); out.push(c[Math.floor(Math.random() * c.length)]); } return out; }
   function setupKeys() { st.sub = { kind: 'keys', seq: st.seqs.keys }; newKey(); }
   function newKey() {
     const s = st.sub, key = s.seq[st.q], clef = st.inst.clef; s.key = key; s.locked = false; s.opts = CH.keys.slice();

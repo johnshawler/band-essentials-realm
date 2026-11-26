@@ -5,7 +5,7 @@
 // the clouds (Chapter 8).
 const TOWERS_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#c8c0b4', 'stoneDark':  '#8a8278', 'stoneLight':  '#ece6dc', 'wood':  '#8a6a42', 'woodDark':  '#5a4428', 'gold':  '#c8983a', 'banner':  '#a02a2a', 'bannerDark':  '#7a1a1a', 'pale':  '#f4f0e8', 'frost':  '#ece8e0', 'slab':  '#b8b0a4', 'rune':  ['#7a5a2a', '#ffd890'], 'glass':  '#fff0d0', 'leather':  '#7a2a2a'},
+  props: { shield: 'bell', shieldRims: ['#b0803a', '#c8983a', '#a07030'], shieldFace: '#f4ead0', shieldMetal: 0.85, 'stone':  '#c8c0b4', 'stoneDark':  '#8a8278', 'stoneLight':  '#ece6dc', 'wood':  '#8a6a42', 'woodDark':  '#5a4428', 'gold':  '#c8983a', 'banner':  '#a02a2a', 'bannerDark':  '#7a1a1a', 'pale':  '#f4f0e8', 'frost':  '#ece8e0', 'slab':  '#b8b0a4', 'rune':  ['#7a5a2a', '#ffd890'], 'glass':  '#fff0d0', 'leather':  '#7a2a2a'},
   env: { top: '#5a8ae0', horizon: '#f0d8b0', bottom: '#4a5a6a', intensity: 0.68, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#fff0d0', power: 4.6 }, { pos: [34, 10, 22], size: [14, 22], color: '#d0e0ff', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c0ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffd8a0', power: 2.0 }] },
   hemi: ['#d0e0ff', '#5a5a48', 0.55], sun: '#fff0d8', sunPower: 2.8, fog: '#a8b8d0',

@@ -4,7 +4,7 @@
 // At the summit the aurora brightens into a curtain, and through it a waterfall pours off a far cliff (Chapter 5).
 const ICE_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#8aa0c0', 'stoneDark':  '#5a6a8a', 'stoneLight':  '#dce8f4', 'wood':  '#a8b8c8', 'woodDark':  '#6a7a90', 'gold':  '#c8d4e0', 'banner':  '#2a4a8a', 'bannerDark':  '#1a3068', 'pale':  '#eef4fb', 'frost':  '#eef4fb', 'rune':  ['#3a6a9a', '#8ae0ff'], 'flame':  ['#2a4a8a', '#8ad8ff'], 'glass':  '#d0e8ff', 'leather':  '#2a3a6a'},
+  props: { shield: 'hex', shieldRims: ['#6fb8ff', '#a8d8ff', '#8ac0f0'], shieldFace: '#eef6ff', 'stone':  '#8aa0c0', 'stoneDark':  '#5a6a8a', 'stoneLight':  '#dce8f4', 'wood':  '#a8b8c8', 'woodDark':  '#6a7a90', 'gold':  '#c8d4e0', 'banner':  '#2a4a8a', 'bannerDark':  '#1a3068', 'pale':  '#eef4fb', 'frost':  '#eef4fb', 'rune':  ['#3a6a9a', '#8ae0ff'], 'flame':  ['#2a4a8a', '#8ad8ff'], 'glass':  '#d0e8ff', 'leather':  '#2a3a6a'},
   env: { top: '#14204a', horizon: '#4a6a9a', bottom: '#20304a', intensity: 0.55, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#a8c8ff', power: 3.6 }, { pos: [34, 10, 22], size: [14, 22], color: '#8affc8', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#9a8aff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#c8e0ff', power: 2.0 }] },
   hemi: ['#a8c0ff', '#2a3450', 0.5], sun: '#cfe0ff', sunPower: 1.9, fog: '#2c3a62',

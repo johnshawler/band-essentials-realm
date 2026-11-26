@@ -4,7 +4,7 @@
 // near the top, and at the summit the player breaks through into calm sky; to the south a volcano smokes (Chapter 11).
 const STORM_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#4a4a54', 'stoneDark':  '#2e2e38', 'stoneLight':  '#7a7a86', 'wood':  '#4a4038', 'woodDark':  '#2e2622', 'gold':  '#8a8a98', 'banner':  '#1e2a5a', 'bannerDark':  '#141c40', 'pale':  '#d8dce8', 'frost':  '#c8ccd8', 'slab':  '#2e3038', 'rune':  ['#3a4ab0', '#c8d8ff'], 'flame':  ['#2a3a8a', '#a8c8ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a3a'},
+  props: { shield: 'cloud', shieldRims: ['#4a4e62', '#5e6278', '#3a3e52'], shieldFace: '#e0e4f0', 'stone':  '#4a4a54', 'stoneDark':  '#2e2e38', 'stoneLight':  '#b8bac8', 'wood':  '#4a4038', 'woodDark':  '#2e2622', 'gold':  '#8a8a98', 'banner':  '#1e2a5a', 'bannerDark':  '#141c40', 'pale':  '#d8dce8', 'frost':  '#c8ccd8', 'slab':  '#2e3038', 'rune':  ['#3a4ab0', '#c8d8ff'], 'flame':  ['#2a3a8a', '#a8c8ff'], 'glass':  '#c8d0ff', 'leather':  '#2a2a3a'},
   env: { top: '#3a4466', horizon: '#6a7088', bottom: '#1a1c26', intensity: 0.5, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#c8d0ff', power: 3.0 }, { pos: [34, 10, 22], size: [14, 22], color: '#a0a8c8', power: 1.6 }, { pos: [0, 44, -12], size: [44, 12], color: '#8a90c0', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#b8c0e0', power: 1.6 }] },
   hemi: ['#a8b0d8', '#24242e', 0.48], sun: '#d8e0ff', sunPower: 1.7, fog: '#3a3e52',
@@ -29,7 +29,7 @@ function sceneStorm(X) {
   };
   const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.rock, rock2: T.rock2, top: T.grass, under: T.rock2, landR: mR, strut: T.rock, strutR: 0.9 });
   const rocklet = kit.rocklet({ rock: T.rock, rock2: T.rock2, top: T.grass2 }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
-  const step = kit.stepOf(T.rock, T.rock2, new THREE.DodecahedronGeometry(0.45, 0));
+  const step = kit.stepOf(T.rock, T.rock2, new THREE.CylinderGeometry(0.42, 0.34, 0.14, 6));   // small and flat, so a step never hides the count-in stones
 
   // the storm's strength: 1 down in it, easing off over the top islands, gone at the summit
   let stormTo = 1, storm = 1;
@@ -54,9 +54,10 @@ function sceneStorm(X) {
     const flash = new THREE.PointLight('#c8d4ff', 0, 300, 1.2); flash.position.set(0, SUM + 20, 40); scene.add(flash);
     const boltM = glowMat('#e0e8ff', 0), bolts = [];
     for (let k = 0; k < 4; k++) {
-      const pts = [], a = k * 1.7 + 0.5, r = 30 + 12 * k; let x = Math.sin(a) * r, z = Math.cos(a) * r;
-      for (let j = 0; j <= 8; j++) { pts.push(new THREE.Vector3(x, SUM + 30 - j * (SUM + 40) / 8, z)); x += (K.hash(k, j) - 0.5) * 8; z += (K.hash(k, j + 9) - 0.5) * 8; }
-      const b = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0), 40, 0.35, 4), boltM); b.visible = false; scene.add(b); bolts.push(b);
+      // far out round the horizon, so a bolt never crosses in front of the island the player is on
+      const pts = [], a = k * 1.57 + 0.5, r = 170 + 25 * k; let x = Math.sin(a) * r, z = Math.cos(a) * r;
+      for (let j = 0; j <= 8; j++) { pts.push(new THREE.Vector3(x, SUM + 70 - j * (SUM + 85) / 8, z)); x += (K.hash(k, j) - 0.5) * 22; z += (K.hash(k, j + 9) - 0.5) * 22; }
+      const b = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0), 40, 1.4, 4), boltM); b.visible = false; scene.add(b); bolts.push(b);
     }
     const amb = new THREE.AmbientLight('#c8d4ff', 0); scene.add(amb);
     let nextRandom = 4, last = 0, which = 0;
@@ -70,7 +71,7 @@ function sceneStorm(X) {
       // a random strike now and then while the storm is up
       if (t > nextRandom && storm > 0.3) { strikes.push(t); nextRandom = t + 5 + 7 * Math.random(); if (SIG.snd) SIG.snd.thunder(SIG.now() + 0.6 + Math.random(), 0.6 * storm); }
       let f = 0; for (const s of strikes) { const u = t - s; if (u >= 0 && u < 0.45) { f = Math.max(f, (u < 0.08 ? 1 : 0.5 * (1 - u / 0.45)) * (u > 0.12 && u < 0.18 ? 0.3 : 1)); if (u < dt + 0.01) which = (which + 1) % bolts.length; } }
-      flash.intensity = f * 9000; amb.intensity = f * 2.2; boltM.color.setRGB(0.9, 0.93, 1).multiplyScalar(f * 3);
+      flash.intensity = f * 3500; amb.intensity = f * 0.7; boltM.color.setRGB(0.9, 0.93, 1).multiplyScalar(f * 3);
       bolts.forEach((b, k) => { b.visible = f > 0.15 && k === which; });
       while (strikes.length && t - strikes[0] > 2) strikes.shift();
     });

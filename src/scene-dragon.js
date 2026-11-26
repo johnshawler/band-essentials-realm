@@ -4,7 +4,7 @@
 // its nest, and far above the clouds a domed observatory floats among the stars (Chapter 12).
 const DRAGON_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#3a3436', 'stoneDark':  '#241e20', 'stoneLight':  '#6a5a58', 'wood':  '#2e2422', 'woodDark':  '#1a1414', 'gold':  '#d8a840', 'banner':  '#8a1a1a', 'bannerDark':  '#5a1010', 'pale':  '#d8c8b8', 'frost':  '#c8b0a0', 'slab':  '#1e1a1c', 'rune':  ['#8a2a0a', '#ff6a1a'], 'flame':  ['#8a2a0a', '#ff7a2a'], 'glass':  '#ffb090', 'leather':  '#5a1a1a'},
+  props: { shield: 'scale', shieldRims: ['#a83a3a', '#d8a840', '#7a2a3a'], shieldFace: '#f0dcc0', 'stone':  '#3a3436', 'stoneDark':  '#241e20', 'stoneLight':  '#c0b0a4', 'wood':  '#2e2422', 'woodDark':  '#1a1414', 'gold':  '#d8a840', 'banner':  '#8a1a1a', 'bannerDark':  '#5a1010', 'pale':  '#d8c8b8', 'frost':  '#c8b0a0', 'slab':  '#1e1a1c', 'rune':  ['#8a2a0a', '#ff6a1a'], 'flame':  ['#8a2a0a', '#ff7a2a'], 'glass':  '#ffb090', 'leather':  '#5a1a1a'},
   env: { top: '#4a2a3a', horizon: '#ff7a3a', bottom: '#2a1410', intensity: 0.55, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffa070', power: 3.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff6a3a', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#c88aa0', power: 1.8 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffb060', power: 2.4 }] },
   hemi: ['#ffb090', '#4a1a10', 0.5], sun: '#ffb080', sunPower: 2.3, fog: '#6a3a34',
@@ -35,7 +35,7 @@ function sceneDragon(X) {
   const decor = (parent, r, seed) => { for (let k = 0; k < 9; k++) { const a = K.hash(seed, k) * Math.PI * 2, d = r * (0.2 + 0.7 * K.hash(seed, k + 9)), h = 2 + 4 * K.hash(seed, k + 18); const c = add(parent, HEX, k % 2 ? T.basalt : T.basalt2, Math.cos(a) * d, -h / 2 - 0.3, Math.sin(a) * d); c.scale.set(0.9, h, 0.9); } add(parent, new THREE.TorusGeometry(r * 0.98, 0.07, 4, 22), T.lava, 0, -0.32, 0).rotation.x = Math.PI / 2; };
   const islet = (parent, r, depth, seed) => kit.islet(parent, r, depth, seed, { rock: T.basalt, rock2: T.basalt2, top: T.crust, under: T.ash, landR: vR, strut: T.basalt2, strutR: 0.8, decor });
   const rocklet = kit.rocklet({ rock: T.basalt, rock2: T.basalt2, top: T.crust }, (g, size, seed, n) => { for (let k = 0; k < n; k++) tree(g, (K.hash(seed, k) - 0.5) * size, 0, (K.hash(seed, k + 4) - 0.5) * size, size, k + seed); });
-  const step = kit.stepOf(T.basalt, T.basalt2, new THREE.CylinderGeometry(0.5, 0.5, 0.35, 6));
+  const step = kit.stepOf(T.basalt, T.basalt2, new THREE.CylinderGeometry(0.45, 0.45, 0.2, 6));
 
   function dragon() {
     const d = group(scene), body = group(d);

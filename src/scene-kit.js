@@ -113,7 +113,8 @@ function sceneKit(X) {
   // a chapter's dressing: ground pieces round each island, a piece on every top anchor and below every hang anchor, and an accent
   // that stands in for the crystal shards beside some props
   function theme({ ground = [], top, hang, accent, size = 1 }) {
-    const SPOTS = [[3.75, 1.3, 0.85], [-3.9, 0.2, 0.7], [-3.55, 1.75, 0.6], [-3.85, 1.1, 0.5], [3.3, 2.15, 0.5]];
+    // round the island's edge, clear of the props and the count-in stones in front
+    const SPOTS = [[3.85, 1.2, 0.8], [-3.95, 0.2, 0.7], [-3.6, 1.8, 0.6], [-4.05, 1.05, 0.5], [4.15, 0.1, 0.5]];
     return {
       decor: (g, i) => SPOTS.forEach(([x, z, s], k) => { const f = PIECE[ground[(i + k) % ground.length]]; if (f) f(g, (i % 2 ? -1 : 1) * x, 0, z, s * 1.6 * size, i * 7 + k); }),
       dress: (A) => { A.top.forEach(([p, x, y, z], k) => top && PIECE[top](p, x, y, z, 1, k)); A.hang.forEach(([p, x, y, z], k) => hang && PIECE[hang](p, x, y, z, 1, k)); },

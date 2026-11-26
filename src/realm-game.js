@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 22; // shown top left; add one for every release to the public site
+  const VERSION = 23; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -525,14 +525,32 @@
         sf.put('four', 3.8, 2); sf.put('four', 3.8, 0);
         text(face, 'Which note is displayed on the staff?', 0.15, 0.66, 0.004, { height: 0.185, color: '#ffe9bc', glow: 0.9 });
         const heater = (s) => { const sh = new THREE.Shape(); sh.moveTo(-0.42 * s, 0.44 * s); sh.lineTo(0.42 * s, 0.44 * s); sh.lineTo(0.42 * s, 0.02); sh.quadraticCurveTo(0.4 * s, -0.36 * s, 0, -0.56 * s); sh.quadraticCurveTo(-0.4 * s, -0.36 * s, -0.42 * s, 0.02); sh.closePath(); return sh; };
-        const rims = ['#b02a3a', '#2d5fb8', '#2a8a5a'];
+        // the three targets take a chapter's own shape (LOOK.props.shield): leaves, life rings, ice plaques, river stones, iron plates,
+        // bells, portholes, gears, storm clouds, dragon scales or stars; the castle keeps its heater shields
+        const poly = (pts) => { const sh = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? sh.lineTo(x, y) : sh.moveTo(x, y))); sh.closePath(); return sh; };
+        const ring = (n, f) => Array.from({ length: n }, (_, i) => f(i / n * Math.PI * 2, i));
+        const SHAPES = {
+          heater,
+          leaf: (s) => { const sh = new THREE.Shape(); sh.moveTo(0, 0.56 * s); sh.quadraticCurveTo(0.62 * s, 0.1 * s, 0, -0.56 * s); sh.quadraticCurveTo(-0.62 * s, 0.1 * s, 0, 0.56 * s); return sh; },
+          circle: (s) => { const sh = new THREE.Shape(); sh.absarc(0, 0, 0.47 * s, 0, Math.PI * 2, false); return sh; },
+          hex: (s) => poly(ring(6, (a) => [Math.sin(a) * 0.5 * s, Math.cos(a) * 0.5 * s])),
+          stone: (s) => { const sh = new THREE.Shape(); sh.absellipse(0, 0, 0.52 * s, 0.4 * s, 0, Math.PI * 2, false, 0.15); return sh; },
+          plate: (s) => poly([[-0.44 * s, 0.4 * s], [-0.4 * s, 0.44 * s], [0.4 * s, 0.44 * s], [0.44 * s, 0.4 * s], [0.44 * s, -0.4 * s], [0.4 * s, -0.44 * s], [-0.4 * s, -0.44 * s], [-0.44 * s, -0.4 * s]]),
+          bell: (s) => { const sh = new THREE.Shape(); sh.moveTo(-0.5 * s, -0.46 * s); sh.lineTo(0.5 * s, -0.46 * s); sh.quadraticCurveTo(0.34 * s, -0.3 * s, 0.32 * s, 0.1 * s); sh.quadraticCurveTo(0.3 * s, 0.5 * s, 0, 0.52 * s); sh.quadraticCurveTo(-0.3 * s, 0.5 * s, -0.32 * s, 0.1 * s); sh.quadraticCurveTo(-0.34 * s, -0.3 * s, -0.5 * s, -0.46 * s); return sh; },
+          gear: (s) => poly([].concat(...ring(12, (a) => { const d = Math.PI / 24; return [[Math.sin(a - d * 1.6) * 0.42 * s, Math.cos(a - d * 1.6) * 0.42 * s], [Math.sin(a - d) * 0.53 * s, Math.cos(a - d) * 0.53 * s], [Math.sin(a + d) * 0.53 * s, Math.cos(a + d) * 0.53 * s], [Math.sin(a + d * 1.6) * 0.42 * s, Math.cos(a + d * 1.6) * 0.42 * s]]; }))),
+          cloud: (s) => { const sh = new THREE.Shape(); sh.moveTo(-0.55 * s, -0.3 * s); sh.lineTo(0.55 * s, -0.3 * s); sh.absarc(0.38 * s, -0.02 * s, 0.26 * s, -Math.PI / 2.6, Math.PI / 1.6, false); sh.absarc(0.02 * s, 0.14 * s, 0.34 * s, 0.2, Math.PI - 0.1, false); sh.absarc(-0.36 * s, -0.04 * s, 0.25 * s, Math.PI / 2.4, Math.PI * 1.32, false); sh.closePath(); return sh; },
+          scale: (s) => { const sh = new THREE.Shape(); sh.moveTo(0, -0.58 * s); sh.quadraticCurveTo(0.5 * s, -0.2 * s, 0.44 * s, 0.22 * s); sh.quadraticCurveTo(0.3 * s, 0.5 * s, 0, 0.48 * s); sh.quadraticCurveTo(-0.3 * s, 0.5 * s, -0.44 * s, 0.22 * s); sh.quadraticCurveTo(-0.5 * s, -0.2 * s, 0, -0.58 * s); return sh; },
+          star: (s) => poly([].concat(...ring(5, (a) => [[Math.sin(a) * 0.6 * s, Math.cos(a) * 0.6 * s], [Math.sin(a + Math.PI / 5) * 0.34 * s, Math.cos(a + Math.PI / 5) * 0.34 * s]]))),
+        };
+        const shapeOf = SHAPES[PP.shield] || heater, rims = PP.shieldRims || ['#b02a3a', '#2d5fb8', '#2a8a5a'];
         const shields = [0, 1, 2].map((k) => {
           const q = group(g, (k - 1) * 1.3, DAIS + 0.56, 0.86); q.rotation.x = -0.3;
-          add(q, new THREE.ExtrudeGeometry(heater(1), { depth: 0.07, bevelEnabled: false, curveSegments: 6 }), std(rims[k], 0.3, 0.45), 0, 0, -0.07);
-          const fm = glowing('#f1e6c8', 0.1, { rough: 0.5, tint: 0.95, to: '#e05200' }); pickable(add(q, new THREE.ShapeGeometry(heater(0.82), 6), fm, 0, 0.005, 0.004, { cast: false }), { kind: 'shield', k });
+          add(q, new THREE.ExtrudeGeometry(shapeOf(1), { depth: 0.07, bevelEnabled: false, curveSegments: 10 }), std(rims[k], PP.shieldMetal || 0.3, 0.45, { flatShading: PP.shield === 'stone' || PP.shield === 'hex' }), 0, 0, -0.07);
+          const fm = glowing(PP.shieldFace || '#f1e6c8', 0.1, { rough: 0.5, tint: 0.95, to: '#e05200' }); pickable(add(q, new THREE.ShapeGeometry(shapeOf(PP.shield === 'star' ? 0.78 : 0.82), 10), fm, 0, 0.005, 0.004, { cast: false }), { kind: 'shield', k });
           add(g, new THREE.CylinderGeometry(0.04, 0.05, 0.5, 5), M.woodDark, (k - 1) * 1.3, DAIS + 0.3, 0.62).rotation.x = 0.5;
           q.userData = { mat: fm, labelG: group(q), hitAt: -9 }; return q;
         });
+        R4.shieldWord = PP.shield ? null : 'shield';   // the castle's targets are shields; other chapters' are named by their letters
         Object.assign(R4, { face, sf, gilt, shields, clefG: group(face), noteG: group(face) });
         anims.push((t) => shields.forEach((q) => { const h = bump(t, q.userData.hitAt, 0.4); q.rotation.x = -0.3 - 0.3 * h; }));
         restLocal[3] = [2.75, DAIS + 1.6, 1.3];
@@ -568,12 +586,13 @@
       const R6 = {};
       if (CH.keys) {
         const g = props[5];
-        for (const sx of [-1, 1]) { add(g, box(0.62, 4.3, 0.7), M.stone, sx * (PW / 2 + 0.42), 2.15, -0.2); add(g, box(0.8, 0.3, 0.86), M.stoneDark, sx * (PW / 2 + 0.42), 4.38, -0.2); }
-        add(g, box(PW + 1.7, 0.5, 0.8), M.stoneDark, 0, 4.15, -0.2);
-        const arch = add(g, new THREE.TorusGeometry(PW / 2 + 0.1, 0.16, 6, 20, Math.PI), M.gold, 0, 3.6, -0.15); arch.scale.y = 0.25;
-        add(g, K.roundedBox(PW + 0.2, PH + 0.3, 0.12, 0.04, 2), M.stoneDark, 0, PY + 0.3, -0.12);
-        const panelM = glowing(C.parch, 0.0, { rough: 0.8, tint: 0.5 }); add(g, K.roundedBox(PW, PH + 0.1, 0.05, 0.04, 2), panelM, 0, PY + 0.3, 0);
-        const face = group(g, 0, PY + 0.3, 0.03), sf = staff(face, -2.15, 4.3, -0.35);
+        // (kept low and set back, so the island's title banner stays clear in front of the lintel)
+        for (const sx of [-1, 1]) { add(g, box(0.62, 3.85, 0.7), M.stone, sx * (PW / 2 + 0.42), 1.925, -0.3); add(g, box(0.8, 0.3, 0.86), M.stoneDark, sx * (PW / 2 + 0.42), 3.95, -0.3); }
+        add(g, box(PW + 1.7, 0.5, 0.5), M.stoneDark, 0, 3.7, -0.5);
+        const arch = add(g, new THREE.TorusGeometry(PW / 2 + 0.1, 0.16, 6, 20, Math.PI), M.gold, 0, 3.35, -0.35); arch.scale.y = 0.18;
+        add(g, K.roundedBox(PW + 0.2, PH + 0.3, 0.12, 0.04, 2), M.stoneDark, 0, PY + 0.05, -0.12);
+        const panelM = glowing(C.parch, 0.0, { rough: 0.8, tint: 0.5 }); add(g, K.roundedBox(PW, PH + 0.1, 0.05, 0.04, 2), panelM, 0, PY + 0.05, 0);
+        const face = group(g, 0, PY + 0.05, 0.03), sf = staff(face, -2.15, 4.3, -0.35);
         const lock = group(g, 0, 0.7, 0.05); add(lock, K.roundedBox(0.9, 0.7, 0.12, 0.05, 2), M.gold); add(lock, cylZ(0.09, 0.14, 10), M.ink, 0, 0.08, 0.04); add(lock, box(0.08, 0.2, 0.14), M.ink, 0, -0.08, 0.04);
         add(g, box(5.0, 0.07, 0.07), M.woodDark, 0, 2.12, 0.75);
         const keys = [0, 1, 2, 3].map((k) => {
@@ -593,9 +612,9 @@
       // the chapter dresses the props with its own small details: on top of posts and pillars, and hanging from rods and lintels
       if (LAND && LAND.dress) LAND.dress({
         top: [[props[0], -(PW / 2 + 0.34), DAIS + 3.3, -0.14], [props[0], PW / 2 + 0.34, DAIS + 3.3, -0.14], [props[1], -1.6, PY + 1.36, -0.4], [props[1], 1.5, PY + 1.4, -0.4],
-          [props[3], 0, PY + PH / 2 + 0.62, -0.08], [props[4], -2.55, PY + 1.12, -0.32], [props[4], 2.5, PY + 1.12, -0.32], ...(CH.keys ? [[props[5], -(PW / 2 + 0.42), 4.55, -0.2], [props[5], PW / 2 + 0.42, 4.55, -0.2]] : [])],
+          [props[4], -2.55, PY + 1.12, -0.32], [props[4], 2.5, PY + 1.12, -0.32], ...(CH.keys ? [[props[5], -(PW / 2 + 0.42), 4.1, -0.3], [props[5], PW / 2 + 0.42, 4.1, -0.3]] : [])],
         hang: [[props[0], -1.7, PY + PH / 2 + 0.06, 0.06], [props[0], -0.55, PY + PH / 2 + 0.06, 0.06], [props[0], 0.6, PY + PH / 2 + 0.06, 0.06], [props[0], 1.75, PY + PH / 2 + 0.06, 0.06],
-          ...(CH.keys ? [[props[5], -1.9, 3.88, 0.22], [props[5], 1.9, 3.88, 0.22]] : [])],
+          ...(CH.keys ? [[props[5], -2.95, 3.45, -0.3], [props[5], 2.95, 3.45, -0.3]] : [])],
       });
 
       // ------------------------------------------------------------ between and around the islands

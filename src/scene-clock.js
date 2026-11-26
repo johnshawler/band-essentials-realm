@@ -5,7 +5,7 @@
 // jagged peak (Chapter 10).
 const CLOCK_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#b8a894', 'stoneDark':  '#8a7a68', 'stoneLight':  '#e0d4c0', 'wood':  '#5a3a28', 'woodDark':  '#3a2418', 'gold':  '#c8963a', 'banner':  '#4a2a6a', 'bannerDark':  '#321a4a', 'pale':  '#f4ead4', 'frost':  '#e8dcc4', 'slab':  '#9a6a2a', 'rune':  ['#7a5a20', '#ffd27a'], 'glass':  '#ffe8c0', 'leather':  '#4a2a1a'},
+  props: { shield: 'gear', shieldRims: ['#c8963a', '#9a6a2a', '#c8963a'], shieldFace: '#f4ead4', shieldMetal: 0.85, 'stone':  '#b8a894', 'stoneDark':  '#8a7a68', 'stoneLight':  '#e0d4c0', 'wood':  '#5a3a28', 'woodDark':  '#3a2418', 'gold':  '#c8963a', 'banner':  '#4a2a6a', 'bannerDark':  '#321a4a', 'pale':  '#f4ead4', 'frost':  '#e8dcc4', 'slab':  '#9a6a2a', 'rune':  ['#7a5a20', '#ffd27a'], 'glass':  '#ffe8c0', 'leather':  '#4a2a1a'},
   env: { top: '#3a4a8a', horizon: '#ffa070', bottom: '#3a2a3a', intensity: 0.62, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffb080', power: 4.4 }, { pos: [34, 10, 22], size: [14, 22], color: '#ff90a0', power: 1.8 }, { pos: [0, 44, -12], size: [44, 12], color: '#9a90ff', power: 2.0 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffc070', power: 2.4 }] },
   hemi: ['#ffc8a8', '#3a3040', 0.48], sun: '#ffb880', sunPower: 2.5, fog: '#8a6a7a',

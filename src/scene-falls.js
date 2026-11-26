@@ -4,7 +4,7 @@
 // mid-air until the player answers. From the top, far off and low, a mine entrance glows (Chapter 6).
 const FALLS_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#7a8478', 'stoneDark':  '#4e5850', 'stoneLight':  '#b8c4b8', 'wood':  '#6a5a3e', 'woodDark':  '#4a3e2a', 'gold':  '#8a7a4a', 'banner':  '#1e6a6a', 'bannerDark':  '#124a4a', 'pale':  '#e4ece4', 'frost':  '#d8e4e0', 'slab':  '#3e4a4e', 'rune':  ['#2a6a7a', '#7ff0e8'], 'glass':  '#a8f0f0', 'leather':  '#2a5a4a'},
+  props: { shield: 'stone', shieldRims: ['#7a8478', '#6a7468', '#8a9488'], shieldFace: '#dfe6de', 'stone':  '#7a8478', 'stoneDark':  '#4e5850', 'stoneLight':  '#b8c4b8', 'wood':  '#6a5a3e', 'woodDark':  '#4a3e2a', 'gold':  '#8a7a4a', 'banner':  '#1e6a6a', 'bannerDark':  '#124a4a', 'pale':  '#e4ece4', 'frost':  '#d8e4e0', 'slab':  '#3e4a4e', 'rune':  ['#2a6a7a', '#7ff0e8'], 'glass':  '#a8f0f0', 'leather':  '#2a5a4a'},
   env: { top: '#6a9ae0', horizon: '#ffe0b0', bottom: '#4a6a5a', intensity: 0.7, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#fff0c8', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#c8f0ff', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffd090', power: 2.0 }] },
   hemi: ['#d0e4ff', '#4a6a40', 0.55], sun: '#fff0d0', sunPower: 2.9, fog: '#b8d0d8',

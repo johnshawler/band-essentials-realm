@@ -3,7 +3,7 @@
 // treehouse under the canopy. sceneTree(X) gets the stage's helpers and returns what the chapter replaces in the castle world.
 const TREE_LOOK = {
   // the game props' palette on this chapter's islands
-  props: {'stone':  '#8a9a78', 'stoneDark':  '#5e6a4e', 'stoneLight':  '#c8d0b0', 'wood':  '#8a6038', 'woodDark':  '#5a3c22', 'gold':  '#a8963a', 'banner':  '#2f6a3a', 'bannerDark':  '#1e4a28', 'pale':  '#e8e4cc', 'frost':  '#efe6c8', 'slab':  '#7a5a36', 'rune':  ['#3a6a2a', '#a0f070'], 'flame':  ['#6a4a20', '#ffd070'], 'glass':  '#c8f0c8', 'leather':  '#4a6a2a'},
+  props: { shield: 'leaf', shieldRims: ['#4f8a3a', '#6aa448', '#3e7a3a'], shieldFace: '#eef2d8', 'stone':  '#8a9a78', 'stoneDark':  '#5e6a4e', 'stoneLight':  '#c8d0b0', 'wood':  '#8a6038', 'woodDark':  '#5a3c22', 'gold':  '#a8963a', 'banner':  '#2f6a3a', 'bannerDark':  '#1e4a28', 'pale':  '#e8e4cc', 'frost':  '#efe6c8', 'slab':  '#7a5a36', 'rune':  ['#3a6a2a', '#a0f070'], 'flame':  ['#6a4a20', '#ffd070'], 'glass':  '#c8f0c8', 'leather':  '#4a6a2a'},
   env: { top: '#7fa6f0', horizon: '#ffd79a', bottom: '#6a5a3a', intensity: 0.7, blur: 0.06, panels: [
     { pos: [-22, 24, 40], size: [34, 18], color: '#ffd9a0', power: 4.8 }, { pos: [34, 10, 22], size: [14, 22], color: '#ffe6b8', power: 2.0 }, { pos: [0, 44, -12], size: [44, 12], color: '#a8c8ff', power: 2.4 }, { pos: [-36, 6, -20], size: [16, 12], color: '#ffc070', power: 2.2 }] },
   hemi: ['#cfe2ff', '#7a5a30', 0.55], sun: '#ffe2b0', sunPower: 2.8, fog: '#d8c8a8',
