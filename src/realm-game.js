@@ -2,7 +2,7 @@
 // The world, camera path, wisp, lettering and sound are the movie's. Where the movie played each game by itself on a
 // schedule, the player now plays it: the same props on each island take clicks, drags and taps.
 {
-  const VERSION = 24; // shown top left; add one for every release to the public site
+  const VERSION = 25; // shown top left; add one for every release to the public site
   window.GAME_VERSION = VERSION;
   const TITLE = 'Band Adventures';
   const OPEN_LINE = `Chapter ${CH.n}: ${CH.title}`;
@@ -399,7 +399,7 @@
 
       // the wisp's flights between islands, as in the movie
 
-      // ---- 1. Read Rhythms: a scroll between two posts, four rune stones to count in, a hand drum to tap
+      // ---- 1. Read Rhythms: a scroll between two posts, three rune stones to count in, a hand drum to tap
       const R1 = {};
       {
         const g = props[0];
@@ -417,7 +417,7 @@
         const sticks = [-1, 1].map((sx) => { const s = group(drum, sx * 0.56, 0.52, 0.02); add(s, cylX(0.02, 0.5, 6), M.woodDark, -sx * 0.25, 0, 0); add(s, new THREE.SphereGeometry(0.05, 8, 6), M.pale, -sx * 0.5, 0, 0); return s; });
         const sTap = sign(g, 'Tap', -0.98, DAIS, 0.78), sCount = sign(g, 'Count in', 0.02, DAIS, 0.78);
         pickable(sTap.userData.plank, { kind: 'drum' }); pickable(sCount.userData.plank, { kind: 'countin' });
-        const SX = [0.98, 1.44, 1.9, 2.36], STONE = (() => { const s = new THREE.CylinderGeometry(0.23, 0.28, 0.52, 4); s.rotateY(Math.PI / 4); return s; })();
+        const SX = [0.98, 1.44, 1.9], STONE = (() => { const s = new THREE.CylinderGeometry(0.23, 0.28, 0.52, 4); s.rotateY(Math.PI / 4); return s; })();
         const stones = SX.map((x, k) => { const s = group(g, x, DAIS + 0.26, 0.82); const body = add(s, STONE, M.stoneLight); pickable(body, { kind: 'countin' }); text(s, String(k + 1), 0, 0.0, 0.195, { height: 0.26, face: CINZEL_B }); const m = glowing('#5a2a1c', 0.6, { rough: 0.3, tint: 0.95, facet: true }); add(s, OCTA, m, 0, 0.4, 0, { cast: false }).scale.set(0.085, 0.12, 0.085); s.userData.mat = m; return s; });
         Object.assign(R1, { face, sf, dyn, drum, skin, sticks, stones, notes: [], stoneAt: [-9, -9, -9, -9], tapAt: [] });
         anims.push((t) => {
@@ -639,7 +639,7 @@
 
       // ------------------------------------------------------------ between and around the islands
       for (let i = 0; i < NS - 1; i++) for (let k = 1; k <= 3; k++) {
-        const a = A0 + (i + k / 4) * DA, r = RAD + 0.4 + 0.8 * Math.sin(k * 2.1 + i), y = (i + k / 4) * STEP - 0.25 + 0.2 * Math.sin(k * 1.3 + i * 2);
+        const f = 0.09 + 0.22 * k, a = A0 + (i + f) * DA, r = RAD + 0.4 + 0.8 * Math.sin(k * 2.1 + i), y = (i + f) * STEP - 0.25 + 0.2 * Math.sin(k * 1.3 + i * 2);
         const s = LAND ? LAND.step(r * Math.sin(a), y, r * Math.cos(a), i * 3 + k) : add(scene, new THREE.CylinderGeometry(0.55, 0.3, 0.3, 6), k % 2 ? M.stone : M.rock, r * Math.sin(a), y, r * Math.cos(a)); if (!LAND) s.rotation.y = k + i; s.scale.setScalar(0.8 + 0.4 * K.hash(i, k));
         anims.push((t) => { s.position.y = y + 0.07 * Math.sin(t * 1.1 + k * 1.9 + i); });
       }
