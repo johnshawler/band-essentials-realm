@@ -764,6 +764,8 @@ function createGame(E) {
     if (G.mode === 'finale') { G.endTau = Math.min(T.end, T.lift + (t - st.endStart)); if (G.endTau >= T.end - 1.2) { G.mode = 'summary'; st.sumAt = t; saveBest(); } }
     if (G.mode === 'summary') { G.endTau = T.end; G.summaryFade = K.seg(t, st.sumAt, st.sumAt + 0.8); }
     const s = st.sub;
+    // Read Rhythms cues: the Count in sign glows while an exercise waits to start, the drum while the rhythm is tapped
+    { const r = G.mode === 'play' && !st.fly && s && s.kind === 'rhythm'; R1.cueCount = r && s.phase === 'ready' ? 1 : 0; R1.cueDrum = r && s.phase === 'tap' ? 1 : 0; }
     // the wisp drifts back to its resting place when nothing has happened for a while
     if (G.mode === 'play' && WS.free && t > WS.t0 + WS.dur + 2.5 && !(s && s.kind === 'rhythm' && s.phase !== 'ready' && s.phase !== 'result')) wispTo(restOf(st.stop), 0.6, 0.15);
   }
